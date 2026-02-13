@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+<<<<<<< HEAD
+# Environment variables
+.env
+.env.local
+.env.production
+=======
+# Environment
+.env
+.env.local
+.env.production
+*.env
+
+# Build
+dist/
+build/
+dist-ssr
+*.local
+>>>>>>> 7ec557b87aacd8c37e2232589f535a5e9e891ed5
+
+# Logs
+logs
+*.log
+npm-debug.log*
+<<<<<<< HEAD
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build files
+dist/
+build/
+dist-ssr
+=======
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+>>>>>>> 7ec557b87aacd8c37e2232589f535a5e9e891ed5
