@@ -5,6 +5,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Modal from '../components/common/Modal';
 import Table, { TableRow, TableCell } from '../components/common/Table';
+import mockData from '../utils/mockData';
 import { ClockIcon, BellIcon, FilterIcon, PlusIcon, TrashIcon, EditIcon, SearchIcon } from '../components/common/Icons';
 
 /**
@@ -18,6 +19,7 @@ const Announcements = () => {
 
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
+    // ... rest of state ...
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -44,11 +46,25 @@ const Announcements = () => {
         setLoading(true);
         try {
             const response = await noticeAPI.getAll(filters);
-            if (response.success) {
+            if (response.success && response.data.length > 0) {
                 setNotices(response.data);
+            } else {
+                throw new Error('No data');
             }
         } catch (err) {
-            console.error('Failed to fetch:', err);
+            // Fallback to centralized mockData
+            const list = mockData.announcements.map((n, i) => ({
+                _id: `NOT00${i + 1}`,
+                title: n.title,
+                content: n.description,
+                priority: n.priority,
+                hostel: 'All',
+                floor: 'All',
+                author: { name: 'Admin Office', role: 'admin' },
+                createdAt: n.date,
+                expiresAt: new Date(new Date(n.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            }));
+            setNotices(list);
         } finally {
             setLoading(false);
         }

@@ -141,6 +141,12 @@ const studentSchema = new mongoose.Schema(
             type: String,
             trim: true,
             default: null
+        },
+
+        nativePlace: {
+            type: String,
+            trim: true,
+            default: null
         }
     },
     {

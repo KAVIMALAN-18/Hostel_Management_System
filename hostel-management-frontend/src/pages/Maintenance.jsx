@@ -5,6 +5,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Modal from '../components/common/Modal';
 import Table, { TableRow, TableCell } from '../components/common/Table';
+import mockData from '../utils/mockData';
 import {
     ToolIcon,
     ClockIcon,
@@ -18,6 +19,7 @@ const Maintenance = () => {
     const { user } = useAuth();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
+    // ... rest of state ...
     const [exporting, setExporting] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -52,11 +54,27 @@ const Maintenance = () => {
                 status: filters.status
             };
             const response = await complaintAPI.getAll(params);
-            if (response.success) {
+            if (response.success && response.data.length > 0) {
                 setTickets(response.data);
+            } else {
+                throw new Error('No data');
             }
         } catch (err) {
-            console.error('Failed to fetch tickets:', err);
+            // Fallback to centralized mockData
+            const list = mockData.maintenance.map((m, i) => ({
+                _id: m.ticketId,
+                title: m.issueType.split(' - ')[1] || m.issueType,
+                description: `Maintenance request for ${m.issueType} in Room ${m.room}.`,
+                category: m.issueType.split(' - ')[0],
+                priority: m.priority,
+                status: m.status,
+                hostelName: i % 2 === 0 ? 'Alpha Block' : 'Beta Block',
+                floor: 'Floor 2',
+                roomNumber: m.room,
+                student: { name: m.studentName, phone: '+91 98765 00000' },
+                createdAt: new Date().toISOString()
+            }));
+            setTickets(list);
         } finally {
             setLoading(false);
         }

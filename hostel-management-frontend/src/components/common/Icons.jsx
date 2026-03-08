@@ -175,3 +175,23 @@ export const SendIcon = ({ className = "w-5 h-5" }) => (
     </svg>
 );
 
+
+export const MapPinIcon = ({ className = "w-5 h-5" }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+export const DropIcon = ({ className = "w-5 h-5" }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2.25c-2.43 0-4.312 1.913-4.312 4.312 0 4.125 4.312 8.438 4.312 8.438s4.312-4.313 4.312-8.438c0-2.399-1.882-4.312-4.312-4.312z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 12v.008h.008V12H12zm0-2.25V7.5m0 0l-1.5 1.5m1.5-1.5l1.5 1.5" />
+    </svg>
+);
+
+export const BoltIcon = ({ className = "w-5 h-5" }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+);

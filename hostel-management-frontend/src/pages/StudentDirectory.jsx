@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UsersIcon, BuildingIcon, DoorIcon, PhoneIcon, MailIcon, UserIcon } from '../components/common/Icons';
+import mockData from '../utils/mockData';
 
 const StudentDirectory = () => {
     const { user } = useAuth();
@@ -15,16 +16,27 @@ const StudentDirectory = () => {
     const isWarden = user?.role === 'warden';
 
     // Hostel data
-    const hostels = ['All Hostels', 'Sapphire', 'Emerald', 'Ruby', 'Pearl', 'Diamond'];
+    const hostels = ['All Hostels', 'Alpha Block', 'Beta Block', 'Gamma Block', 'Delta Block'];
 
     // Mock student data for directory view (Admin/Warden)
-    const [allStudents, setAllStudents] = useState([
-        { id: 'TKT-102', name: 'Rajesh Kumar', photo: null, hostel: 'Sapphire', room: 'B-304', floor: 'Floor 3', issues: 'Plumbing', mobile: '+91 98765 43210', email: 'rajesh@student.edu', parentName: 'Mr. Kumar', parentMobile: '+91 98765 00001', native: 'Chennai', bloodGroup: 'O+', gender: 'Male', wardenName: 'Mrs. Selvi Mani', wardenMobile: '+91 98765 11111' },
-        { id: 'TKT-103', name: 'Hima Sharma', photo: null, hostel: 'Emerald', room: 'A-201', floor: 'Floor 2', issues: 'None', mobile: '+91 98765 43211', email: 'priya@student.edu', parentName: 'Mr. Sharma', parentMobile: '+91 98765 00002', native: 'Mumbai', bloodGroup: 'A+', gender: 'Female', wardenName: 'Mrs. Lakshmi', wardenMobile: '+91 98765 22222' },
-        { id: 'TKT-090', name: 'Amit Patel', photo: null, hostel: 'Ruby', room: 'C-105', floor: 'Floor 1', issues: 'Ration', mobile: '+91 98765 43212', email: 'amit@student.edu', parentName: 'Mr. Patel', parentMobile: '+91 98765 00003', native: 'Ahmedabad', bloodGroup: 'B+', gender: 'Male', wardenName: 'Mr. Ravi Kumar', wardenMobile: '+91 98765 33333' },
-        { id: 'TKT-057', name: 'Sneha Reddy', photo: null, hostel: 'Pearl', room: 'B-303', floor: 'Floor 3', issues: 'None', mobile: '+91 98765 43213', email: 'sneha@student.edu', parentName: 'Mr. Reddy', parentMobile: '+91 98765 00004', native: 'Hyderabad', bloodGroup: 'AB+', gender: 'Female', wardenName: 'Mrs. Kavitha', wardenMobile: '+91 98765 44444' },
-        { id: 'TKT-100', name: 'Shreyas Iyer', photo: null, hostel: 'Diamond', room: 'B-302', floor: 'Floor 3', issues: 'None', mobile: '+91 98765 43214', email: 'karthik@student.edu', parentName: 'Mr. Iyer', parentMobile: '+91 98765 00005', native: 'Bangalore', bloodGroup: 'O-', gender: 'Male', wardenName: 'Mr. Suresh', wardenMobile: '+91 98765 55555' },
-    ]);
+    const [allStudents, setAllStudents] = useState(mockData.studentDirectory.map(s => ({
+        id: s.studentId,
+        name: s.name,
+        photo: null,
+        hostel: s.hostel,
+        room: s.roomNumber,
+        floor: s.floor,
+        issues: 'None',
+        mobile: s.contact,
+        email: `${s.name.toLowerCase().replace(' ', '.')}@student.edu`,
+        parentName: s.parentName,
+        parentMobile: '+91 98765 00000',
+        native: 'Native Place',
+        bloodGroup: s.bloodGroup,
+        gender: 'Male',
+        wardenName: 'Dr. Sundar',
+        wardenMobile: '+91 94440 12345'
+    })));
 
     // Form state for Add/Edit
     const [formData, setFormData] = useState({

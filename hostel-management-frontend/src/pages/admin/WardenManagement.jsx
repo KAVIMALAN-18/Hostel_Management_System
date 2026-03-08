@@ -61,39 +61,17 @@ const WardenManagement = () => {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
 
-    // Mock Database
-    const [wardens, setWardens] = useState([
-        {
-            id: 'WRD001',
-            name: 'Dr. Ramesh Kumar',
-            email: 'ramesh.k@hostel.edu',
-            mobile: '+91 98765 43210',
-            hostel: 'Sapphire',
-            floor: 'Ground & 1st',
-            gender: 'Male',
-            joiningDate: '2023-06-15'
-        },
-        {
-            id: 'WRD002',
-            name: 'Mrs. Selvi Mani',
-            email: 'selvi.m@hostel.edu',
-            mobile: '+91 87654 32109',
-            hostel: 'Emerald',
-            floor: 'All Floors',
-            gender: 'Female',
-            joiningDate: '2022-01-10'
-        },
-        {
-            id: 'WRD003',
-            name: 'Mr. Murugan P',
-            email: 'murugan.p@hostel.edu',
-            mobile: '+91 76543 21098',
-            hostel: 'Ruby',
-            floor: '2nd & 3rd',
-            gender: 'Male',
-            joiningDate: '2024-01-05'
-        }
-    ]);
+    // Mock Database from centralized utility
+    const [wardens, setWardens] = useState(mockData.wardenDirectory.map(w => ({
+        id: w.wardenId,
+        name: w.name,
+        email: w.email,
+        mobile: w.contact,
+        hostel: w.assignedHostel,
+        floor: w.assignedFloor,
+        gender: 'Male',
+        joiningDate: '2023-06-15'
+    })));
 
     const [selectedWarden, setSelectedWarden] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);

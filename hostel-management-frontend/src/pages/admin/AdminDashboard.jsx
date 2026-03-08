@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { hostelAPI } from '../../services/api';
 import { CheckIcon } from '../../components/common/Icons';
+import mockData from '../../utils/mockData';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -14,17 +15,18 @@ const AdminDashboard = () => {
                     setStats(response.data);
                 }
             } catch (err) {
-                // Mock data matching reference image
+                // Mock data from centralized mockData utility
+                const d = mockData.adminDashboard;
                 setStats({
-                    totalOccupancy: 87,
-                    bedsOccupied: 435,
-                    totalBeds: 500,
-                    todayPresent: 480,
-                    onApprovedLeave: 20,
+                    totalOccupancy: d.occupancyRate,
+                    bedsOccupied: Math.round(d.totalRooms * d.occupancyRate / 100),
+                    totalBeds: d.totalRooms,
+                    todayPresent: d.attendanceSummary.present,
+                    onApprovedLeave: d.attendanceSummary.onLeave,
                     onboardingPending: 15,
                     awaitingRoomAssign: 5,
-                    maintenanceOpen: 8,
-                    maintenanceHighPriority: 3
+                    maintenanceOpen: d.maintenanceSummary.pending,
+                    maintenanceHighPriority: d.maintenanceSummary.inProgress
                 });
             } finally {
                 setLoading(false);
@@ -213,8 +215,8 @@ const AdminDashboard = () => {
                                     <td className="px-5 py-4 text-sm text-slate-600">{request.reportedBy}</td>
                                     <td className="px-5 py-4">
                                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${request.status === 'In Progress'
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                             }`}>
                                             {request.status}
                                         </span>

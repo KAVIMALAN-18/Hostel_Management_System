@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Table, { TableRow, TableCell } from '../components/common/Table';
+import mockData from '../utils/mockData';
 
 const Attendance = () => {
     const { user } = useAuth();
@@ -13,28 +14,25 @@ const Attendance = () => {
         status: 'All Status'
     });
 
-    const hostels = ['All Hostels', 'Diamond Hostel', 'Emerald Hostel', 'Ruby Hostel', 'Sapphire Hostel'];
+    const hostels = ['All Hostels', 'Alpha Block', 'Beta Block', 'Gamma Block', 'Delta Block'];
     const floors = ['All Floors', 'Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor'];
-    const statuses = ['All Status', 'Present', 'Absent', 'Not Marked'];
+    const statuses = ['All Status', 'Present', 'Absent', 'Leave', 'Not Marked'];
 
     useEffect(() => {
         const fetchAttendance = async () => {
             setLoading(true);
             try {
-                // Mocking biometric attendance data
-                const mockData = Array.from({ length: 20 }, (_, i) => ({
+                // Use centralized mockData for attendance
+                const list = mockData.attendance.list.map((item, i) => ({
                     _id: `ATT00${i + 1}`,
-                    studentName: [
-                        'Arjun Patel', 'Sneha Reddy', 'Karthik Raja', 'Priya Mani',
-                        'Vikram Singh', 'Ananya Iyer', 'Rahul Verma', 'Meera Nair'
-                    ][i % 8],
-                    hostelName: hostels[1 + (i % 4)],
+                    studentName: item.name,
+                    hostelName: i % 2 === 0 ? 'Alpha Block' : 'Beta Block',
                     floor: `${(i % 5)}th Floor`,
-                    roomNumber: `${100 + i}`,
-                    biometricTime: i % 5 === 0 ? '--:--' : `0${8 + (i % 2)}:${10 + i} AM`,
-                    status: i % 5 === 0 ? 'Not Marked' : (i % 7 === 0 ? 'Absent' : 'Present')
+                    roomNumber: item.room,
+                    biometricTime: item.biometricTime,
+                    status: item.status
                 }));
-                setAttendanceList(mockData);
+                setAttendanceList(list);
             } catch (error) {
                 console.error('Failed to fetch attendance:', error);
             } finally {
@@ -176,8 +174,8 @@ const Attendance = () => {
                             </TableCell>
                             <TableCell>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${record.status === 'Present' ? 'bg-green-50 text-green-700 border-green-100' :
-                                        record.status === 'Absent' ? 'bg-red-50 text-red-700 border-red-100' :
-                                            'bg-slate-50 text-slate-500 border-slate-100'
+                                    record.status === 'Absent' ? 'bg-red-50 text-red-700 border-red-100' :
+                                        'bg-slate-50 text-slate-500 border-slate-100'
                                     }`}>
                                     {record.status}
                                 </span>

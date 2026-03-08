@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import mockData from '../utils/mockData';
 import {
     CalendarIcon,
     ClockIcon,
     CheckIcon,
     StarIcon,
     UsersIcon,
-    EditIcon
+    EditIcon,
+    SendIcon
 } from '../components/common/Icons';
 
 /**
@@ -26,19 +28,19 @@ const MessManagement = () => {
     const [comment, setComment] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
-    // Mock Feedback Data
+    // Mock Feedback Data from centralized utility
     const [feedbackStats, setFeedbackStats] = useState({
         score: '8.4',
-        count: '132'
+        count: mockData.messManagement.feedback.length.toString()
     });
 
-    const recentFeedbacks = [
-        { rating: 9 },
-        { rating: 8 },
-        { rating: 10 }
-    ];
+    const recentFeedbacks = mockData.messManagement.feedback.map(f => ({
+        name: f.studentName,
+        rating: f.rating,
+        comment: f.comment
+    }));
 
-    // Menu Data based on selected date and updated timings
+    // Menu Data based on selected date
     const menuData = useMemo(() => {
         const timings = {
             breakfast: '7:00 AM – 8:30 AM',
@@ -47,21 +49,18 @@ const MessManagement = () => {
             dinner: '7:00 PM – 8:30 PM'
         };
 
-        const menus = {
-            'default': [
-                { meal: 'Breakfast', time: timings.breakfast, items: ['Idli', 'Sambar', 'Coconut Chutney', 'Filter Coffee'] },
-                { meal: 'Lunch', time: timings.lunch, items: ['Rice', 'Sambar', 'Rasam', 'Poriyal', 'Curd'] },
-                { meal: 'Evening Snacks', time: timings.snacks, items: ['Vada / Sundal', 'Tea'] },
-                { meal: 'Dinner', time: timings.dinner, items: ['Chapati / Dosa', 'Kurma', 'Milk'] }
-            ],
-            'alternate': [
-                { meal: 'Breakfast', time: timings.breakfast, items: ['Pongal', 'Medhu Vada', 'Gotsu', 'Tea / Coffee'] },
-                { meal: 'Lunch', time: timings.lunch, items: ['Variety Rice', 'Potato Fry', 'Curd Rice', 'Pickle'] },
-                { meal: 'Evening Snacks', time: timings.snacks, items: ['Onion Pakoda', 'Tea'] },
-                { meal: 'Dinner', time: timings.dinner, items: ['Dosa', 'Tomato Thokku', 'Milk'] }
-            ]
-        };
-        return selectedDate.getDate() % 2 === 0 ? menus.alternate : menus.default;
+        const m = mockData.messManagement.menu;
+
+        // If it's today (simplified as selectedDate), use the mockData.menu
+        // For other dates, we vary it slightly
+        const isEven = selectedDate.getDate() % 2 === 0;
+
+        return [
+            { meal: 'Breakfast', time: timings.breakfast, items: isEven ? ['Pongal', 'Vada', 'Sambar'] : m.breakfast.split(', ') },
+            { meal: 'Lunch', time: timings.lunch, items: isEven ? ['Variety Rice', 'Curd Rice'] : m.lunch.split(', ') },
+            { meal: 'Evening Snacks', time: timings.snacks, items: isEven ? ['Pakoda'] : m.snacks.split(', ') },
+            { meal: 'Dinner', time: timings.dinner, items: isEven ? ['Dosa', 'Chutney'] : m.dinner.split(', ') }
+        ];
     }, [selectedDate]);
 
     // Calendar Grid Logic
@@ -303,13 +302,24 @@ const MessManagement = () => {
                                 type="submit"
                                 disabled={rating === 0 || submitted}
                                 className={`
-                                            px-8 py-7 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all transform active:scale-[0.98] shadow-brand-soft
-                                            ${submitted
-                                        ? 'bg-emerald-50 text-emerald-300 border border-emerald-100 grayscale cursor-not-allowed'
-                                        : 'bg-brand-600 hover:bg-brand-700 text-white hover:shadow-2xl hover:-translate-y-1 focus:ring-8 focus:ring-brand-500/10'}
-                                        `}
+                                    flex items-center justify-center gap-4 px-10 py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all transform active:scale-95 shadow-brand-soft
+                                    ${submitted
+                                        ? 'bg-emerald-500 text-white shadow-emerald-200'
+                                        : 'bg-black hover:bg-slate-900 text-white hover:shadow-2xl hover:-translate-y-1 focus:ring-8 focus:ring-slate-200'}
+                                    ${rating === 0 && !submitted ? 'opacity-30 cursor-not-allowed grayscale' : ''}
+                                `}
                             >
-                                {submitted ? 'Feedback Received' : 'Submit My Feedback'}
+                                {submitted ? (
+                                    <>
+                                        <CheckIcon className="w-5 h-5 animate-pulse" />
+                                        <span>Feedback Received</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <SendIcon className={`w-5 h-5 transition-transform duration-300 ${rating > 0 ? 'group-hover:translate-x-1 group-hover:-translate-y-1' : ''}`} />
+                                        <span>Submit My Feedback</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>

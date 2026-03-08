@@ -15,7 +15,6 @@ import RoomManagement from './pages/admin/RoomManagement';
 import HostelView from './pages/admin/HostelView';
 import WardenManagement from './pages/admin/WardenManagement';
 import MessManagement from './pages/MessManagement';
-import BlockManagement from './pages/warden/BlockManagement';
 import MyRoom from './pages/student/MyRoom';
 import Complaints from './pages/Complaints';
 import Maintenance from './pages/Maintenance';
@@ -36,65 +35,59 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          {/* Public Routes - Only accessible when NOT logged in */}
+          {/* Public Routes */}
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Route>
           <Route path="/unauthorized" element={<Unauthorized />} />
 
-          {/* Core App Routes (Available to all authenticated users) */}
+          {/* Authenticated Application Shell */}
           <Route element={<ProtectedRoute allowedRoles={['admin', 'warden', 'student']} />}>
             <Route element={<DashboardLayout />}>
-              <Route path="/maintenance" element={<Maintenance />} />
-              <Route path="/complaints" element={<Complaints />} />
+
+              {/* Common Routes */}
+              <Route path="/profile" element={<FeaturePlaceholder title="Profile" subtitle="Manage your account settings." />} />
               <Route path="/notices" element={<Announcements />} />
+              <Route path="/maintenance" element={<Maintenance />} />
+              <Route path="/mess-menu" element={<MessManagement />} />
+              <Route path="/complaints" element={<Complaints />} />
+
+              {/* Shared Staff Routes (Admin + Warden) */}
               <Route element={<ProtectedRoute allowedRoles={['admin', 'warden']} />}>
                 <Route path="/attendance" element={<Attendance />} />
-              </Route>
-
-              {/* Role-Specific Leave Management */}
-              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-                <Route path="/admin/leave-requests" element={<LeaveManagement />} />
-              </Route>
-              <Route element={<ProtectedRoute allowedRoles={['warden']} />}>
-                <Route path="/warden/leave-requests" element={<LeaveManagement />} />
-              </Route>
-              <Route path="/mess-menu" element={<MessManagement />} />
-              <Route element={<ProtectedRoute allowedRoles={['admin', 'warden']} />}>
                 <Route path="/student-directory" element={<StudentDirectory />} />
-                <Route path="/reports" element={<Reports />} />
               </Route>
-              <Route path="/profile" element={<FeaturePlaceholder title="User Profile" subtitle="Manage your personal information and system credentials." />} />
 
-              {/* Admin Routes */}
+              {/* Admin-Only Routes */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/rooms" element={<RoomManagement />} />
                 <Route path="/admin/students" element={<StudentManagement />} />
                 <Route path="/admin/hostels" element={<HostelView />} />
-                <Route element={<ProtectedRoute allowedRoles={['admin', 'warden']} />}>
-                  <Route path="/staff-management" element={<WardenManagement />} />
-                </Route>
+                <Route path="/staff-management" element={<WardenManagement />} />
                 <Route path="/admin/mess" element={<MessManagement />} />
+                <Route path="/admin/leave-requests" element={<LeaveManagement />} />
+                <Route path="/reports" element={<Reports />} />
               </Route>
 
-              {/* Warden Routes */}
-              <Route element={<ProtectedRoute allowedRoles={['admin', 'warden']} />}>
+              {/* Warden-Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['warden']} />}>
                 <Route path="/warden/dashboard" element={<WardenDashboard />} />
-                <Route path="/warden/students" element={<StudentManagement />} />
-                <Route path="/warden/block" element={<BlockManagement />} />
+                <Route path="/warden/leave-requests" element={<LeaveManagement />} />
               </Route>
 
-              {/* Student Routes */}
-              <Route element={<ProtectedRoute allowedRoles={['admin', 'warden', 'student']} />}>
+              {/* Student-Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                 <Route path="/student/dashboard" element={<StudentDashboard />} />
                 <Route path="/student/room" element={<MyRoom />} />
+                <Route path="/student/leave" element={<StudentDashboard />} />
               </Route>
+
             </Route>
           </Route>
 
-          {/* Utility Routes */}
+          {/* Fallback Redirects */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

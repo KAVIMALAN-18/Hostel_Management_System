@@ -4,6 +4,7 @@ import { noticeAPI, complaintAPI, leaveAPI } from '../services/api';
 import Table, { TableRow, TableCell } from '../components/common/Table';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
+import mockData from '../utils/mockData';
 
 const LeaveManagement = () => {
     const { user } = useAuth();
@@ -21,15 +22,29 @@ const LeaveManagement = () => {
             setLoading(true);
             try {
                 const res = await leaveAPI.getAll();
-                if (res.success) {
+                if (res.success && res.data.length > 0) {
                     setLeaves(res.data.map(l => ({
                         ...l,
-                        // Add some flavor stats for UI
                         leavePercentage: Math.floor(Math.random() * 20) + 2
                     })));
+                } else {
+                    throw new Error('No data');
                 }
             } catch (error) {
-                console.error('Failed to fetch leaves:', error);
+                // Fallback to centralized mockData
+                const list = mockData.leaveRequests.map((l, i) => ({
+                    _id: `LVE00${i + 1}`,
+                    studentName: l.studentName,
+                    hostelName: i % 2 === 0 ? 'Alpha Block' : 'Beta Block',
+                    floor: 'Floor 2',
+                    fromDate: l.fromDate,
+                    toDate: l.toDate,
+                    days: Math.ceil((new Date(l.toDate) - new Date(l.fromDate)) / (1000 * 60 * 60 * 24)) + 1,
+                    reason: l.reason,
+                    status: l.status,
+                    leavePercentage: parseFloat(l.leavePercentage)
+                }));
+                setLeaves(list);
             } finally {
                 setLoading(false);
             }

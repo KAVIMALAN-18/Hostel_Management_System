@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
  * 
  * @param {Array} allowedRoles - List of roles permitted to access this route
  */
-const ProtectedRoute = ({ allowedRoles = [] }) => {
+const ProtectedRoute = ({ allowedRoles = [], children }) => {
     const { user, isAuthenticated, loading } = useAuth();
     const location = useLocation();
 
@@ -36,8 +36,8 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
         return <Navigate to="/unauthorized" replace />;
     }
 
-    // If authorized, render child routes (Outlet)
-    return <Outlet />;
+    // If authorized, render children or child routes (Outlet)
+    return children ? children : <Outlet />;
 };
 
 export default ProtectedRoute;

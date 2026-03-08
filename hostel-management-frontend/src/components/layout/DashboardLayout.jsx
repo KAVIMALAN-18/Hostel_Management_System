@@ -66,8 +66,6 @@ const DashboardLayout = () => {
                 { name: 'Room Management', path: '/admin/rooms' },
                 { name: 'Student Directory', path: '/student-directory' },
                 { name: 'Warden Directory', path: '/staff-management' },
-                { name: 'Hostels', path: '/admin/hostels' },
-                { name: 'Rooms & Beds', path: '/admin/hostels' },
                 { name: 'Students', path: '/admin/students' },
                 { name: 'Attendance', path: '/attendance' },
                 { name: 'Leave Requests', path: '/admin/leave-requests' },
@@ -75,20 +73,18 @@ const DashboardLayout = () => {
                 { name: 'Mess Management', path: '/admin/mess' },
                 { name: 'Announcements', path: '/notices' },
                 { name: 'Reports', path: '/reports' },
-                { name: 'Warden View', path: '/warden/dashboard' },
-                { name: 'Student View', path: '/student/dashboard' },
             ],
             warden: [
-                { name: 'Students', path: '/warden/students' },
+                { name: 'Student Directory', path: '/student-directory' },
                 { name: 'Attendance', path: '/attendance' },
-                { name: 'Leave Approvals', path: '/warden/leave-requests' },
+                { name: 'Leave Requests', path: '/warden/leave-requests' },
                 { name: 'Maintenance', path: '/maintenance' },
                 { name: 'Announcements', path: '/notices' },
-                { name: 'Reports', path: '/reports' },
+                { name: 'Mess Menu', path: '/mess-menu' }
             ],
             student: [
                 { name: 'My Hostel Details', path: '/student/room' },
-                { name: 'Mess Menu', path: '/student/mess' },
+                { name: 'Mess Menu', path: '/mess-menu' },
                 { name: 'Announcements', path: '/notices' },
                 { name: 'Maintenance', path: '/maintenance' },
             ]

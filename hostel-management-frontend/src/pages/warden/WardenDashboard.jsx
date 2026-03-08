@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { noticeAPI, leaveAPI, complaintAPI, studentAPI } from '../../services/api';
 import {
     HomeIcon,
     UsersIcon,
@@ -10,224 +11,376 @@ import {
     CalendarIcon,
     CheckIcon,
     XIcon,
-    ClockIcon
+    ClockIcon,
+    PlusIcon,
+    BellIcon,
+    BoltIcon
 } from '../../components/common/Icons';
 import Table, { TableRow, TableCell } from '../../components/common/Table';
 import Button from '../../components/common/Button';
+import Modal from '../../components/common/Modal';
 
-/**
- * WardenDashboard Component
- * High-visibility operational dashboard for Wardens.
- */
 const WardenDashboard = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Mock Data for Warden Operations
+    // UI States
+    const [showNoticeModal, setShowNoticeModal] = useState(false);
+    const [showLeaveHistoryModal, setShowLeaveHistoryModal] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Data States
+    const [notices, setNotices] = useState([]);
+    const [pendingLeaves, setPendingLeaves] = useState([]);
+    const [complaints, setComplaints] = useState([]);
+    const [attendanceList, setAttendanceList] = useState([]);
+    const [noticeForm, setNoticeForm] = useState({ title: '', content: '', priority: 'Normal' });
+
+    // Mock Profile (To be replaced by real data if available)
     const wardenProfile = {
-        name: user?.name || 'Mrs. Selvi Mani',
-        hostel: user?.hostel || 'Diamond Hostel',
-        type: 'Girls Hostel',
-        floors: user?.floor || 'Ground, 1st, 2nd Floor',
+        name: user?.name || 'Authorized Warden',
+        hostel: user?.hostel || 'Main Hostel',
+        floors: user?.floor || 'All Floors',
         totalStudents: 124
     };
 
-    const kpiStats = [
-        { label: 'Present Today', value: '112', icon: CheckIcon, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-        { label: 'Absent Today', value: '08', icon: XIcon, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
-        { label: 'On Leave', value: '04', icon: CalendarIcon, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-        { label: 'Pending Leaves', value: '03', icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-        { label: 'Open Complaints', value: '05', icon: ToolIcon, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-    ];
-
-    const floorOccupancy = [
-        { floor: 'Ground Floor', total: 40, occupied: 38, vacant: 2 },
-        { floor: '1st Floor', total: 40, occupied: 35, vacant: 5 },
-        { floor: '2nd Floor', total: 40, occupied: 39, vacant: 1 },
-        { floor: '3rd Floor', total: 40, occupied: 12, vacant: 28 },
-    ];
-
-    const pendingLeaves = [
-        { id: 1, name: 'Ananya Iyer', room: '102', from: '2026-02-12', to: '2026-02-14' },
-        { id: 2, name: 'Meera Nair', room: '205', from: '2026-02-11', to: '2026-02-15' },
-        { id: 3, name: 'Sneha Reddy', room: '004', from: '2026-02-13', to: '2026-02-13' },
-    ];
-
-    const recentMaintenance = [
-        { room: '102', issue: 'AC Leakage', priority: 'High', status: 'Assigned' },
-        { room: '204', issue: 'Fan Noise', priority: 'Medium', status: 'Pending' },
-        { room: 'Common Area', issue: 'Light Replacement', priority: 'Low', status: 'Scheduled' },
-    ];
-
     useEffect(() => {
-        // Simulate data loading
-        const timer = setTimeout(() => setLoading(false), 800);
-        return () => clearTimeout(timer);
+        const fetchDashboardData = async () => {
+            try {
+                const [noticesRes, leavesRes, complaintsRes] = await Promise.all([
+                    noticeAPI.getAll({ limit: 5 }),
+                    leaveAPI.getAll(),
+                    complaintAPI.getAll()
+                ]);
+
+                if (noticesRes.success) setNotices(noticesRes.data);
+                if (leavesRes.success) {
+                    setPendingLeaves(leavesRes.data.filter(l => l.status === 'Pending'));
+                }
+                if (complaintsRes.success) {
+                    setComplaints(complaintsRes.data.filter(c => c.status !== 'Resolved').slice(0, 5));
+                }
+
+                // Mock Biometric Data for demonstration
+                setAttendanceList([
+                    { id: '101', name: 'Arun Kumar', room: '102', time: '07:15 AM', status: 'Present' },
+                    { id: '102', name: 'Bala Chandar', room: '104', time: '07:22 AM', status: 'Present' },
+                    { id: '103', name: 'Deepak Raj', room: '201', time: '--:--', status: 'Absent' },
+                    { id: '104', name: 'Eswaran M', room: '205', time: '07:05 AM', status: 'Present' },
+                ]);
+
+            } catch (error) {
+                console.error('Failed to fetch warden dashboard data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
     }, []);
+
+    const handleNoticeSubmit = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            const res = await noticeAPI.create(noticeForm);
+            if (res.success) {
+                setNotices([res.data, ...notices]);
+                setShowNoticeModal(false);
+                setNoticeForm({ title: '', content: '', priority: 'Normal' });
+                alert('Announcement posted successfully');
+            }
+        } catch (error) {
+            alert('Failed to post announcement');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleLeaveAction = async (id, status) => {
+        try {
+            const res = await leaveAPI.update(id, status);
+            if (res.success) {
+                setPendingLeaves(prev => prev.filter(l => l._id !== id));
+                alert(`Leave request ${status.toLowerCase()}`);
+            }
+        } catch (error) {
+            alert('Action failed');
+        }
+    };
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Initialising Operational Data...</span>
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Initialising Warden Console...</span>
             </div>
         </div>
     );
 
     return (
-        <div className="space-y-8 pb-10">
-            {/* 1. Warden Profile Summary Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
-                <div className="bg-slate-900 p-8 text-white flex flex-col justify-center items-center md:items-start md:w-1/3">
-                    <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-500/20">
-                        <UserIcon className="w-8 h-8 text-white" />
-                    </div>
-                    <h2 className="text-xl font-black tracking-tight">{wardenProfile.name}</h2>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Authorized Warden Officer</p>
-                </div>
-                <div className="flex-1 p-8 grid grid-cols-2 lg:grid-cols-4 gap-6 bg-slate-50/30">
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Assigned Hostel</p>
-                        <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <BuildingIcon className="w-3.5 h-3.5 text-brand-500" />
-                            {wardenProfile.hostel}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Classification</p>
-                        <p className="text-sm font-bold text-slate-800">{wardenProfile.type}</p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Managed Floors</p>
-                        <p className="text-sm font-bold text-slate-800">{wardenProfile.floors}</p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Supervising</p>
-                        <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <UsersIcon className="w-3.5 h-3.5 text-brand-500" />
-                            {wardenProfile.totalStudents} Students
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* 2. KPI Summary Section */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {kpiStats.map((stat, idx) => (
-                    <div key={idx} className={`bg-white p-5 rounded-2xl border ${stat.border} shadow-sm transition-all hover:shadow-md group`}>
-                        <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                            <stat.icon className="w-5 h-5" />
+        <div className="space-y-8 pb-12">
+            {/* Header & Profile Summary */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3 bg-white rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden flex flex-col md:flex-row">
+                    <div className="bg-slate-900 p-8 text-white flex flex-col justify-center items-center md:items-start md:w-1/3 relative overflow-hidden">
+                        <div className="relative z-10">
+                            <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-500/20">
+                                <UserIcon className="w-8 h-8 text-white" />
+                            </div>
+                            <h2 className="text-xl font-black tracking-tight">{wardenProfile.name}</h2>
+                            <p className="text-brand-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Authorized Officer</p>
                         </div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                        <p className="text-2xl font-black text-slate-900 leading-none">{stat.value}</p>
+                        <div className="absolute top-0 right-0 -mr-10 -mt-10 opacity-10">
+                            <BuildingIcon className="w-48 h-48" />
+                        </div>
                     </div>
-                ))}
+                    <div className="flex-1 p-8 grid grid-cols-2 gap-6 bg-slate-50/30">
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 leading-none">Assigned Hostel</p>
+                            <p className="text-sm font-black text-slate-800 flex items-center gap-2">
+                                <BuildingIcon className="w-4 h-4 text-brand-600" />
+                                {wardenProfile.hostel}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 leading-none">Managed Floors</p>
+                            <p className="text-sm font-black text-slate-800">{wardenProfile.floors}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 leading-none">Student Census</p>
+                            <p className="text-sm font-black text-slate-800 flex items-center gap-2">
+                                <UsersIcon className="w-4 h-4 text-brand-600" />
+                                {wardenProfile.totalStudents} Global Residents
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 leading-none">Console Status</p>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span className="text-xs font-black text-emerald-600 uppercase">System Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Actions Card */}
+                <div className="bg-brand-600 rounded-[2rem] p-6 text-white flex flex-col justify-between shadow-xl shadow-brand-600/30 group">
+                    <div>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] mb-4 opacity-80">Quick Command</h3>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => setShowNoticeModal(true)}
+                                className="w-full py-4 bg-white/10 hover:bg-white text-white hover:text-brand-700 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/20 flex items-center justify-center gap-2"
+                            >
+                                <PlusIcon className="w-4 h-4" />
+                                Post Announcement
+                            </button>
+                            <button className="w-full py-4 bg-black/20 hover:bg-black/40 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10 flex items-center justify-center gap-2">
+                                <BoltIcon className="w-4 h-4" />
+                                Start Roll Call
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            {/* Dashboard Primary Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* 3. Floor-wise Occupancy Table */}
-                <div className="lg:col-span-2 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Floor-wise Occupancy</h3>
-                        <Button variant="secondary" size="sm">Export Data</Button>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <Table headers={['Floor Level', 'Total Rooms', 'Occupied', 'Vacant Slots']}>
-                            {floorOccupancy.map((f, i) => (
-                                <TableRow key={i}>
-                                    <TableCell><span className="font-bold text-slate-800">{f.floor}</span></TableCell>
-                                    <TableCell><span className="font-bold text-slate-600">{f.total}</span></TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-black text-slate-900">{f.occupied}</span>
-                                            <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className="bg-brand-500 h-full" style={{ width: `${(f.occupied / f.total) * 100}%` }}></div>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${f.vacant > 5 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
-                                            {f.vacant} Vacant
-                                        </span>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </Table>
+
+                {/* Left & Middle: Operational Tables */}
+                <div className="lg:col-span-2 space-y-8">
+
+                    {/* Attendance Monitoring */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
+                                    <ClipboardIcon className="w-5 h-5 text-brand-600" />
+                                </div>
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Biometric Attendance Log</h3>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Filter by ID/Room..."
+                                    className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest w-48 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="p-4 md:p-8">
+                            <div className="overflow-hidden border border-slate-100 rounded-3xl overflow-x-auto">
+                                <Table headers={['Student ID', 'Full Name', 'Room No', 'Timestamp', 'Status']}>
+                                    {attendanceList.map((entry) => (
+                                        <TableRow key={entry.id}>
+                                            <TableCell><span className="text-[11px] font-mono font-black text-brand-600">{entry.id}</span></TableCell>
+                                            <TableCell><span className="text-xs font-black text-slate-900">{entry.name}</span></TableCell>
+                                            <TableCell><span className="text-xs font-bold text-slate-600">Room {entry.room}</span></TableCell>
+                                            <TableCell><span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter">{entry.time}</span></TableCell>
+                                            <TableCell>
+                                                <span className={`inline-flex items-center px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${entry.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+                                                    }`}>
+                                                    {entry.status}
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* 4. Leave Approval Preview */}
-                    <div className="space-y-4 pt-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Pending Leave Requests</h3>
-                            <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded">Update Needed</span>
+                    {/* Pending Leaves */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-50 rounded-xl border border-amber-100 flex items-center justify-center">
+                                    <ClockIcon className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Pending Leave Requests</h3>
+                            </div>
                         </div>
-                        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm divide-y divide-slate-100">
-                            {pendingLeaves.map((leave) => (
-                                <div key={leave.id} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+                        <div className="divide-y divide-slate-50">
+                            {pendingLeaves.length > 0 ? pendingLeaves.map((leave) => (
+                                <div key={leave._id} className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-slate-50/50 transition-all group">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-500 text-xs">
-                                            {leave.name.split(' ').map(n => n[0]).join('')}
+                                        <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 text-sm">
+                                            {leave.studentName?.charAt(0) || 'S'}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-slate-800">{leave.name}</p>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Room {leave.room} • {leave.from} to {leave.to}</p>
+                                            <p className="text-sm font-black text-slate-900">{leave.studentName || 'Resident Student'}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(leave.fromDate).toLocaleDateString()} to {new Date(leave.toDate).toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => handleLeaveAction(leave._id, 'Approved')}
+                                            className="px-6 py-2.5 bg-brand-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/20"
+                                        >
                                             Approve
                                         </button>
-                                        <button className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all">
+                                        <button
+                                            onClick={() => handleLeaveAction(leave._id, 'Rejected')}
+                                            className="px-6 py-2.5 bg-white border border-slate-200 text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                        >
                                             Reject
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="py-12 text-center text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] italic">No pending requests</div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Right Column: Alerts & Maintenance */}
+                {/* Right Column: Maintenance & Announcements */}
                 <div className="space-y-8">
-                    {/* 5. Maintenance Alert Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Maintenance Alerts</h3>
-                        <div className="space-y-3">
-                            {recentMaintenance.map((item, i) => (
-                                <div key={i} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-brand-200 transition-all group">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-black text-slate-900 group-hover:text-brand-600 uppercase transition-colors tracking-tight">Room {item.room}</span>
-                                            <span className="text-sm font-medium text-slate-600">{item.issue}</span>
-                                        </div>
-                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${item.priority === 'High' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-slate-50 text-slate-500 border-slate-100'
-                                            }`}>{item.priority}</span>
+
+                    {/* Active Maintenance Tickets */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+                            <div className="flex items-center gap-3">
+                                <ToolIcon className="w-4 h-4 text-brand-400" />
+                                <h3 className="text-xs font-black uppercase tracking-widest">Maintenance Feed</h3>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            {complaints.map((c) => (
+                                <div key={c._id} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 hover:border-brand-200 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Category: {c.type}</span>
+                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${c.priority === 'High' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-600'
+                                            }`}>
+                                            {c.priority} Priority
+                                        </span>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-3">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status: {item.status}</span>
+                                    <p className="text-xs font-bold text-slate-800 line-clamp-2">{c.description}</p>
+                                    <div className="pt-2 flex items-center justify-between border-t border-slate-200/50">
+                                        <span className="text-[11px] font-mono text-brand-600 font-bold uppercase">Rm: {c.roomNo}</span>
+                                        <button className="text-[9px] font-black text-slate-400 hover:text-brand-600 uppercase tracking-widest transition-colors">Update Status</button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Quick Shift Log Section (Refined) */}
-                    <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl">
-                        <h3 className="text-xs font-black uppercase tracking-[0.2em] mb-4 text-slate-400">Shift Log Access</h3>
-                        <p className="text-sm font-medium text-slate-200 leading-relaxed mb-6">
-                            Ongoing shift records for Diamond Hostel - Level 1 & 2. Ensure all incidents are logged for hand-off.
-                        </p>
-                        <textarea
-                            placeholder="Type shift note..."
-                            className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-xs text-white placeholder-white/40 mb-3 outline-none focus:ring-2 focus:ring-brand-500/50 resize-none h-20"
-                        ></textarea>
-                        <button className="w-full py-3 bg-brand-500 hover:bg-brand-600 text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-brand-500/20">
-                            Post Shift Entry
-                        </button>
+                    {/* Announcement Reel */}
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-brand-50/50">
+                            <div className="flex items-center gap-3">
+                                <BellIcon className="w-5 h-5 text-brand-600" />
+                                <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase">Recent Notices</h3>
+                            </div>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            {notices.map((n) => (
+                                <div key={n._id} className="p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-all rounded-xl">
+                                    <h4 className="text-xs font-black text-slate-900 mb-1">{n.title}</h4>
+                                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed mb-2">{n.content}</p>
+                                    <span className="text-[9px] font-bold text-slate-300 uppercase">{new Date(n.createdAt).toLocaleDateString()}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
+
                 </div>
             </div>
+
+            {/* Modals */}
+            <Modal
+                isOpen={showNoticeModal}
+                onClose={() => setShowNoticeModal(false)}
+                title="Post Official Announcement"
+            >
+                <form onSubmit={handleNoticeSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Announcement Title</label>
+                        <input
+                            required
+                            type="text"
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black outline-none focus:border-brand-500 transition-all"
+                            placeholder="Urgent Maintenance Notice..."
+                            value={noticeForm.title}
+                            onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Message Content</label>
+                        <textarea
+                            required
+                            rows="5"
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] text-sm font-bold outline-none focus:border-brand-500 transition-all resize-none"
+                            placeholder="Details of the announcement..."
+                            value={noticeForm.content}
+                            onChange={(e) => setNoticeForm({ ...noticeForm, content: e.target.value })}
+                        ></textarea>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Priority Level</label>
+                        <select
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black outline-none focus:border-brand-500 transition-all"
+                            value={noticeForm.priority}
+                            onChange={(e) => setNoticeForm({ ...noticeForm, priority: e.target.value })}
+                        >
+                            <option value="Normal">Normal</option>
+                            <option value="High">High Priority</option>
+                            <option value="Urgent">Emergency / Urgent</option>
+                        </select>
+                    </div>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        loading={submitting}
+                        className="w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em]"
+                    >
+                        Publish Information
+                    </Button>
+                </form>
+            </Modal>
         </div>
     );
 };
