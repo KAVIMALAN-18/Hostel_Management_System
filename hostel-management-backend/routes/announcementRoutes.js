@@ -8,6 +8,7 @@ router.use(authenticate);
 router.post('/', authorize('admin', 'warden'), createNotice);
 router.get('/', getNotices);
 router.patch('/:id', authorize('admin', 'warden'), updateNotice);
+router.put('/:id', authorize('admin', 'warden'), updateNotice);
 router.delete('/:id', authorize('admin', 'warden'), deleteNotice);
 
 module.exports = router;

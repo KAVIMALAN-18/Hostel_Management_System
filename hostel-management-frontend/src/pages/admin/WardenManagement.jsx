@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UsersIcon, BuildingIcon, DoorIcon, PhoneIcon, MailIcon, UserIcon, XIcon } from '../../components/common/Icons';
+import { authAPI, staffAPI } from '../../services/api';
 
 // Reusable Section Component
 const Section = ({ title, icon: Icon, children }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
-            <Icon className="w-5 h-5 text-brand-600" />
-            <h3 className="font-bold text-slate-800 tracking-tight uppercase text-xs">{title}</h3>
+    <div className="data-card overflow-hidden !p-0">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+            <Icon className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase text-xs">{title}</h3>
         </div>
         <div className="p-6">
             {children}
@@ -18,12 +19,12 @@ const Section = ({ title, icon: Icon, children }) => (
 // Reusable Info Row Component
 const InfoRow = ({ label, value, icon: Icon }) => (
     <div className="flex items-start gap-3 group">
-        <div className="mt-1 w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+        <div className="mt-1 w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400 group-hover:bg-brand-50 dark:group-hover:bg-brand-900/30 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
             {Icon && <Icon className="w-4 h-4" />}
         </div>
         <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
-            <p className="text-sm font-semibold text-slate-700">{value || 'Not Assigned'}</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">{label}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{value || 'Not Assigned'}</p>
         </div>
     </div>
 );
@@ -31,13 +32,13 @@ const InfoRow = ({ label, value, icon: Icon }) => (
 // Form Input Component
 const FormInput = ({ label, value, onChange, disabled, type = "text" }) => (
     <div className="space-y-1.5">
-        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">{label}</label>
+        <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">{label}</label>
         <input
             type={type}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-60 disabled:bg-slate-100"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800"
         />
     </div>
 );
@@ -61,48 +62,85 @@ const WardenManagement = () => {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
 
-    // Mock Database from centralized utility
-    const [wardens, setWardens] = useState(mockData.wardenDirectory.map(w => ({
-        id: w.wardenId,
-        name: w.name,
-        email: w.email,
-        mobile: w.contact,
-        hostel: w.assignedHostel,
-        floor: w.assignedFloor,
-        gender: 'Male',
-        joiningDate: '2023-06-15'
-    })));
+    const [wardens, setWardens] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [selectedWarden, setSelectedWarden] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddMode, setIsAddMode] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', email: '', mobile: '', hostel: 'Sapphire', floor: '', gender: 'Male'
+        name: '', email: '', phone: '', hostel: 'Sapphire', floor: '', gender: 'Male', password: 'password123'
     });
 
     const hostels = ['Sapphire', 'Emerald', 'Ruby', 'Pearl', 'Diamond'];
 
+    const fetchWardens = async () => {
+        setIsLoading(true);
+        try {
+            const response = await staffAPI.getStaff();
+            if (response.success) {
+                setWardens(response.data.map(w => ({
+                    id: w._id,
+                    name: w.name,
+                    email: w.email,
+                    mobile: w.phone,
+                    hostel: w.assignedHostel,
+                    floor: w.assignedFloor,
+                    gender: w.gender || 'Male',
+                    joiningDate: new Date(w.createdAt).toLocaleDateString()
+                })));
+            }
+        } catch (err) {
+            setError('Failed to fetch warden records');
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchWardens();
+    }, []);
+
     const handleEdit = (wrd) => {
-        setFormData(wrd);
+        setFormData({
+            ...wrd,
+            phone: wrd.mobile // match state field name
+        });
         setSelectedWarden(wrd);
         setIsEditMode(true);
     };
 
     const handleAdd = () => {
-        setFormData({ name: '', email: '', mobile: '', hostel: 'Sapphire', floor: '', gender: 'Male' });
+        setFormData({ name: '', email: '', phone: '', hostel: 'Sapphire', floor: '', gender: 'Male', password: 'password123' });
         setIsAddMode(true);
     };
 
-    const saveWarden = () => {
-        if (isAddMode) {
-            const newWrd = { ...formData, id: `WRD00${wardens.length + 1}`, joiningDate: new Date().toISOString().split('T')[0] };
-            setWardens([...wardens, newWrd]);
-        } else {
-            setWardens(wardens.map(w => w.id === formData.id ? formData : w));
+    const saveWarden = async () => {
+        try {
+            if (isAddMode) {
+                await authAPI.register({
+                    ...formData,
+                    role: 'warden'
+                });
+            } else {
+                await staffAPI.updateStaff(formData.id, {
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    assignedHostel: formData.hostel,
+                    assignedFloor: formData.floor,
+                    role: 'warden'
+                });
+            }
+            fetchWardens();
+            setIsEditMode(false);
+            setIsAddMode(false);
+            setSelectedWarden(null);
+        } catch (err) {
+            alert(err.message || 'Error saving warden details');
         }
-        setIsEditMode(false);
-        setIsAddMode(false);
-        setSelectedWarden(null);
     };
 
     // If warden, filter to show only self
@@ -113,10 +151,10 @@ const WardenManagement = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                         {isAdmin ? 'Warden Management' : 'My Assignment Details'}
                     </h1>
-                    <p className="text-sm font-medium text-slate-500 mt-1">
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
                         {isAdmin ? 'Administer staff assignments and contact registry.' : 'View your current hostel duties and profile info.'}
                     </p>
                 </div>
@@ -136,38 +174,38 @@ const WardenManagement = () => {
                 <div className="lg:col-span-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {displayWardens.map(wrd => (
-                            <div key={wrd.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all group overflow-hidden relative">
+                            <div key={wrd.id} className="data-card group overflow-hidden relative border-white/5">
                                 <div className="absolute top-0 right-0 p-4">
-                                    <span className="text-[10px] font-black text-slate-300 group-hover:text-brand-100 transition-colors uppercase tracking-widest">{wrd.id}</span>
+                                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 group-hover:text-brand-100 dark:group-hover:text-brand-900 transition-colors uppercase tracking-widest">{wrd.id}</span>
                                 </div>
 
                                 <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-brand-600 font-bold text-xl group-hover:bg-brand-600 group-hover:text-white transition-all duration-300">
+                                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold text-xl group-hover:bg-brand-600 group-hover:text-white transition-all duration-300">
                                         {wrd.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-900 leading-tight">{wrd.name}</h3>
-                                        <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wider mt-1">{wrd.hostel} • {wrd.floor}</p>
+                                        <h3 className="font-bold text-slate-900 dark:text-white leading-tight">{wrd.name}</h3>
+                                        <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mt-1">{wrd.hostel} • {wrd.floor}</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-3 mb-6">
-                                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                                        <MailIcon className="w-4 h-4 text-slate-400" />
+                                    <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                        <MailIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                                         <span className="truncate">{wrd.email}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                                        <PhoneIcon className="w-4 h-4 text-slate-400" />
+                                    <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                        <PhoneIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                                         <span>{wrd.mobile}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Joined: {wrd.joiningDate}</span>
+                                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Joined: {wrd.joiningDate}</span>
                                     {isAdmin && (
                                         <button
                                             onClick={() => handleEdit(wrd)}
-                                            className="text-xs font-bold text-brand-600 hover:text-brand-800 uppercase tracking-tight"
+                                            className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 uppercase tracking-tight"
                                         >
                                             Edit Assignment
                                         </button>
@@ -179,17 +217,16 @@ const WardenManagement = () => {
                 </div>
             </div>
 
-            {/* Modal for Add/Edit */}
             {(isEditMode || isAddMode) && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                            <h2 className="text-xl font-bold text-slate-900">
+                <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-700">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                                 {isAddMode ? 'Register New Warden' : `Editing ${formData.name}`}
                             </h2>
                             <button
                                 onClick={() => { setIsEditMode(false); setIsAddMode(false); }}
-                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                             >
                                 <XIcon className="w-6 h-6" />
                             </button>
@@ -209,8 +246,8 @@ const WardenManagement = () => {
                                 />
                                 <FormInput
                                     label="Mobile Number"
-                                    value={formData.mobile}
-                                    onChange={(v) => setFormData({ ...formData, mobile: v })}
+                                    value={formData.phone}
+                                    onChange={(v) => setFormData({ ...formData, phone: v })}
                                 />
                                 <FormSelect
                                     label="Gender"
@@ -232,10 +269,10 @@ const WardenManagement = () => {
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                        <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3">
                             <button
                                 onClick={() => { setIsEditMode(false); setIsAddMode(false); }}
-                                className="px-6 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 transition-colors"
+                                className="px-6 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                             >
                                 Cancel
                             </button>

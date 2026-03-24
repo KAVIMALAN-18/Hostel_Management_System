@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { applyLeave, getLeaves, updateLeave } = require('../controllers/leaveController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { validateLeaveApply, validateLeaveStatusUpdate } = require('../middleware/requestValidators');
 
 // Generic Protected Routes
 router.use(authenticate);
@@ -10,10 +11,10 @@ router.use(authenticate);
 router.get('/', getLeaves);
 
 // Post leave (Student only)
-router.post('/', authorize('student'), applyLeave);
+router.post('/', authorize('student'), validateLeaveApply, applyLeave);
 
 // Update status (Admin/Warden/Student)
-// Controller handles specific role-based rules for transitions
-router.patch('/:id', updateLeave);
+router.patch('/:id', validateLeaveStatusUpdate, updateLeave);
+router.put('/:id', validateLeaveStatusUpdate, updateLeave);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 
@@ -7,6 +8,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import WardenDashboard from './pages/warden/WardenDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -32,13 +34,15 @@ import Reports from './pages/Reports';
  */
 function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <ThemeProvider>
+      <Router>
+        <AuthProvider>
         <Routes>
           {/* Public Routes */}
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Route>
           <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -93,6 +97,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </Router>
+    </ThemeProvider>
   );
 }
 

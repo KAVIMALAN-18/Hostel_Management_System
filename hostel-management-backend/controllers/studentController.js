@@ -1,4 +1,4 @@
-const { Student, User } = require('../models');
+const { Student, User, Hostel, Block, Room, Bed } = require('../models');
 
 // @route   GET /api/students
 // @desc    Get all students with profiles
@@ -27,6 +27,71 @@ exports.getStudents = async (req, res) => {
             success: true,
             count: students.length,
             data: combinedData
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @route   GET /api/students/profile/me
+// @desc    Get current student's enriched profile
+// @access  Private (Student)
+exports.getMyProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const user = await User.findById(userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const profile = await Student.findOne({ user: userId })
+            .populate('hostel', 'name type')
+            .populate('block', 'name')
+            .populate('room', 'roomNumber roomType')
+            .populate('bed', 'bedNumber');
+
+        if (!profile) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    ...user.toObject(),
+                    profile: null
+                }
+            });
+        }
+
+        // Fetch roommates if room is assigned
+        let roommates = [];
+        let warden = null;
+
+        if (profile.room) {
+            const roommateProfiles = await Student.find({
+                room: profile.room._id,
+                user: { $ne: userId }
+            }).populate('user', 'name');
+            
+            roommates = roommateProfiles.map(p => p.user?.name).filter(Boolean);
+
+            // Fetch Warden for this hostel
+            if (profile.hostel) {
+                warden = await User.findOne({ 
+                    role: 'warden', 
+                    assignedHostel: profile.hostel.name 
+                }).select('name phone email');
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                ...user.toObject(),
+                profile: {
+                    ...profile.toObject(),
+                    roommates,
+                    warden
+                }
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

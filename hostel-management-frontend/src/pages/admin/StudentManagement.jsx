@@ -96,8 +96,8 @@ const StudentManagement = () => {
             {/* Page Header */}
             <div className="section-header flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 leading-none">Global Student Directory</h1>
-                    <p className="text-sm text-slate-500 mt-2 font-medium">Registry of all authorized hostel residents and allocation status.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-none">Global Student Directory</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Registry of all authorized hostel residents and allocation status.</p>
                 </div>
                 <Button variant="primary" onClick={() => setShowModal(true)}>
                     Register New Student
@@ -105,19 +105,19 @@ const StudentManagement = () => {
             </div>
 
             {/* Operational Filters */}
-            <div className="flex gap-4 items-end bg-slate-50 border border-slate-200 p-4 rounded shadow-sm">
+            <div className="data-card flex gap-4 items-end !p-4">
                 <div className="flex-1 max-w-sm">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Live Search</label>
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Live Search Registry</label>
                     <input
                         type="text"
                         placeholder="Search by name, ID, or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium"
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
                     />
                 </div>
-                <div className="h-9 px-4 flex items-center bg-white border border-slate-200 rounded text-xs font-bold text-slate-600">
-                    Showing {filteredStudents.length} Records
+                <div className="h-10 px-4 flex items-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    {filteredStudents.length} Records Found
                 </div>
             </div>
 
@@ -135,16 +135,16 @@ const StudentManagement = () => {
                         <TableRow key={student._id}>
                             <TableCell>
                                 <div className="flex flex-col">
-                                    <span className="font-bold text-slate-900 text-sm tracking-tight">{student.name}</span>
-                                    <span className="text-[11px] text-slate-500 font-medium uppercase tracking-tight">{student.email}</span>
+                                    <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">{student.name}</span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{student.email}</span>
                                 </div>
                             </TableCell>
                             <TableCell>
                                 <div className="flex flex-col items-start gap-1">
-                                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-bold border border-slate-200">
+                                    <span className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[11px] font-bold border border-slate-200 dark:border-slate-700">
                                         Room: {student.room || 'N/A'}
                                     </span>
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase ml-1">Bed: {student.bed || '-'}</span>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase ml-1">Bed: {student.bed || '-'}</span>
                                 </div>
                             </TableCell>
                             <TableCell>
@@ -154,10 +154,10 @@ const StudentManagement = () => {
                             </TableCell>
                             <TableCell>
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-mono text-slate-600 font-bold">
+                                    <span className="text-xs font-mono text-slate-600 dark:text-slate-300 font-bold">
                                         {student.updatedAt ? new Date(student.updatedAt).toLocaleDateString() : '-'}
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-medium">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         {student.updatedAt ? new Date(student.updatedAt).toLocaleTimeString() : '-'}
                                     </span>
                                 </div>

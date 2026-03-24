@@ -55,14 +55,27 @@ const LeaveManagement = () => {
     const handleUpdateStatus = async (id, status) => {
         setActionLoading(true);
         try {
+            // Intercept mock data IDs locally to simulate success and avoid 500 Network Errors
+            if (id && (id.startsWith('LVE') || id.startsWith('REP'))) {
+                setLeaves(prev => prev.map(l => l._id === id ? { ...l, status } : l));
+                setShowDetailModal(false);
+                return;
+            }
+
             const res = await leaveAPI.update(id, status);
             if (res.success) {
                 setLeaves(prev => prev.map(l => l._id === id ? { ...l, status } : l));
                 setShowDetailModal(false);
             }
         } catch (error) {
-            console.error('Failed to update status:', error);
-            alert(error.message || 'Failed to update status');
+            console.error('Leave Status Update Failed:', {
+                id,
+                status,
+                errorMessage: error.message,
+                responseData: error.response?.data
+            });
+            const errorMsg = error.response?.data?.message || error.message || 'Network error occurred';
+            alert(`Error: ${errorMsg}`);
         } finally {
             setActionLoading(false);
         }
@@ -81,37 +94,37 @@ const LeaveManagement = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Leave Management</h1>
-                    <p className="text-sm text-slate-500 mt-1 font-medium">Process and monitor student leave applications.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Leave Management</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Process and monitor student leave applications.</p>
                 </div>
             </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Requests Today</span>
-                    <span className="text-2xl font-bold text-slate-900">{stats.totalToday}</span>
+                <div className="data-card !p-4">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Requests Today</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalToday}</span>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">On Leave Today</span>
-                    <span className="text-2xl font-bold text-slate-900 text-blue-600">{stats.onLeave}</span>
+                <div className="data-card !p-4">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">On Leave Today</span>
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.onLeave}</span>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Pending</span>
-                    <span className="text-2xl font-bold text-amber-600">{stats.pending}</span>
+                <div className="data-card !p-4">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Pending</span>
+                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</span>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Approved</span>
-                    <span className="text-2xl font-bold text-green-600">{stats.approved}</span>
+                <div className="data-card !p-4">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Approved</span>
+                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.approved}</span>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Rejected</span>
-                    <span className="text-2xl font-bold text-red-600">{stats.rejected}</span>
+                <div className="data-card !p-4">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Rejected</span>
+                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.rejected}</span>
                 </div>
             </div>
 
             {/* Leave Request Table */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="table-container">
                 <Table headers={['Student Name', 'Hostel', 'Floor', 'Duration', 'Days', 'Leave %', 'Status', 'Actions']}>
                     {loading ? (
                         <TableRow>
@@ -128,31 +141,31 @@ const LeaveManagement = () => {
                     ) : leaves.map((leave) => (
                         <TableRow key={leave._id}>
                             <TableCell>
-                                <span className="font-bold text-slate-900 text-sm tracking-tight">{leave.studentName}</span>
+                                <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">{leave.studentName}</span>
                             </TableCell>
                             <TableCell>
-                                <span className="text-slate-600 text-sm font-medium">{leave.hostelName}</span>
+                                <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{leave.hostelName}</span>
                             </TableCell>
                             <TableCell>
-                                <span className="text-slate-600 text-sm font-medium">{leave.floor}</span>
+                                <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{leave.floor}</span>
                             </TableCell>
                             <TableCell>
-                                <div className="text-[11px] font-mono font-bold text-slate-500">
-                                    {new Date(leave.fromDate).toLocaleDateString()} <span className="text-slate-300">→</span> {new Date(leave.toDate).toLocaleDateString()}
+                                <div className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                                    {new Date(leave.fromDate).toLocaleDateString()} <span className="text-slate-300 dark:text-slate-700">→</span> {new Date(leave.toDate).toLocaleDateString()}
                                 </div>
                             </TableCell>
                             <TableCell>
-                                <span className="text-slate-900 text-sm font-bold">{leave.days}</span>
+                                <span className="text-slate-900 dark:text-white text-sm font-bold">{leave.days}</span>
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-12 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-12 bg-slate-100 dark:bg-slate-900 h-1.5 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full ${leave.leavePercentage > 15 ? 'bg-red-500' : 'bg-blue-500'}`}
                                             style={{ width: `${Math.min(leave.leavePercentage, 100)}%` }}
                                         ></div>
                                     </div>
-                                    <span className={`text-[11px] font-bold ${leave.leavePercentage > 15 ? 'text-red-600' : 'text-slate-600'}`}>
+                                    <span className={`text-[11px] font-bold ${leave.leavePercentage > 15 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
                                         {leave.leavePercentage}%
                                     </span>
                                 </div>
@@ -286,30 +299,30 @@ const LeaveManagement = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Student</span>
-                                <span className="text-sm font-bold text-slate-900">{selectedLeave.studentName}</span>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Student</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedLeave.studentName}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Hostel & Floor</span>
-                                <span className="text-sm font-bold text-slate-900">{selectedLeave.hostelName}, {selectedLeave.floor}</span>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Hostel & Floor</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedLeave.hostelName}, {selectedLeave.floor}</span>
                             </div>
                         </div>
                         <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Duration</span>
-                            <span className="text-sm font-bold text-slate-900">{selectedLeave.fromDate} to {selectedLeave.toDate} ({selectedLeave.days} days)</span>
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Duration</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedLeave.fromDate} to {selectedLeave.toDate} ({selectedLeave.days} days)</span>
                         </div>
                         <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Reason for Leave</span>
-                            <p className="text-sm text-slate-600 mt-1 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Reason for Leave</span>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
                                 {selectedLeave.reason}
                             </p>
                         </div>
-                        <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 flex items-center justify-between transition-colors">
                             <div>
-                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block">Leave Statistics</span>
-                                <span className="text-xs font-medium text-blue-800">Current leave percentage for this semester:</span>
+                                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">Leave Statistics</span>
+                                <span className="text-xs font-medium text-blue-800 dark:text-blue-200">Current leave percentage for this semester:</span>
                             </div>
-                            <span className={`text-xl font-bold ${selectedLeave.leavePercentage > 15 ? 'text-red-600' : 'text-blue-700'}`}>
+                            <span className={`text-xl font-bold ${selectedLeave.leavePercentage > 15 ? 'text-red-600 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
                                 {selectedLeave.leavePercentage}%
                             </span>
                         </div>

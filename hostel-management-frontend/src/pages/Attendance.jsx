@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { reportsAPI } from '../services/api';
 import Button from '../components/common/Button';
 import Table, { TableRow, TableCell } from '../components/common/Table';
-import mockData from '../utils/mockData';
 
 const Attendance = () => {
     const { user } = useAuth();
@@ -22,17 +22,19 @@ const Attendance = () => {
         const fetchAttendance = async () => {
             setLoading(true);
             try {
-                // Use centralized mockData for attendance
-                const list = mockData.attendance.list.map((item, i) => ({
-                    _id: `ATT00${i + 1}`,
-                    studentName: item.name,
-                    hostelName: i % 2 === 0 ? 'Alpha Block' : 'Beta Block',
-                    floor: `${(i % 5)}th Floor`,
-                    roomNumber: item.room,
-                    biometricTime: item.biometricTime,
-                    status: item.status
-                }));
-                setAttendanceList(list);
+                const res = await reportsAPI.getAttendance();
+                if (res.success) {
+                    const mappedList = res.data.map(item => ({
+                        _id: item._id,
+                        studentName: item.student?.user?.name || 'Unknown Student',
+                        hostelName: item.student?.hostel?.name || 'N/A',
+                        floor: item.student?.floor || 'N/A',
+                        roomNumber: item.student?.room?.roomNumber || 'N/A',
+                        biometricTime: new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        status: item.status
+                    }));
+                    setAttendanceList(mappedList);
+                }
             } catch (error) {
                 console.error('Failed to fetch attendance:', error);
             } finally {
@@ -60,11 +62,11 @@ const Attendance = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Attendance Monitoring</h1>
-                    <p className="text-sm text-slate-500 mt-1 font-medium">Real-time biometric attendance tracking across all hostels.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Attendance Monitoring</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Real-time biometric attendance tracking across all hostels.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 self-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 self-center border border-green-200 dark:border-green-800/50">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
                         System Online
                     </span>
@@ -74,72 +76,72 @@ const Attendance = () => {
 
             {/* KPI Cards Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Students</span>
-                    <span className="text-3xl font-bold text-slate-900">{stats.total}</span>
-                    <div className="mt-2 text-[10px] text-slate-500 font-medium">Across all 4 Hostels</div>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col transition-colors">
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total Students</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats.total}</span>
+                    <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 font-medium">Across all Hostels</div>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-green-600">Present Today</span>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col transition-colors">
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 text-green-600 dark:text-green-400">Present Today</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-slate-900">{stats.present}</span>
-                        <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                        <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats.present}</span>
+                        <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
                             {Math.round((stats.present / stats.total) * 100)}%
                         </span>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-red-600">Absent Today</span>
-                    <span className="text-3xl font-bold text-slate-900">{stats.absent}</span>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col transition-colors">
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 text-red-600 dark:text-red-400">Absent Today</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats.absent}</span>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-amber-600">Not Marked</span>
-                    <span className="text-3xl font-bold text-slate-900">{stats.notMarked}</span>
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col transition-colors">
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 text-amber-600 dark:text-amber-400">Not Marked</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats.notMarked}</span>
                 </div>
             </div>
 
             {/* Filters Section */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap gap-4 items-end">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-wrap gap-4 items-end transition-colors">
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Hostel</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Hostel</label>
                     <select
                         value={filters.hostel}
                         onChange={(e) => setFilters({ ...filters, hostel: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-w-[160px]"
+                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-w-[160px]"
                     >
                         {hostels.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Floor</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Floor</label>
                     <select
                         value={filters.floor}
                         onChange={(e) => setFilters({ ...filters, floor: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-w-[140px]"
+                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-w-[140px]"
                     >
                         {floors.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Status</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Status</label>
                     <select
                         value={filters.status}
                         onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-w-[140px]"
+                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-w-[140px]"
                     >
                         {statuses.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                 <button
                     onClick={() => setFilters({ hostel: 'All Hostels', floor: 'All Floors', status: 'All Status' })}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 p-2"
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-2"
                 >
                     Reset Filters
                 </button>
             </div>
 
             {/* Table Section */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="table-container">
                 <Table headers={['Student Name', 'Hostel', 'Floor', 'Room', 'Biometric Time', 'Status']}>
                     {loading ? (
                         <TableRow>
@@ -149,33 +151,33 @@ const Attendance = () => {
                         </TableRow>
                     ) : filteredList.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan="6" className="py-20 text-center text-slate-400 font-medium">
+                            <TableCell colSpan="6" className="py-20 text-center text-slate-400 dark:text-slate-500 font-medium">
                                 No records found matching current filters.
                             </TableCell>
                         </TableRow>
                     ) : filteredList.map((record) => (
                         <TableRow key={record._id}>
                             <TableCell>
-                                <span className="font-bold text-slate-900 text-sm tracking-tight">{record.studentName}</span>
+                                <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">{record.studentName}</span>
                             </TableCell>
                             <TableCell>
-                                <span className="text-slate-600 text-sm font-medium">{record.hostelName}</span>
+                                <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{record.hostelName}</span>
                             </TableCell>
                             <TableCell>
-                                <span className="text-slate-600 text-sm font-medium">{record.floor}</span>
+                                <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{record.floor}</span>
                             </TableCell>
                             <TableCell>
-                                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-bold border border-slate-200">
+                                <span className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[11px] font-bold border border-slate-200 dark:border-slate-700">
                                     {record.roomNumber}
                                 </span>
                             </TableCell>
                             <TableCell>
-                                <span className="text-xs font-mono text-slate-500 font-bold">{record.biometricTime}</span>
+                                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">{record.biometricTime}</span>
                             </TableCell>
                             <TableCell>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${record.status === 'Present' ? 'bg-green-50 text-green-700 border-green-100' :
-                                    record.status === 'Absent' ? 'bg-red-50 text-red-700 border-red-100' :
-                                        'bg-slate-50 text-slate-500 border-slate-100'
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${record.status === 'Present' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800' :
+                                    record.status === 'Absent' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-100 dark:border-red-800' :
+                                        'bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'
                                     }`}>
                                     {record.status}
                                 </span>

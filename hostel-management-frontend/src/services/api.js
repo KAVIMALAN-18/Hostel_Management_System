@@ -14,6 +14,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
 });
 
 /**
@@ -64,6 +65,19 @@ export const authAPI = {
     login: (credentials) => api.post('/auth/login', credentials),
     getProfile: () => api.get('/auth/me'),
     logout: () => api.post('/auth/logout'), // JWT is stateless, but this hits the endpoint if needed
+    sendForgotPasswordOtp: (identifier) =>
+        api.post('/auth/forgot-password/send-otp', { identifier }),
+    resetPasswordWithOtp: (payload) =>
+        api.post('/auth/forgot-password/reset', payload),
+};
+
+/**
+ * Staff Management API
+ */
+export const staffAPI = {
+    getStaff: () => api.get('/auth/staff'),
+    updateStaff: (id, data) => api.put(`/auth/users/${id}`, data),
+    deleteStaff: (id) => api.delete(`/auth/users/${id}`),
 };
 
 /**
@@ -71,8 +85,8 @@ export const authAPI = {
  */
 export const studentAPI = {
     getAll: () => api.get('/students'),
-    getProfile: (id) => api.get(`/students/${id}`),
-    update: (id, data) => api.patch(`/students/${id}`, data),
+    getProfile: () => api.get('/students/profile/me'),
+    update: (id, data) => api.put(`/students/${id}`, data),
     deactivate: (id) => api.delete(`/students/${id}`)
 };
 
@@ -82,14 +96,14 @@ export const studentAPI = {
 export const hostelAPI = {
     getHostels: () => api.get('/hostels/hostels'),
     createHostel: (data) => api.post('/hostels/hostels', data),
-    updateHostel: (id, data) => api.patch(`/hostels/hostels/${id}`, data),
+    updateHostel: (id, data) => api.put(`/hostels/hostels/${id}`, data),
     deleteHostel: (id) => api.delete(`/hostels/hostels/${id}`),
     getRooms: (hostelId) => api.get(`/hostels/rooms${hostelId ? `?hostelId=${hostelId}` : ''}`),
     createRoom: (data) => api.post('/hostels/rooms', data),
-    updateRoom: (id, data) => api.patch(`/hostels/rooms/${id}`, data),
+    updateRoom: (id, data) => api.put(`/hostels/rooms/${id}`, data),
     deleteRoom: (id) => api.delete(`/hostels/rooms/${id}`),
     getStats: () => api.get('/hostels/stats'),
-    allocateBed: (data) => api.patch('/hostels/allocate', data)
+    allocateBed: (data) => api.put('/hostels/allocate', data)
 };
 
 /**
@@ -98,7 +112,7 @@ export const hostelAPI = {
 export const complaintAPI = {
     getAll: (params) => api.get('/complaints', { params }),
     create: (data) => api.post('/complaints', data),
-    updateStatus: (id, statusData) => api.patch(`/complaints/${id}/status`, statusData)
+    updateStatus: (id, statusData) => api.put(`/complaints/${id}/status`, statusData)
 };
 
 /**
@@ -107,7 +121,7 @@ export const complaintAPI = {
 export const noticeAPI = {
     getAll: (params) => api.get('/announcements', { params }),
     create: (data) => api.post('/announcements', data),
-    update: (id, data) => api.patch(`/announcements/${id}`, data),
+    update: (id, data) => api.put(`/announcements/${id}`, data),
     delete: (id) => api.delete(`/announcements/${id}`)
 };
 
@@ -117,7 +131,7 @@ export const noticeAPI = {
 export const leaveAPI = {
     apply: (data) => api.post('/leave', data),
     getAll: () => api.get('/leave'),
-    update: (id, status) => api.patch(`/leave/${id}`, { status })
+    update: (id, status) => api.put(`/leave/${id}`, { status })
 };
 
 /**
@@ -157,14 +171,14 @@ export const reportsAPI = {
     getOccupancy: () => api.get('/reports/occupancy'),
     getMessFeedback: () => api.get('/reports/mess-feedback'),
     exportPDF: (month) => axios.get(`${API_BASE_URL}/reports/export`, {
-        params: { month, type: 'pdf' },
+        params: { month, format: 'pdf' },
         responseType: 'blob',
         headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
         }
     }),
     exportExcel: (month) => axios.get(`${API_BASE_URL}/reports/export`, {
-        params: { month, type: 'excel' },
+        params: { month, format: 'excel' },
         responseType: 'blob',
         headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`

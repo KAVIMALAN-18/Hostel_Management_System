@@ -10,13 +10,14 @@ const Button = ({
     iconPosition = 'left',
     ...props
 }) => {
-    const baseStyles = 'px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-soft hover:shadow-soft-lg';
+    const baseStyles =
+        'px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-soft hover:shadow-soft-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:scale-[0.99]';
 
     const variants = {
-        primary: 'bg-brand-500 text-white hover:bg-brand-600 border-0',
-        secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300',
-        danger: 'bg-red-600 text-white hover:bg-red-700 border-0',
-        success: 'bg-emerald-600 text-white hover:bg-emerald-700 border-0',
+        primary: 'bg-brand-500 text-white hover:bg-brand-600 dark:hover:bg-brand-400 border-0',
+        secondary: 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus-visible:ring-brand-500',
+        danger: 'bg-red-600 text-white hover:bg-red-700 dark:hover:bg-red-500 border-0 focus-visible:ring-red-600',
+        success: 'bg-emerald-600 text-white hover:bg-emerald-700 dark:hover:bg-emerald-500 border-0 focus-visible:ring-emerald-600',
     };
 
     return (

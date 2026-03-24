@@ -8,5 +8,6 @@ router.use(authenticate);
 router.post('/', authorize('student'), createComplaint);
 router.get('/', getComplaints);
 router.patch('/:id/status', authorize('admin', 'warden'), updateComplaintStatus);
+router.put('/:id/status', authorize('admin', 'warden'), updateComplaintStatus);
 
 module.exports = router;

@@ -34,11 +34,15 @@ const MessManagement = () => {
         count: mockData.messManagement.feedback.length.toString()
     });
 
-    const recentFeedbacks = mockData.messManagement.feedback.map(f => ({
-        name: f.studentName,
-        rating: f.rating,
-        comment: f.comment
-    }));
+    // Mock Feedback Data from centralized utility
+    const [recentFeedbacks, setRecentFeedbacks] = useState(
+        mockData.messManagement.feedback.map(f => ({
+            name: f.studentName,
+            rating: f.rating,
+            comment: f.comment,
+            date: new Date().toLocaleDateString()
+        }))
+    );
 
     // Menu Data based on selected date
     const menuData = useMemo(() => {
@@ -83,18 +87,30 @@ const MessManagement = () => {
 
     const handleSubmitFeedback = (e) => {
         e.preventDefault();
-        setSubmitted(true);
-        // Simulate visual update
+        
+        // Add new feedback to state immediately
+        const newFeedback = {
+            name: user.name || 'Student',
+            rating: rating,
+            comment: comment || 'No comment provided.',
+            date: new Date().toLocaleDateString()
+        };
+
+        setRecentFeedbacks(prev => [newFeedback, ...prev]);
         setFeedbackStats(prev => ({
             ...prev,
-            count: (parseInt(prev.count) + 1).toString()
+            count: (parseInt(prev.count) + 1).toString(),
+            score: ((parseFloat(prev.score) * parseInt(prev.count) + rating) / (parseInt(prev.count) + 1)).toFixed(1)
         }));
 
+        setSubmitted(true);
+        
+        // Clear form after delay
         setTimeout(() => {
             setRating(0);
             setComment('');
             setSubmitted(false);
-        }, 4000);
+        }, 3000);
     };
 
     const isToday = (date) => {
@@ -111,12 +127,12 @@ const MessManagement = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Mess Management</h1>
-                    <p className="text-slate-500 font-medium">Daily & Monthly Meal Schedule</p>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mess Management</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Daily & Monthly Meal Schedule</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                    <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <ClockIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">
                         Daily mess menu updated every night
                     </span>
                 </div>
@@ -125,13 +141,13 @@ const MessManagement = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Lateral Panel: Month & Calendar Selection */}
                 <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.1)] space-y-6">
                         <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Month</span>
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Select Month</span>
                             <select
                                 value={currentMonth.getMonth()}
                                 onChange={(e) => setCurrentMonth(new Date(currentMonth.getFullYear(), parseInt(e.target.value), 1))}
-                                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none"
+                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none"
                             >
                                 {months.map((m, idx) => (
                                     <option key={idx} value={idx}>{m} {currentMonth.getFullYear()}</option>
@@ -140,8 +156,8 @@ const MessManagement = () => {
                         </div>
 
                         <div className="grid grid-cols-7 gap-1">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                                <div key={d} className="text-center text-[10px] font-black text-slate-300 py-2">{d}</div>
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                                <div key={`${d}-${i}`} className="text-center text-[10px] font-black text-slate-300 dark:text-slate-600 py-2">{d}</div>
                             ))}
                             {calendarDays.map((date, idx) => (
                                 <button
@@ -150,8 +166,8 @@ const MessManagement = () => {
                                     onClick={() => date && setSelectedDate(date)}
                                     className={`
                                         aspect-square flex items-center justify-center rounded-xl text-xs font-bold transition-all
-                                        ${!date ? 'invisible pointer-events-none' : 'hover:bg-slate-50'}
-                                        ${isToday(date) ? 'text-brand-600 ring-2 ring-inset ring-brand-100' : 'text-slate-500'}
+                                        ${!date ? 'invisible pointer-events-none' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}
+                                        ${isToday(date) ? 'text-brand-600 ring-2 ring-inset ring-brand-100 dark:ring-brand-900/40' : 'text-slate-500 dark:text-slate-400'}
                                         ${isSelected(date) ? 'bg-brand-600 !text-white shadow-soft ring-0' : ''}
                                     `}
                                 >
@@ -178,11 +194,11 @@ const MessManagement = () => {
                 <div className="lg:col-span-8 space-y-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {menuData.map((item, idx) => (
-                            <div key={idx} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col group">
-                                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/20 group-hover:bg-slate-50/50 transition-colors">
+                            <div key={idx} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-[0_0_20px_rgba(59,130,246,0.1)] overflow-hidden flex flex-col group transition-all hover:shadow-md dark:hover:shadow-[0_0_25px_rgba(59,130,246,0.15)]">
+                                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/20 dark:bg-slate-900/40 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-900/60 transition-colors">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">{item.meal}</h3>
-                                        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm border border-blue-100/50">
+                                        <h3 className="font-bold text-slate-900 dark:text-white text-lg uppercase tracking-tight">{item.meal}</h3>
+                                        <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/50">
                                             {item.time}
                                         </span>
                                     </div>
@@ -207,32 +223,32 @@ const MessManagement = () => {
             </div>
 
             {/* Redesigned Full-Width Feedback Section */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-[0_0_30px_rgba(59,130,246,0.1)] overflow-hidden">
                 {/* Section Header & Summary Row */}
-                <div className="p-8 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-slate-50/10">
+                <div className="p-8 border-b border-slate-50 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-slate-50/10 dark:bg-slate-900/20">
                     <div>
-                        <h3 className="text-xl font-black text-slate-900 tracking-tight">Rate Today's Menu</h3>
-                        <p className="text-sm text-slate-500 font-medium tracking-tight">Your feedback helps us maintain the highest dining standards.</p>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Rate Today's Menu</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium tracking-tight">Your feedback helps us maintain the highest dining standards.</p>
                     </div>
 
                     <div className="flex items-center gap-8">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
                                 <StarIcon className="w-5 h-5 text-amber-500" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Avg Rating</p>
-                                <p className="text-lg font-black text-slate-900">{feedbackStats.score}<span className="text-xs font-bold text-slate-400 ml-0.5">/10</span></p>
+                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Avg Rating</p>
+                                <p className="text-lg font-black text-slate-900 dark:text-white">{feedbackStats.score}<span className="text-xs font-bold text-slate-400 dark:text-slate-500 ml-0.5">/10</span></p>
                             </div>
                         </div>
-                        <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
+                        <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
                                 <UsersIcon className="w-5 h-5 text-blue-500" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Responses</p>
-                                <p className="text-lg font-black text-slate-900">{feedbackStats.count}</p>
+                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Responses</p>
+                                <p className="text-lg font-black text-slate-900 dark:text-white">{feedbackStats.count}</p>
                             </div>
                         </div>
                     </div>
@@ -285,7 +301,7 @@ const MessManagement = () => {
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 placeholder="Tell us what you liked or how we can improve today's food quality..."
-                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-3xl p-6 text-sm font-medium focus:bg-white focus:border-brand-500 outline-none transition-all placeholder:text-slate-300 resize-none h-32"
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-50 dark:border-slate-700 rounded-3xl p-6 text-sm font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-brand-500 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none h-32"
                             ></textarea>
                         </div>
 
@@ -323,6 +339,33 @@ const MessManagement = () => {
                             </button>
                         </div>
                     </form>
+                </div>
+
+                {/* Recent Feedbacks Display */}
+                <div className="p-8 bg-slate-50/5 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-700">
+                    <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">Recent Community Feedback</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {recentFeedbacks.slice(0, 4).map((fb, idx) => (
+                            <div key={idx} className="bg-white dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm flex flex-col gap-3 group hover:border-brand-200 dark:hover:border-brand-900/50 transition-all">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
+                                            {fb.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-slate-800 dark:text-slate-200">{fb.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">{fb.date || 'Today'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-lg border border-amber-100 dark:border-amber-800/40">
+                                        <StarIcon className="w-3 h-3 text-amber-500" />
+                                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">{fb.rating}</span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 italic leading-relaxed">"{fb.comment}"</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

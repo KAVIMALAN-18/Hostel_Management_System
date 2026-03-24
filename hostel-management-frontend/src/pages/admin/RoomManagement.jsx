@@ -5,13 +5,16 @@ const RoomManagement = () => {
     const [selectedHostel, setSelectedHostel] = useState('Block A (Boys)');
     const [selectedFloor, setSelectedFloor] = useState('Ground Floor');
     const [selectedRoom, setSelectedRoom] = useState(null);
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [selectedBed, setSelectedBed] = useState(null);
+    const [selectedStudentId, setSelectedStudentId] = useState('');
 
     // Mock data for hostels and floors
     const hostels = ['Block A (Boys)', 'Block B (Girls)', 'Block C (Staff)'];
     const floors = ['Ground Floor', 'Floor 1', 'Floor 2', 'Floor 3', 'Floor 4'];
 
-    // Mock room data
-    const rooms = [
+    // Mock room data (migrated to local state for assignment demonstration)
+    const [rooms, setRooms] = useState([
         {
             id: 'A-G-101',
             number: '101',
@@ -95,12 +98,63 @@ const RoomManagement = () => {
             occupied: 0,
             occupants: []
         },
-    ];
+    ]);
+
+    // Mock unassigned students for the assignment flow
+    const [unassignedStudents, setUnassignedStudents] = useState([
+        { id: 'ST-9901', name: 'Kabir Singh', course: 'B.Tech CS' },
+        { id: 'ST-9902', name: 'Pooja Hegde', course: 'B.Com' },
+        { id: 'ST-9903', name: 'Varun Dhawan', course: 'B.Sc Physics' },
+    ]);
+
+    const handleAssignStudent = () => {
+        if (!selectedStudentId || !selectedBed) return;
+
+        const student = unassignedStudents.find(s => s.id === selectedStudentId);
+        if (!student) return;
+
+        // Perform local state update to simulate backend assignment
+        setRooms(prevRooms => prevRooms.map(room => {
+            if (room.id === selectedBed.roomId) {
+                return {
+                    ...room,
+                    occupied: room.occupied + 1,
+                    occupants: [
+                        ...room.occupants,
+                        { name: student.name, id: student.id, bed: `B${room.occupied + 1}` }
+                    ]
+                };
+            }
+            return room;
+        }));
+
+        // Remove assigned student from unassigned list
+        setUnassignedStudents(prev => prev.filter(s => s.id !== selectedStudentId));
+
+        // Update the currently viewed room details modal
+        setSelectedRoom(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                occupied: prev.occupied + 1,
+                occupants: [
+                    ...prev.occupants,
+                    { name: student.name, id: student.id, bed: `B${prev.occupied + 1}` }
+                ]
+            };
+        });
+
+        // Close assignment modal and reset selection
+        setShowAssignModal(false);
+        setSelectedStudentId('');
+        setSelectedBed(null);
+        alert('Student successfully assigned to room!');
+    };
 
     const getOccupancyColor = (room) => {
-        if (room.occupied === 0) return 'bg-slate-100 border-slate-300';
-        if (room.occupied === room.capacity) return 'bg-red-50 border-red-300';
-        return 'bg-emerald-50 border-emerald-300';
+        if (room.occupied === 0) return 'bg-slate-100 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700';
+        if (room.occupied === room.capacity) return 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800';
+        return 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-300 dark:border-emerald-800';
     };
 
     const getOccupancyStatus = (room) => {
@@ -111,22 +165,27 @@ const RoomManagement = () => {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">Room Management</h1>
-                <p className="text-sm text-slate-500 mt-1">Manage hostel rooms, occupancy, and student assignments</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Room Management</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage hostel rooms, occupancy, and student assignments</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button className="btn-secondary text-xs py-2">Add New Room</button>
+                    <button className="btn-primary text-xs py-2">Batch Allocate</button>
+                </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-5 shadow-sm transition-colors">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Hostel Selection */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-2">Select Hostel</label>
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Select Hostel</label>
                         <select
                             value={selectedHostel}
                             onChange={(e) => setSelectedHostel(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                         >
                             {hostels.map((hostel) => (
                                 <option key={hostel} value={hostel}>{hostel}</option>
@@ -136,11 +195,11 @@ const RoomManagement = () => {
 
                     {/* Floor Selection */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-2">Select Floor</label>
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Select Floor</label>
                         <select
                             value={selectedFloor}
                             onChange={(e) => setSelectedFloor(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                         >
                             {floors.map((floor) => (
                                 <option key={floor} value={floor}>{floor}</option>
@@ -150,18 +209,18 @@ const RoomManagement = () => {
                 </div>
 
                 {/* Summary Stats */}
-                <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-200">
+                <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <div className="text-center">
-                        <p className="text-xs text-slate-500">Total Rooms</p>
-                        <p className="text-2xl font-bold text-slate-900">{rooms.length}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Total Rooms</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{rooms.length}</p>
                     </div>
                     <div className="text-center">
-                        <p className="text-xs text-slate-500">Occupied</p>
-                        <p className="text-2xl font-bold text-emerald-600">{rooms.filter(r => r.occupied > 0).length}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Occupied</p>
+                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{rooms.filter(r => r.occupied > 0).length}</p>
                     </div>
                     <div className="text-center">
-                        <p className="text-xs text-slate-500">Vacant</p>
-                        <p className="text-2xl font-bold text-slate-400">{rooms.filter(r => r.occupied === 0).length}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Vacant</p>
+                        <p className="text-2xl font-bold text-slate-400 dark:text-slate-500">{rooms.filter(r => r.occupied === 0).length}</p>
                     </div>
                 </div>
             </div>
@@ -172,34 +231,34 @@ const RoomManagement = () => {
                     <div
                         key={room.id}
                         onClick={() => setSelectedRoom(room)}
-                        className={`${getOccupancyColor(room)} border-2 rounded-lg p-4 cursor-pointer hover:shadow-md transition-all`}
+                        className={`${getOccupancyColor(room)} border-2 rounded-lg p-4 cursor-pointer hover:shadow-md dark:shadow-[0_0_15px_rgba(59,130,246,0.1)] transition-all`}
                     >
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
-                                <DoorIcon className="w-5 h-5 text-slate-600" />
-                                <span className="text-lg font-bold text-slate-900">Room {room.number}</span>
+                                <DoorIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                                <span className="text-lg font-bold text-slate-900 dark:text-white">Room {room.number}</span>
                             </div>
                             {room.occupied === room.capacity ? (
-                                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">Full</span>
+                                <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-semibold rounded">Full</span>
                             ) : room.occupied === 0 ? (
-                                <span className="px-2 py-1 bg-slate-200 text-slate-600 text-xs font-semibold rounded">Vacant</span>
+                                <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded">Vacant</span>
                             ) : (
-                                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded">Available</span>
+                                <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded">Available</span>
                             )}
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-600">Type:</span>
-                                <span className="font-semibold text-slate-900">{room.type}</span>
+                                <span className="text-slate-600 dark:text-slate-400">Type:</span>
+                                <span className="font-semibold text-slate-900 dark:text-slate-100">{room.type}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-600">Occupancy:</span>
-                                <span className="font-semibold text-slate-900">{room.occupied}/{room.capacity}</span>
+                                <span className="text-slate-600 dark:text-slate-400">Occupancy:</span>
+                                <span className="font-semibold text-slate-900 dark:text-slate-100">{room.occupied}/{room.capacity}</span>
                             </div>
-                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-2">
+                            <div className="w-full bg-slate-200 dark:bg-slate-900 h-2 rounded-full overflow-hidden mt-2">
                                 <div
-                                    className={`h-full ${room.occupied === room.capacity ? 'bg-red-500' : room.occupied === 0 ? 'bg-slate-400' : 'bg-emerald-500'}`}
+                                    className={`h-full ${room.occupied === room.capacity ? 'bg-red-500' : room.occupied === 0 ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-500'}`}
                                     style={{ width: `${(room.occupied / room.capacity) * 100}%` }}
                                 ></div>
                             </div>
@@ -210,17 +269,17 @@ const RoomManagement = () => {
 
             {/* Room Details Modal */}
             {selectedRoom && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedRoom(null)}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedRoom(null)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl dark:shadow-[0_0_30px_rgba(59,130,246,0.15)] max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/5" onClick={(e) => e.stopPropagation()}>
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
-                                    <DoorIcon className="w-6 h-6 text-brand-600" />
+                                <div className="w-12 h-12 bg-brand-100 dark:bg-brand-900 rounded-lg flex items-center justify-center">
+                                    <DoorIcon className="w-6 h-6 text-brand-600 dark:text-brand-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-bold text-slate-900">Room {selectedRoom.number}</h2>
-                                    <p className="text-sm text-slate-500">{selectedHostel} - {selectedFloor}</p>
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Room {selectedRoom.number}</h2>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{selectedHostel} - {selectedFloor}</p>
                                 </div>
                             </div>
                             <button
@@ -278,7 +337,7 @@ const RoomManagement = () => {
                                 {selectedRoom.occupants.length > 0 ? (
                                     <div className="space-y-2">
                                         {selectedRoom.occupants.map((occupant, index) => (
-                                            <div key={index} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-brand-300 transition-colors">
+                                            <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-300 dark:hover:border-brand-500 transition-colors">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold">
                                                         {occupant.name.charAt(0)}
@@ -308,10 +367,19 @@ const RoomManagement = () => {
                                                         <p className="text-xs text-slate-400">Available for assignment</p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
+                                                <div className="flex items-center gap-3 text-right">
                                                     <span className="px-3 py-1 bg-slate-200 text-slate-500 text-xs font-semibold rounded">
                                                         Bed B{selectedRoom.occupied + index + 1}
                                                     </span>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelectedBed({ roomId: selectedRoom.id, bedIndex: selectedRoom.occupied + index + 1 });
+                                                            setShowAssignModal(true);
+                                                        }}
+                                                        className="px-3 py-1 bg-brand-50 text-brand-600 hover:bg-brand-100 text-xs font-bold rounded shadow-sm transition-colors border border-brand-200"
+                                                    >
+                                                        Assign
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
@@ -332,10 +400,47 @@ const RoomManagement = () => {
                                 onClick={() => setSelectedRoom(null)}
                                 className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
                             >
-                                Close
+                                Close Room Details
                             </button>
-                            <button className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors text-sm font-medium">
-                                Assign Student
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Assign Student Modal */}
+            {showAssignModal && (
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-[60] p-4" onClick={() => setShowAssignModal(false)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl dark:shadow-[0_0_20px_rgba(59,130,246,0.1)] max-w-md w-full border border-white/5" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Assign Student to Room</h2>
+                            <button onClick={() => setShowAssignModal(false)} className="hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded transition-colors text-slate-500 dark:text-slate-400">
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Select Unassigned Student</label>
+                            <select 
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-4 py-3 text-sm focus:ring-brand-500 focus:border-brand-500"
+                                value={selectedStudentId}
+                                onChange={(e) => setSelectedStudentId(e.target.value)}
+                            >
+                                <option value="">-- Choose a student --</option>
+                                {unassignedStudents.map(student => (
+                                    <option key={student.id} value={student.id}>{student.name} ({student.id})</option>
+                                ))}
+                            </select>
+                            {unassignedStudents.length === 0 && (
+                                <p className="text-xs text-amber-600 mt-2">No unassigned students currently available.</p>
+                            )}
+                        </div>
+                        <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-b-lg">
+                            <button onClick={() => setShowAssignModal(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                            <button 
+                                onClick={handleAssignStudent} 
+                                disabled={!selectedStudentId}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium text-white ${!selectedStudentId ? 'bg-brand-300 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700'}`}
+                            >
+                                Confirm Assignment
                             </button>
                         </div>
                     </div>

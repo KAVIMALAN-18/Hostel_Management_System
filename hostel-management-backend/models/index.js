@@ -12,6 +12,7 @@ const Bed = require('./Bed');
 const Complaint = require('./Complaint');
 const Notice = require('./Notice');
 const MessFeedback = require('./MessFeedback');
+const PasswordOtp = require('./PasswordOtp');
 
 module.exports = {
     User,
@@ -22,5 +23,6 @@ module.exports = {
     Bed,
     Complaint,
     Notice,
-    MessFeedback
+    MessFeedback,
+    PasswordOtp
 };

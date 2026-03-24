@@ -1,39 +1,55 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const Modal = ({ isOpen, onClose, title, children, footer }) => {
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? 'modal-title' : undefined}
+        >
             <div
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                className="modal-backdrop absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
                 onClick={onClose}
-            ></div>
+                aria-hidden="true"
+            />
 
-            {/* Modal Content */}
-            <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
-                {/* Header */}
-                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white">
-                    <div>
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest italic">{title}</h3>
+            <div className="modal-panel relative z-10 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-slate-300/40 dark:shadow-slate-950/40 ring-1 ring-slate-200/80 dark:ring-slate-700/80 w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col transition-colors">
+                <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-4 bg-white dark:bg-slate-800 shrink-0">
+                    <div className="min-w-0">
+                        {title && (
+                            <h3 id="modal-title" className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide truncate">
+                                {title}
+                            </h3>
+                        )}
                     </div>
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group"
+                        className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 shrink-0"
+                        aria-label="Close dialog"
                     >
-                        <span className="text-xl font-light group-hover:rotate-90 transition-transform">×</span>
+                        <span className="text-xl font-light leading-none" aria-hidden>×</span>
                     </button>
                 </div>
 
-                {/* Body */}
-                <div className="px-8 py-8 max-h-[70vh] overflow-y-auto">
+                <div className="px-6 py-6 overflow-y-auto min-h-0 text-slate-600 dark:text-slate-300">
                     {children}
                 </div>
 
-                {/* Footer */}
                 {footer && (
-                    <div className="px-8 py-6 border-t border-slate-50 bg-slate-50/50 flex justify-end gap-3">
+                    <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 flex justify-end gap-3 shrink-0">
                         {footer}
                     </div>
                 )}

@@ -83,28 +83,53 @@ const Reports = () => {
                     case 'mess': res = await reportsAPI.getMessFeedback(); break;
                     default: break;
                 }
-                if (res?.success && res.data.length > 0) {
-                    setReportData(res.data);
-                } else {
-                    throw new Error('No data');
+                if (res?.success) {
+                    let mappedData = res.data;
+                    // Domain specific mapping to match table expectations
+                    if (activeTab === 'attendance') {
+                        mappedData = res.data.map(item => ({
+                            _id: item._id,
+                            date: new Date(item.date).toLocaleDateString(),
+                            total: 1, // Aggregation happens on backend usually, simple mapping here
+                            present: item.status === 'Present' ? 1 : 0,
+                            absent: item.status === 'Absent' ? 1 : 0,
+                            onLeave: item.status === 'Leave' ? 1 : 0,
+                            notMarked: 0
+                        }));
+                    } else if (activeTab === 'leave') {
+                        mappedData = res.data.map(item => ({
+                            _id: item._id,
+                            studentName: item.student?.user?.name || 'Unknown',
+                            hostelName: item.student?.hostel?.name || 'N/A',
+                            floor: item.student?.floor || 'N/A',
+                            fromDate: item.fromDate,
+                            toDate: item.toDate,
+                            days: Math.ceil((new Date(item.toDate) - new Date(item.fromDate)) / (1000 * 60 * 60 * 24)),
+                            status: item.status,
+                            actionBy: item.approvedBy?.name || '-'
+                        }));
+                    } else if (activeTab === 'maintenance') {
+                        mappedData = res.data.map(item => ({
+                            _id: item._id,
+                            hostelName: item.hostelName || 'N/A',
+                            roomNumber: item.roomNumber || 'N/A',
+                            title: item.title,
+                            priority: item.priority,
+                            status: item.status,
+                            updatedAt: item.updatedAt
+                        }));
+                    }
+                    setReportData(mappedData);
                 }
             } catch (error) {
-                // Fallback to centralized mockData.reports
-                const d = mockData.reports;
-                switch (activeTab) {
-                    case 'attendance': setReportData(d.monthlyAttendance); break;
-                    case 'leave': setReportData(d.leaveAnalytics); break;
-                    case 'maintenance': setReportData(d.maintenanceAnalytics); break;
-                    case 'occupancy': setReportData(d.occupancyByBlock); break;
-                    case 'mess': setReportData(d.messFeedbackSummary); break;
-                    default: setReportData([]); break;
-                }
+                console.error('Failed to fetch report data:', error);
+                setReportData([]);
             } finally {
                 setLoading(false);
             }
         };
         fetchReportData();
-    }, [activeTab, filters]);
+    }, [activeTab, selectedMonth]);
 
     // Export handlers
     const handleExportPDF = async () => {
@@ -165,37 +190,37 @@ const Reports = () => {
         <div className="space-y-6">
             {/* Page Header */}
             <div>
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight">Institutional Analytics</h1>
-                <p className="text-slate-500 font-medium">Aggregated operational reports and system health metrics.</p>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Institutional Analytics</h1>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Aggregated operational reports and system health metrics.</p>
             </div>
 
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {kpiCards.map((card, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
+                    <div key={idx} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4 transition-colors">
+                        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-900/50 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500">
                             <card.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">{card.label}</p>
-                            <p className="text-xl font-black text-slate-900 leading-none">{card.value}</p>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">{card.label}</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{card.value}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Main Content Area */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-h-[500px] flex flex-col transition-colors">
                 {/* Tabs */}
-                <div className="flex border-b border-slate-100 bg-slate-50/30 overflow-x-auto">
+                <div className="flex border-b border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-900/30 overflow-x-auto">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-6 py-4 text-xs font-bold transition-all border-b-2 whitespace-nowrap
                                 ${activeTab === tab.id
-                                    ? 'bg-white border-brand-500 text-brand-600'
-                                    : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                                    ? 'bg-white dark:bg-slate-800 border-brand-500 text-brand-600 dark:text-brand-400'
+                                    : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                         >
                             <tab.icon className="w-4 h-4" />
                             {tab.label.toUpperCase()}
@@ -204,12 +229,12 @@ const Reports = () => {
                 </div>
 
                 {/* FiltersRow */}
-                <div className="p-4 border-b border-slate-50 flex flex-wrap items-center gap-4 bg-white">
+                <div className="p-4 border-b border-slate-50 dark:border-slate-700 flex flex-wrap items-center gap-4 bg-white dark:bg-slate-800">
                     <div className="flex items-center gap-3">
                         <select
                             value={filters.hostel}
                             onChange={(e) => setFilters({ ...filters, hostel: e.target.value })}
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none"
                         >
                             <option>All Hostels</option>
                             <option>Diamond</option>
@@ -219,7 +244,7 @@ const Reports = () => {
                             type="month"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                            className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none"
                         />
                     </div>
                     <div className="ml-auto flex items-center gap-2">
@@ -267,12 +292,12 @@ const Reports = () => {
                                 <Table headers={['Date', 'Total Students', 'Present', 'Absent', 'On Leave', 'Not Marked']}>
                                     {reportData?.map((row) => (
                                         <TableRow key={row._id || row.date}>
-                                            <TableCell><span className="font-mono font-bold text-slate-900">{row.date}</span></TableCell>
-                                            <TableCell><span className="font-bold">{row.total}</span></TableCell>
-                                            <TableCell><span className="text-emerald-600 font-bold">{row.present}</span></TableCell>
-                                            <TableCell><span className="text-rose-600 font-bold">{row.absent}</span></TableCell>
-                                            <TableCell><span className="text-blue-600 font-bold">{row.onLeave}</span></TableCell>
-                                            <TableCell><span className="text-slate-400 font-bold">{row.notMarked}</span></TableCell>
+                                            <TableCell><span className="font-mono font-bold text-slate-900 dark:text-white">{row.date}</span></TableCell>
+                                            <TableCell><span className="font-bold dark:text-slate-300">{row.total}</span></TableCell>
+                                            <TableCell><span className="text-emerald-600 dark:text-emerald-400 font-bold">{row.present}</span></TableCell>
+                                            <TableCell><span className="text-rose-600 dark:text-rose-400 font-bold">{row.absent}</span></TableCell>
+                                            <TableCell><span className="text-blue-600 dark:text-blue-400 font-bold">{row.onLeave}</span></TableCell>
+                                            <TableCell><span className="text-slate-400 dark:text-slate-600 font-bold">{row.notMarked}</span></TableCell>
                                         </TableRow>
                                     ))}
                                 </Table>
@@ -282,19 +307,19 @@ const Reports = () => {
                                 <Table headers={['Student Name', 'Hostel', 'Floor', 'From', 'To', 'Days', 'Status', 'Approved By']}>
                                     {reportData?.map((row) => (
                                         <TableRow key={row._id || row.studentName}>
-                                            <TableCell><span className="font-bold text-slate-900">{row.studentName}</span></TableCell>
-                                            <TableCell><span>{row.hostelName}</span></TableCell>
-                                            <TableCell><span>{row.floor}</span></TableCell>
-                                            <TableCell><span className="text-[11px] font-mono">{new Date(row.fromDate).toLocaleDateString()}</span></TableCell>
-                                            <TableCell><span className="text-[11px] font-mono">{new Date(row.toDate).toLocaleDateString()}</span></TableCell>
-                                            <TableCell><span>{row.days}</span></TableCell>
+                                            <TableCell><span className="font-bold text-slate-900 dark:text-white">{row.studentName}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.hostelName}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.floor}</span></TableCell>
+                                            <TableCell><span className="text-[11px] font-mono dark:text-slate-400">{new Date(row.fromDate).toLocaleDateString()}</span></TableCell>
+                                            <TableCell><span className="text-[11px] font-mono dark:text-slate-400">{new Date(row.toDate).toLocaleDateString()}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.days}</span></TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border 
-                                                    ${row.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                                    ${row.status === 'Approved' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'}`}>
                                                     {row.status}
                                                 </span>
                                             </TableCell>
-                                            <TableCell><span className="text-xs font-semibold text-slate-500">{row.actionBy || '-'}</span></TableCell>
+                                            <TableCell><span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{row.actionBy || '-'}</span></TableCell>
                                         </TableRow>
                                     ))}
                                 </Table>
@@ -304,22 +329,22 @@ const Reports = () => {
                                 <Table headers={['Ticket ID', 'Hostel', 'Room', 'Issue', 'Priority', 'Status', 'Last Updated']}>
                                     {reportData?.map((row) => (
                                         <TableRow key={row._id}>
-                                            <TableCell><span className="font-bold text-slate-400 text-xs">#{row._id?.slice(-6).toUpperCase() || 'ID'}</span></TableCell>
-                                            <TableCell><span>{row.hostelName || 'Unknown'}</span></TableCell>
-                                            <TableCell><span>{row.roomNumber || 'N/A'}</span></TableCell>
-                                            <TableCell><span className="text-slate-600 font-medium">{row.title}</span></TableCell>
+                                            <TableCell><span className="font-bold text-slate-400 dark:text-slate-500 text-xs">#{row._id?.slice(-6).toUpperCase() || 'ID'}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.hostelName || 'Unknown'}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.roomNumber || 'N/A'}</span></TableCell>
+                                            <TableCell><span className="text-slate-600 dark:text-slate-200 font-medium">{row.title}</span></TableCell>
                                             <TableCell>
-                                                <span className={`text-[10px] font-black uppercase ${row.priority === 'High' ? 'text-red-500' : 'text-slate-400'}`}>
+                                                <span className={`text-[10px] font-black uppercase ${row.priority === 'High' ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                                     {row.priority || 'Low'}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border 
-                                                    ${row.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                                    ${row.status === 'Resolved' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'}`}>
                                                     {row.status}
                                                 </span>
                                             </TableCell>
-                                            <TableCell><span className="text-[11px] text-slate-400 font-mono">{new Date(row.updatedAt).toLocaleDateString()}</span></TableCell>
+                                            <TableCell><span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">{new Date(row.updatedAt).toLocaleDateString()}</span></TableCell>
                                         </TableRow>
                                     ))}
                                 </Table>
@@ -329,18 +354,18 @@ const Reports = () => {
                                 <Table headers={['Hostel', 'Floor', 'Total Rooms', 'Total Beds', 'Occupied beds', 'Vacant Beds', 'Occupancy %']}>
                                     {reportData?.map((row) => (
                                         <TableRow key={row._id || `${row.hostel}-${row.floor}`}>
-                                            <TableCell><span className="font-bold text-slate-900">{row.hostel}</span></TableCell>
-                                            <TableCell><span>{row.floor}</span></TableCell>
-                                            <TableCell><span>{row.totalRooms}</span></TableCell>
-                                            <TableCell><span>{row.totalBeds}</span></TableCell>
-                                            <TableCell><span className="text-brand-600 font-bold">{row.occupiedBeds}</span></TableCell>
-                                            <TableCell><span className="text-emerald-600 font-bold">{row.vacantBeds}</span></TableCell>
+                                            <TableCell><span className="font-bold text-slate-900 dark:text-white">{row.hostel}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.floor}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.totalRooms}</span></TableCell>
+                                            <TableCell><span className="dark:text-slate-300">{row.totalBeds}</span></TableCell>
+                                            <TableCell><span className="text-brand-600 dark:text-brand-400 font-bold">{row.occupiedBeds}</span></TableCell>
+                                            <TableCell><span className="text-emerald-600 dark:text-emerald-400 font-bold">{row.vacantBeds}</span></TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div className="bg-brand-500 h-full" style={{ width: `${row.occupancyRate}%` }}></div>
+                                                    <div className="w-12 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                        <div className="bg-brand-500 dark:bg-brand-600 h-full" style={{ width: `${row.occupancyRate}%` }}></div>
                                                     </div>
-                                                    <span className="text-[10px] font-black">{row.occupancyRate.toFixed(1)}%</span>
+                                                    <span className="text-[10px] font-black dark:text-slate-300">{row.occupancyRate.toFixed(1)}%</span>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -352,14 +377,14 @@ const Reports = () => {
                                 <Table headers={['Date', 'Average Rating', 'Total Responses']}>
                                     {reportData?.map((row) => (
                                         <TableRow key={row._id || row.date}>
-                                            <TableCell><span className="font-mono font-bold text-slate-900">{row.date}</span></TableCell>
+                                            <TableCell><span className="font-mono font-bold text-slate-900 dark:text-white">{row.date}</span></TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-1 text-amber-500">
+                                                <div className="flex items-center gap-1 text-amber-500 dark:text-amber-400">
                                                     <StarIcon className="w-3 h-3 fill-current" />
                                                     <span className="font-black">{row.avgRating}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell><span className="font-bold text-slate-500">{row.totalResponses}</span></TableCell>
+                                            <TableCell><span className="font-bold text-slate-500 dark:text-slate-400">{row.totalResponses}</span></TableCell>
                                         </TableRow>
                                     ))}
                                 </Table>

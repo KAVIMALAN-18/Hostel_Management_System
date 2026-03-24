@@ -1,63 +1,78 @@
 # Hostel Management System (HMS)
 
-A professional, full-stack web application designed to streamline hostel operations, resident management, and communication for educational institutions.
+Production-ready full-stack platform to manage hostel operations across students, wardens, and administrators.
 
-## 🚀 Project Overview
-The Hostel Management System is a centralized platform that connects Students, Wardens, and Administrators. It replaces manual record-keeping with a digital "Infrastructure Hub," "Support Desk," and "Official Bulletin," ensuring transparency and efficiency in hostel life.
+## Features
+- Role-based dashboards and route protection (`admin`, `warden`, `student`)
+- Student directory, complaints, announcements, attendance, leave workflow
+- OTP-based forgot-password reset flow (email/phone lookup, OTP to registered phone)
+- Centralized API service layer in frontend
 
-## ✨ Key Features
-- **Role-Based Access Control (RBAC)**: Distinct dashboards and permissions for Admin, Warden, and Student.
-- **Infrastructure Hub**: Real-time tracking of hostel occupancy and room availability.
-- **Resident Hub**: Centralized student management with live search and profile filtering.
-- **Support Desk**: A full complaint lifecycle (Student File -> Warden Process -> Resolved).
-- **Official Bulletin**: Digital notice board for broadcasting urgent and standard announcements.
-- **Secure Authentication**: JWT-based login and registration with protected routes.
+## Tech Stack
+- Frontend: React + Vite + Tailwind CSS
+- Backend: Node.js + Express + MongoDB (Mongoose)
+- Auth: JWT + bcrypt
+- Runtime hardening: Helmet, CORS allowlist, rate limiting, compression, request logging
 
-## 🛠️ Tech Stack
-- **Frontend**: React.js, Tailwind CSS, Vite.
-- **Backend**: Node.js, Express.js.
-- **Database**: MongoDB (Mongoose ODM).
-- **Authentication**: JSON Web Tokens (JWT), BcryptJS.
-- **Deployment**: Localhost (Demo Ready).
+## Local Development
 
-## ⚙️ Setup Instructions
+### 1) Backend
+```bash
+cd hostel-management-backend
+cp .env.example .env
+npm install
+npm run dev
+```
 
-### Prerequisites
-- Node.js installed
-- MongoDB (Local or Atlas)
-- NPM or Yarn
+### 2) Frontend
+```bash
+cd hostel-management-frontend
+cp .env.example .env
+npm install
+npm run dev
+```
 
-### Backend Setup
-1. Navigate to `hostel-management-backend/`.
-2. Install dependencies: `npm install`.
-3. Create a `.env` file and add:
-   ```env
-   PORT=5000
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret
-   JWT_EXPIRE=30d
-   ```
-4. Start the server: `npm start`.
+Frontend default: `http://localhost:5173`  
+Backend default: `http://localhost:5001`
 
-### Frontend Setup
-1. Navigate to `hostel-management-frontend/`.
-2. Install dependencies: `npm install`.
-3. Create a `.env` file and add:
-   ```env
-   VITE_API_URL=http://localhost:5000/api
-   ```
-4. Start the dev server: `npm run dev`.
+## Environment Variables
 
-## 🔐 Demo Credentials
+### Backend (`hostel-management-backend/.env`)
+```env
+PORT=5001
+NODE_ENV=production
+MONGODB_URI=mongodb://localhost:27017/hostel_management
+JWT_SECRET=replace_with_a_long_random_secret
+JWT_EXPIRE=7d
+FRONTEND_URL=http://localhost:5173
+```
 
-| Role | Email (Example) | Password |
-|------|-----------------|----------|
-| **Admin** | admin@hms.com | admin123 |
-| **Warden** | warden@hms.com | warden123 |
-| **Student** | student@hms.com | student123 |
+### Frontend (`hostel-management-frontend/.env`)
+```env
+VITE_API_URL=http://localhost:5001/api
+```
 
-*(Note: Use these values if you have seeded the DB, otherwise register new accounts via the UI.)*
+## Deployment (Docker)
 
----
-## 📄 License
-This project is developed for educational purposes as part of the University Submission.
+### Single-command local production
+```bash
+docker compose up --build
+```
+
+Services:
+- Frontend: `http://localhost:8080`
+- Backend: `http://localhost:5001`
+- MongoDB: `mongodb://localhost:27017`
+
+## API Production Readiness Added
+- Security headers (`helmet`)
+- CORS origin allowlist using `FRONTEND_URL`
+- Global API rate limiting (`/api`)
+- Gzip compression
+- Structured request logging (`morgan`)
+- Graceful shutdown handlers (`SIGINT`, `SIGTERM`)
+- Health endpoint: `GET /api/health`
+
+## Notes
+- In non-production mode, forgot-password OTP returns `devOtp` for testing.
+- In production mode, integrate an SMS provider and disable OTP exposure fully.

@@ -60,11 +60,10 @@ const leaveSchema = new mongoose.Schema(
 );
 
 // Basic validation to ensure end date is after start date
-leaveSchema.pre('save', function (next) {
+leaveSchema.pre('save', async function () {
     if (this.fromDate > this.toDate) {
-        return next(new Error('End date must be after start date'));
+        throw new Error('End date must be after start date');
     }
-    next();
 });
 
 module.exports = mongoose.model('Leave', leaveSchema);

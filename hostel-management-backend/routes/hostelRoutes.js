@@ -20,14 +20,17 @@ router.use(authenticate);
 router.post('/hostels', authorize('admin'), createHostel);
 router.get('/hostels', getHostels);
 router.patch('/hostels/:id', authorize('admin'), updateHostel);
+router.put('/hostels/:id', authorize('admin'), updateHostel);
 router.delete('/hostels/:id', authorize('admin'), deleteHostel);
 router.get('/stats', authorize('admin', 'warden'), getHostelStats);
 router.patch('/allocate', authorize('admin', 'warden'), allocateBed);
+router.put('/allocate', authorize('admin', 'warden'), allocateBed);
 
 // Room operations
 router.post('/rooms', authorize('admin'), createRoom);
 router.get('/rooms', getRooms);
 router.patch('/rooms/:id', authorize('admin', 'warden'), updateRoom);
+router.put('/rooms/:id', authorize('admin', 'warden'), updateRoom);
 router.delete('/rooms/:id', authorize('admin'), deleteRoom);
 
 module.exports = router;

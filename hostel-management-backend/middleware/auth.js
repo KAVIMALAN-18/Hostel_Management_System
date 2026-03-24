@@ -35,6 +35,12 @@ exports.authenticate = async (req, res, next) => {
                     message: 'User no longer exists.'
                 });
             }
+            if (req.user.isActive === false) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your account is inactive. Contact administrator.',
+                });
+            }
 
             next();
         } catch (error) {

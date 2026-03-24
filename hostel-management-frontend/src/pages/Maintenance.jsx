@@ -170,8 +170,8 @@ const Maintenance = () => {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">Maintenance {user?.role === 'student' ? 'Requests' : 'Management'}</h1>
-                    <p className="text-slate-500 font-medium">Tracking and resolution of facility maintenance and utility grievances.</p>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Maintenance {user?.role === 'student' ? 'Requests' : 'Management'}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Tracking and resolution of facility maintenance and utility grievances.</p>
                 </div>
                 {user?.role === 'student' && (
                     <Button variant="primary" onClick={() => setShowForm(true)}>Raise New Request</Button>
@@ -181,55 +181,55 @@ const Maintenance = () => {
             {/* KPI Cards (Hidden for students) */}
             {user?.role !== 'student' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-500">
+                    <div className="data-card !p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center text-amber-500 dark:text-amber-400">
                             <ClockIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Open Tickets</p>
-                            <p className="text-xl font-black text-slate-900 leading-none">{stats.open}</p>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Open Tickets</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.open}</p>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className="w-10 h-10 bg-rose-50 rounded-lg flex items-center justify-center text-rose-500">
+                    <div className="data-card !p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 rounded-lg flex items-center justify-center text-rose-500 dark:text-rose-400">
                             <AlertCircleIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">High Priority</p>
-                            <p className="text-xl font-black text-slate-900 leading-none">{stats.highPriority}</p>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">High Priority</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.highPriority}</p>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500">
+                    <div className="data-card !p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-500 dark:text-blue-400">
                             <ToolIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">In Progress</p>
-                            <p className="text-xl font-black text-slate-900 leading-none">{stats.inProgress}</p>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">In Progress</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.inProgress}</p>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500">
+                    <div className="data-card !p-4 flex items-center gap-4">
+                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-500 dark:text-emerald-400">
                             <CheckCircleIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Resolved (MTD)</p>
-                            <p className="text-xl font-black text-slate-900 leading-none">{stats.resolvedThisMonth}</p>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Resolved (MTD)</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.resolvedThisMonth}</p>
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Main Content Area */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div className="table-container shadow-premium flex flex-col !bg-transparent !p-0">
                 {/* FiltersRow (Warden/Admin only) */}
                 {user?.role !== 'student' && (
-                    <div className="p-4 border-b border-slate-50 flex flex-wrap items-center gap-4 bg-white">
+                    <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-4 bg-white dark:bg-slate-800">
                         <div className="flex items-center gap-3">
                             <select
                                 value={filters.hostel}
                                 onChange={(e) => setFilters({ ...filters, hostel: e.target.value })}
-                                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-brand-500/20"
                             >
                                 <option>All Hostels</option>
                                 <option>Diamond</option>
@@ -238,7 +238,7 @@ const Maintenance = () => {
                             <select
                                 value={filters.priority}
                                 onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-brand-500/20"
                             >
                                 <option>All Priority</option>
                                 <option>High</option>
@@ -248,7 +248,7 @@ const Maintenance = () => {
                             <select
                                 value={filters.status}
                                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-brand-500/20"
                             >
                                 <option>All Status</option>
                                 <option>Pending</option>
@@ -277,9 +277,9 @@ const Maintenance = () => {
                             </TableRow>
                         ) : tickets.length > 0 ? (
                             tickets.map((ticket) => (
-                                <TableRow key={ticket._id}>
+                                <TableRow key={ticket._id} className="table-row-hover">
                                     <TableCell>
-                                        <span className="font-mono text-[10px] font-bold text-slate-400 uppercase">
+                                        <span className="font-mono text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">
                                             #{ticket._id.slice(-6)}
                                         </span>
                                     </TableCell>
@@ -287,8 +287,8 @@ const Maintenance = () => {
                                     {user?.role !== 'student' && (
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-slate-900">{ticket.student?.name || 'Unknown'}</span>
-                                                <span className="text-[10px] text-slate-400 font-medium">{ticket.student?.phone || '-'}</span>
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">{ticket.student?.name || 'Unknown'}</span>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{ticket.student?.phone || '-'}</span>
                                             </div>
                                         </TableCell>
                                     )}
@@ -304,8 +304,8 @@ const Maintenance = () => {
 
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-slate-800">{ticket.category}</span>
-                                            <span className="text-[10px] text-slate-500 font-medium line-clamp-1">{ticket.title}</span>
+                                            <span className="text-xs font-black text-slate-800 dark:text-slate-200">{ticket.category}</span>
+                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1">{ticket.title}</span>
                                         </div>
                                     </TableCell>
 
@@ -365,13 +365,13 @@ const Maintenance = () => {
                 onClose={() => setShowForm(false)}
                 title="Raise Facility Request"
                 footer={(
-                    <div className="flex gap-3 justify-end px-6 py-4 border-t border-slate-50">
+                    <div className="flex gap-3 justify-end px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                         <Button variant="secondary" onClick={() => setShowForm(false)}>Discard Action</Button>
                         <Button variant="primary" onClick={handleSubmit} loading={submitting}>Submit Ticket</Button>
                     </div>
                 )}
             >
-                <form id="maintenance-form" onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form id="maintenance-form" onSubmit={handleSubmit} className="p-6 space-y-6 bg-white dark:bg-slate-800 transition-colors">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
                             <Input
@@ -383,9 +383,9 @@ const Maintenance = () => {
                             />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Problem Category</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Problem Category</label>
                             <select
-                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                                className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             >
@@ -397,9 +397,9 @@ const Maintenance = () => {
                             </select>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Severity Level</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Severity Level</label>
                             <select
-                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                                className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                             >
@@ -410,18 +410,18 @@ const Maintenance = () => {
                         </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Technical Description</label>
+                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Technical Description</label>
                         <textarea
                             required
                             rows="4"
                             placeholder="Please provide specific details about the issue..."
-                            className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all resize-none"
+                            className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all resize-none"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         ></textarea>
                     </div>
-                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-start gap-3">
-                        <div className="mt-0.5 text-emerald-600">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 p-4 rounded-xl flex items-start gap-3">
+                        <div className="mt-0.5 text-emerald-600 dark:text-emerald-400">
                             <CheckCircleIcon className="w-4 h-4" />
                         </div>
                         <p className="text-[11px] text-emerald-700 font-medium">
@@ -438,29 +438,29 @@ const Maintenance = () => {
                 onClose={() => setShowUpdateModal(false)}
                 title="Manage Maintenance Ticket"
                 footer={(
-                    <div className="flex gap-3 justify-end px-6 py-4 border-t border-slate-50">
+                    <div className="flex gap-3 justify-end px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                         <Button variant="secondary" onClick={() => setShowUpdateModal(false)}>Cancel</Button>
                         <Button variant="primary" onClick={handleUpdateTicket} loading={submitting}>Save Updates</Button>
                     </div>
                 )}
             >
                 {selectedTicket && (
-                    <div className="p-6 space-y-6">
+                    <div className="p-6 space-y-6 bg-white dark:bg-slate-800 transition-colors">
                         {/* Ticket Info Summary */}
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col gap-2">
+                        <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl p-4 border border-slate-100 dark:border-slate-700 flex flex-col gap-2">
                             <div className="flex justify-between items-start">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">#{selectedTicket._id.slice(-6)}</span>
+                                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">#{selectedTicket._id.slice(-6)}</span>
                                 <StatusBadge status={updateData.status} />
                             </div>
-                            <h3 className="text-sm font-black text-slate-900">{selectedTicket.title}</h3>
-                            <p className="text-xs text-slate-500 line-clamp-2">{selectedTicket.description}</p>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white">{selectedTicket.title}</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{selectedTicket.description}</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Workflow Status</label>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Workflow Status</label>
                                 <select
-                                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none"
+                                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
                                     value={updateData.status}
                                     onChange={(e) => setUpdateData({ ...updateData, status: e.target.value })}
                                 >
@@ -471,9 +471,9 @@ const Maintenance = () => {
                                 </select>
                             </div>
                             <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Priority Override</label>
+                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Priority Override</label>
                                 <select
-                                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none"
+                                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
                                     value={updateData.priority}
                                     onChange={(e) => setUpdateData({ ...updateData, priority: e.target.value })}
                                 >
@@ -485,22 +485,22 @@ const Maintenance = () => {
                         </div>
 
                         <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Resolution Detail (Visible to Student)</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Resolution Detail (Visible to Student)</label>
                             <textarea
                                 rows="3"
                                 placeholder="Explain what fix was applied..."
-                                className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none resize-none"
+                                className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none resize-none"
                                 value={updateData.resolutionNotes}
                                 onChange={(e) => setUpdateData({ ...updateData, resolutionNotes: e.target.value })}
                             ></textarea>
                         </div>
 
                         <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Internal Staff Notes</label>
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Internal Staff Notes</label>
                             <textarea
                                 rows="2"
                                 placeholder="Private notes for administration..."
-                                className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none resize-none"
+                                className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none resize-none"
                                 value={updateData.staffNotes}
                                 onChange={(e) => setUpdateData({ ...updateData, staffNotes: e.target.value })}
                             ></textarea>
