@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import mockData from '../utils/mockData';
+
 import {
     CalendarIcon,
     ClockIcon,
@@ -28,21 +28,14 @@ const MessManagement = () => {
     const [comment, setComment] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
-    // Mock Feedback Data from centralized utility
+    // Feedback Stats
     const [feedbackStats, setFeedbackStats] = useState({
-        score: '8.4',
-        count: mockData.messManagement.feedback.length.toString()
+        score: '0.0',
+        count: '0'
     });
 
-    // Mock Feedback Data from centralized utility
-    const [recentFeedbacks, setRecentFeedbacks] = useState(
-        mockData.messManagement.feedback.map(f => ({
-            name: f.studentName,
-            rating: f.rating,
-            comment: f.comment,
-            date: new Date().toLocaleDateString()
-        }))
-    );
+    // Recent Feedbacks
+    const [recentFeedbacks, setRecentFeedbacks] = useState([]);
 
     // Menu Data based on selected date
     const menuData = useMemo(() => {
@@ -53,17 +46,20 @@ const MessManagement = () => {
             dinner: '7:00 PM – 8:30 PM'
         };
 
-        const m = mockData.messManagement.menu;
+        const defaultMenu = {
+            breakfast: ['Idli', 'Sambar', 'Chutney'],
+            lunch: ['Rice', 'Dal', 'Poriyal', 'Rasam'],
+            snacks: ['Tea', 'Biscuits'],
+            dinner: ['Chapati', 'Kurma']
+        };
 
-        // If it's today (simplified as selectedDate), use the mockData.menu
-        // For other dates, we vary it slightly
         const isEven = selectedDate.getDate() % 2 === 0;
 
         return [
-            { meal: 'Breakfast', time: timings.breakfast, items: isEven ? ['Pongal', 'Vada', 'Sambar'] : m.breakfast.split(', ') },
-            { meal: 'Lunch', time: timings.lunch, items: isEven ? ['Variety Rice', 'Curd Rice'] : m.lunch.split(', ') },
-            { meal: 'Evening Snacks', time: timings.snacks, items: isEven ? ['Pakoda'] : m.snacks.split(', ') },
-            { meal: 'Dinner', time: timings.dinner, items: isEven ? ['Dosa', 'Chutney'] : m.dinner.split(', ') }
+            { meal: 'Breakfast', time: timings.breakfast, items: isEven ? ['Pongal', 'Vada', 'Sambar'] : defaultMenu.breakfast },
+            { meal: 'Lunch', time: timings.lunch, items: isEven ? ['Variety Rice', 'Curd Rice'] : defaultMenu.lunch },
+            { meal: 'Evening Snacks', time: timings.snacks, items: isEven ? ['Pakoda'] : defaultMenu.snacks },
+            { meal: 'Dinner', time: timings.dinner, items: isEven ? ['Dosa', 'Chutney'] : defaultMenu.dinner }
         ];
     }, [selectedDate]);
 

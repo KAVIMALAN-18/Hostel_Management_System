@@ -70,56 +70,23 @@ const StudentDashboard = () => {
 
                 if (profileRes.success && profileRes.data) {
                     setProfile(profileRes.data);
-                } else {
-                    throw new Error('No profile');
                 }
 
                 if (leavesRes.success && leavesRes.data.length > 0) {
                     setLeaveHistory(leavesRes.data);
                 } else {
-                    const mockLeaves = (mockData.leaveRequests || []).map((l, i) => ({
-                        _id: `LVE00${i + 1}`,
-                        fromDate: l.fromDate,
-                        toDate: l.toDate,
-                        status: l.status,
-                        reason: l.reason
-                    }));
-                    setLeaveHistory(mockLeaves);
+                    setLeaveHistory([]);
                 }
 
                 if (noticesRes.success && noticesRes.data.length > 0) {
                     setNotices(noticesRes.data);
                 } else {
-                    const mockNotices = (mockData.announcements || []).map((n, i) => ({
-                        _id: `NOT00${i + 1}`,
-                        title: n.title,
-                        content: n.description,
-                        createdAt: n.date
-                    }));
-                    setNotices(mockNotices);
+                    setNotices([]);
                 }
 
             } catch (error) {
                 console.error("Dashboard fetch error:", error);
-                // Fallback to primary mock student Arjun Venkat
-                const mockStudent = mockData.studentDirectory[0];
-                setProfile({
-                    name: mockStudent.name,
-                    phone: mockStudent.contact,
-                    profile: {
-                        registrationNumber: mockStudent.studentId,
-                        bloodGroup: mockStudent.bloodGroup,
-                        guardianName: mockStudent.parentName,
-                        guardianRelation: 'Father',
-                        guardianPhone: '+91 98765 00000',
-                        nativePlace: 'Chennai, TN',
-                        hostel: { name: mockStudent.hostel },
-                        block: { name: mockStudent.floor },
-                        room: { roomNumber: mockStudent.roomNumber },
-                        bed: { bedNumber: mockStudent.bedNumber },
-                        roommates: ['Rahul Nair', 'Karthik Raja']
-                    }
-                });
+                setProfile(null);
             } finally {
                 setLoading(false);
             }

@@ -44,12 +44,7 @@ const HostelView = () => {
             }
         } catch (err) {
             setError(err.message);
-            const mockHostels = [
-                { _id: 'h1', name: 'Main Block Alpha', type: 'Boys', location: 'Section A' },
-                { _id: 'h2', name: 'Annex Block Beta', type: 'Girls', location: 'Section B' },
-            ];
-            setHostels(mockHostels);
-            if (!selectedHostel) setSelectedHostel(mockHostels[0]);
+            setHostels([]);
         } finally {
             setLoading(false);
         }
@@ -64,15 +59,7 @@ const HostelView = () => {
                 setRooms(roomRes.data);
             }
         } catch (err) {
-            const mockRooms = Array.from({ length: 18 }, (_, i) => ({
-                _id: `r${i}`,
-                roomNumber: 101 + i,
-                status: i % 5 === 0 ? 'full' : 'available',
-                occupied: i % 5 === 0 ? 4 : (i % 3 === 0 ? 2 : 1),
-                capacity: 4,
-                type: 'Standard'
-            }));
-            setRooms(mockRooms);
+            setRooms([]);
         } finally {
             setLoading(false);
         }

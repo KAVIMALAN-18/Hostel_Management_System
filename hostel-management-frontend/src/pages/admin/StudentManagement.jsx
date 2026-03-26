@@ -29,13 +29,7 @@ const StudentManagement = () => {
             }
         } catch (err) {
             setError(err.message);
-            // Fallback for demo - making it look more realistic
-            setStudents([
-                { _id: 'S1001', name: 'Kavimalan K', email: 'kavi@example.com', phone: '9876543210', isActive: true, room: 'A-102', bed: 'B1', updatedAt: '2026-02-10T08:30:00Z' },
-                { _id: 'S1002', name: 'Vijay Raman', email: 'vijay@example.com', phone: '9123456789', isActive: true, room: 'A-102', bed: 'B2', updatedAt: '2026-02-10T09:15:00Z' },
-                { _id: 'S1003', name: 'Rahul Sharma', email: 'rahul@example.com', phone: '9000000001', isActive: false, room: '-', bed: '-', updatedAt: '2026-02-09T18:45:00Z' },
-                { _id: 'S1004', name: 'Nithin Varman', email: 'nithin@example.com', phone: '9888888888', isActive: true, room: 'B-204', bed: 'B1', updatedAt: '2026-02-10T07:20:00Z' },
-            ]);
+            setStudents([]);
         } finally {
             setLoading(false);
         }

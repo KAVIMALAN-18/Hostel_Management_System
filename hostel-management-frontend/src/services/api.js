@@ -96,8 +96,8 @@ export const studentAPI = {
 export const hostelAPI = {
     getHostels: () => api.get('/hostels/hostels'),
     createHostel: (data) => api.post('/hostels/hostels', data),
-    updateHostel: (id, data) => api.put(`/hostels/hostels/${id}`, data),
-    deleteHostel: (id) => api.delete(`/hostels/hostels/${id}`),
+    updateHostel: (id, data) => api.put(`/hostels/${id}`, data),
+    deleteHostel: (id) => api.delete(`/hostels/${id}`),
     getRooms: (hostelId) => api.get(`/hostels/rooms${hostelId ? `?hostelId=${hostelId}` : ''}`),
     createRoom: (data) => api.post('/hostels/rooms', data),
     updateRoom: (id, data) => api.put(`/hostels/rooms/${id}`, data),

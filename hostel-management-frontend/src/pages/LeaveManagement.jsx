@@ -31,20 +31,8 @@ const LeaveManagement = () => {
                     throw new Error('No data');
                 }
             } catch (error) {
-                // Fallback to centralized mockData
-                const list = mockData.leaveRequests.map((l, i) => ({
-                    _id: `LVE00${i + 1}`,
-                    studentName: l.studentName,
-                    hostelName: i % 2 === 0 ? 'Alpha Block' : 'Beta Block',
-                    floor: 'Floor 2',
-                    fromDate: l.fromDate,
-                    toDate: l.toDate,
-                    days: Math.ceil((new Date(l.toDate) - new Date(l.fromDate)) / (1000 * 60 * 60 * 24)) + 1,
-                    reason: l.reason,
-                    status: l.status,
-                    leavePercentage: parseFloat(l.leavePercentage)
-                }));
-                setLeaves(list);
+                console.error('Failed to fetch leaves:', error);
+                setLeaves([]);
             } finally {
                 setLoading(false);
             }
@@ -55,12 +43,6 @@ const LeaveManagement = () => {
     const handleUpdateStatus = async (id, status) => {
         setActionLoading(true);
         try {
-            // Intercept mock data IDs locally to simulate success and avoid 500 Network Errors
-            if (id && (id.startsWith('LVE') || id.startsWith('REP'))) {
-                setLeaves(prev => prev.map(l => l._id === id ? { ...l, status } : l));
-                setShowDetailModal(false);
-                return;
-            }
 
             const res = await leaveAPI.update(id, status);
             if (res.success) {

@@ -16,18 +16,17 @@ const AdminDashboard = () => {
                     setStats(response.data);
                 }
             } catch (err) {
-                // Mock data from centralized mockData utility
-                const d = mockData.adminDashboard;
+                console.error('Failed to fetch dashboard stats:', err);
                 setStats({
-                    totalOccupancy: d.occupancyRate,
-                    bedsOccupied: Math.round(d.totalRooms * d.occupancyRate / 100),
-                    totalBeds: d.totalRooms,
-                    todayPresent: d.attendanceSummary.present,
-                    onApprovedLeave: d.attendanceSummary.onLeave,
-                    onboardingPending: 15,
-                    awaitingRoomAssign: 5,
-                    maintenanceOpen: d.maintenanceSummary.pending,
-                    maintenanceHighPriority: d.maintenanceSummary.inProgress
+                    totalOccupancy: 0,
+                    bedsOccupied: 0,
+                    totalBeds: 0,
+                    todayPresent: 0,
+                    onApprovedLeave: 0,
+                    onboardingPending: 0,
+                    awaitingRoomAssign: 0,
+                    maintenanceOpen: 0,
+                    maintenanceHighPriority: 0
                 });
             } finally {
                 setLoading(false);

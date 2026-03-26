@@ -60,21 +60,8 @@ const Maintenance = () => {
                 throw new Error('No data');
             }
         } catch (err) {
-            // Fallback to centralized mockData
-            const list = mockData.maintenance.map((m, i) => ({
-                _id: m.ticketId,
-                title: m.issueType.split(' - ')[1] || m.issueType,
-                description: `Maintenance request for ${m.issueType} in Room ${m.room}.`,
-                category: m.issueType.split(' - ')[0],
-                priority: m.priority,
-                status: m.status,
-                hostelName: i % 2 === 0 ? 'Alpha Block' : 'Beta Block',
-                floor: 'Floor 2',
-                roomNumber: m.room,
-                student: { name: m.studentName, phone: '+91 98765 00000' },
-                createdAt: new Date().toISOString()
-            }));
-            setTickets(list);
+            console.error('Failed to fetch tickets:', err);
+            setTickets([]);
         } finally {
             setLoading(false);
         }

@@ -23,8 +23,7 @@ const roomSchema = new mongoose.Schema(
 
         block: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Block',
-            required: [true, 'Block reference is required']
+            ref: 'Block'
         },
 
         // Room Details

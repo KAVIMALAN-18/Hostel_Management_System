@@ -75,7 +75,12 @@ exports.getRooms = async (req, res) => {
         let query = {};
         if (hostelId) query.hostel = hostelId;
 
-        const rooms = await Room.find(query).populate('hostel', 'name');
+        const rooms = await Room.find(query)
+            .populate('hostel', 'name')
+            .populate({
+                path: 'beds',
+                populate: { path: 'student', select: 'name' }
+            });
         res.status(200).json({ success: true, data: rooms });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

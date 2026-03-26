@@ -52,19 +52,8 @@ const Announcements = () => {
                 throw new Error('No data');
             }
         } catch (err) {
-            // Fallback to centralized mockData
-            const list = mockData.announcements.map((n, i) => ({
-                _id: `NOT00${i + 1}`,
-                title: n.title,
-                content: n.description,
-                priority: n.priority,
-                hostel: 'All',
-                floor: 'All',
-                author: { name: 'Admin Office', role: 'admin' },
-                createdAt: n.date,
-                expiresAt: new Date(new Date(n.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
-            }));
-            setNotices(list);
+            console.error('Failed to fetch notices:', err);
+            setNotices([]);
         } finally {
             setLoading(false);
         }

@@ -56,11 +56,11 @@ const Reports = () => {
                 } else {
                     // Fallback to mockData
                     setStats({
-                        totalStudents: mockData.adminDashboard.totalStudents,
-                        occupancyPercentage: mockData.adminDashboard.occupancyRate,
-                        presentToday: mockData.adminDashboard.attendanceSummary.present,
-                        activeLeaves: mockData.adminDashboard.attendanceSummary.onLeave,
-                        openTickets: mockData.adminDashboard.maintenanceSummary.pending
+                        totalStudents: 0,
+                        occupancyPercentage: 0,
+                        presentToday: 0,
+                        activeLeaves: 0,
+                        openTickets: 0
                     });
                 }
             } catch (error) {
