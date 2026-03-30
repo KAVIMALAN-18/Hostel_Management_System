@@ -1,317 +1,280 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { noticeAPI, complaintAPI, leaveAPI } from '../services/api';
-import Table, { TableRow, TableCell } from '../components/common/Table';
-import Modal from '../components/common/Modal';
-import Button from '../components/common/Button';
-import mockData from '../utils/mockData';
+import { leaveAPI } from '../services/api';
+import { 
+    CalendarIcon, 
+    CheckCircleIcon, 
+    XCircleIcon, 
+    ClockIcon, 
+    UserIcon, 
+    BuildingIcon, 
+    FileTextIcon, 
+    AlertCircleIcon, 
+    MoreVerticalIcon,
+    ChevronRightIcon,
+    ArrowUpRightIcon,
+    XIcon
+} from '../components/common/Icons';
 
 const LeaveManagement = () => {
     const { user } = useAuth();
     const [leaves, setLeaves] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedLeave, setSelectedLeave] = useState(null);
-    const [showDetailModal, setShowDetailModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
 
     const isAdmin = user?.role === 'admin';
     const isWarden = user?.role === 'warden';
 
-    useEffect(() => {
-        const fetchLeaves = async () => {
-            setLoading(true);
-            try {
-                const res = await leaveAPI.getAll();
-                if (res.success && res.data.length > 0) {
-                    setLeaves(res.data.map(l => ({
-                        ...l,
-                        leavePercentage: Math.floor(Math.random() * 20) + 2
-                    })));
-                } else {
-                    throw new Error('No data');
-                }
-            } catch (error) {
-                console.error('Failed to fetch leaves:', error);
-                setLeaves([]);
-            } finally {
-                setLoading(false);
+    const fetchLeaves = async () => {
+        setLoading(true);
+        try {
+            const res = await leaveAPI.getAll();
+            if (res.success) {
+                setLeaves(res.data);
             }
-        };
+        } catch (error) {
+            console.error('Failed to fetch leaves:', error);
+            setLeaves([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchLeaves();
-    }, [isWarden, user]);
+    }, []);
 
     const handleUpdateStatus = async (id, status) => {
         setActionLoading(true);
         try {
-
             const res = await leaveAPI.update(id, status);
             if (res.success) {
                 setLeaves(prev => prev.map(l => l._id === id ? { ...l, status } : l));
-                setShowDetailModal(false);
+                setSelectedLeave(null);
             }
         } catch (error) {
-            console.error('Leave Status Update Failed:', {
-                id,
-                status,
-                errorMessage: error.message,
-                responseData: error.response?.data
-            });
-            const errorMsg = error.response?.data?.message || error.message || 'Network error occurred';
-            alert(`Error: ${errorMsg}`);
+            alert(`Error: ${error.message || 'Operation failed'}`);
         } finally {
             setActionLoading(false);
         }
     };
 
     const stats = {
-        totalToday: leaves.length, // Simplified for mock
-        onLeave: leaves.filter(l => l.status === 'Approved').length,
+        total: leaves.length,
         pending: leaves.filter(l => l.status === 'Pending').length,
         approved: leaves.filter(l => l.status === 'Approved').length,
         rejected: leaves.filter(l => l.status === 'Rejected').length
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Leave Management</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Process and monitor student leave applications.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">Authorization Queue</h1>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-300 mt-2">Executive jurisdiction over student travel and residential leaves.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center gap-6">
+                         <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div>
+                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stats.pending} Pending</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stats.approved} Active</span>
+                         </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="data-card !p-4">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Requests Today</span>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalToday}</span>
-                </div>
-                <div className="data-card !p-4">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">On Leave Today</span>
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.onLeave}</span>
-                </div>
-                <div className="data-card !p-4">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Pending</span>
-                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</span>
-                </div>
-                <div className="data-card !p-4">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Approved</span>
-                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.approved}</span>
-                </div>
-                <div className="data-card !p-4">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Rejected</span>
-                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.rejected}</span>
-                </div>
-            </div>
+            {/* Request Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {loading ? (
+                    [1,2,3,4].map(i => <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] animate-pulse"></div>)
+                ) : leaves.length === 0 ? (
+                    <div className="col-span-full py-20 text-center bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem]">
+                         <FileTextIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Clear queue. No unauthorized travel requests.</p>
+                    </div>
+                ) : (
+                    leaves.map((leave) => (
+                        <div key={leave._id} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[2.5rem] p-8 shadow-soft hover:shadow-premium transition-all duration-500 relative overflow-hidden">
+                            <div className={`absolute top-0 right-0 p-6`}>
+                                <StatusBadge status={leave.status} />
+                            </div>
 
-            {/* Leave Request Table */}
-            <div className="table-container">
-                <Table headers={['Student Name', 'Hostel', 'Floor', 'Duration', 'Days', 'Leave %', 'Status', 'Actions']}>
-                    {loading ? (
-                        <TableRow>
-                            <TableCell colSpan="8" className="py-20 text-center">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            </TableCell>
-                        </TableRow>
-                    ) : leaves.length === 0 ? (
-                        <TableRow>
-                            <TableCell colSpan="8" className="py-20 text-center text-slate-400 font-medium font-medium">
-                                No leave requests found.
-                            </TableCell>
-                        </TableRow>
-                    ) : leaves.map((leave) => (
-                        <TableRow key={leave._id}>
-                            <TableCell>
-                                <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">{leave.studentName}</span>
-                            </TableCell>
-                            <TableCell>
-                                <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{leave.hostelName}</span>
-                            </TableCell>
-                            <TableCell>
-                                <span className="text-slate-600 dark:text-slate-300 text-sm font-medium">{leave.floor}</span>
-                            </TableCell>
-                            <TableCell>
-                                <div className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                                    {new Date(leave.fromDate).toLocaleDateString()} <span className="text-slate-300 dark:text-slate-700">→</span> {new Date(leave.toDate).toLocaleDateString()}
+                            <div className="flex items-start gap-5 mb-8">
+                                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center font-bold text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all duration-500">
+                                    {leave.studentName.charAt(0)}
                                 </div>
-                            </TableCell>
-                            <TableCell>
-                                <span className="text-slate-900 dark:text-white text-sm font-bold">{leave.days}</span>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-12 bg-slate-100 dark:bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${leave.leavePercentage > 15 ? 'bg-red-500' : 'bg-blue-500'}`}
-                                            style={{ width: `${Math.min(leave.leavePercentage, 100)}%` }}
-                                        ></div>
+                                <div className="mt-1">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{leave.studentName}</h3>
+                                    <div className="flex items-center gap-2 mt-1.5 opacity-60">
+                                        <BuildingIcon className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-bold uppercase tracking-wider">{leave.hostelName} • {leave.floor}</span>
                                     </div>
-                                    <span className={`text-[11px] font-bold ${leave.leavePercentage > 15 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
-                                        {leave.leavePercentage}%
-                                    </span>
                                 </div>
-                            </TableCell>
-                            <TableCell>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${leave.status === 'Approved' ? 'bg-green-50 text-green-700 border-green-100' :
-                                    leave.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-100' :
-                                        'bg-amber-50 text-amber-700 border-amber-100'
-                                    }`}>
-                                    {leave.status}
-                                </span>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    {(isAdmin || isWarden) && (
-                                        <>
-                                            {leave.status === 'Pending' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleUpdateStatus(leave._id, 'Approved')}
-                                                        className="text-[10px] font-bold text-green-600 hover:text-green-700 uppercase tracking-tight"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleUpdateStatus(leave._id, 'Rejected')}
-                                                        className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tight"
-                                                    >
-                                                        Reject
-                                                    </button>
-                                                </>
-                                            )}
-                                            {leave.status === 'Approved' && (
-                                                <button
-                                                    onClick={() => handleUpdateStatus(leave._id, 'Cancelled')}
-                                                    className="text-[10px] font-bold text-slate-400 hover:text-rose-600 uppercase tracking-tight"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            )}
-                                            {(leave.status === 'Cancelled' || leave.status === 'Rejected') && (
-                                                <button
-                                                    onClick={() => handleUpdateStatus(leave._id, 'Approved')}
-                                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-tight"
-                                                >
-                                                    Re-Approve
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            setSelectedLeave(leave);
-                                            setShowDetailModal(true);
-                                        }}
-                                        className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-tight"
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-8 mb-8">
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 px-1">Mission Window</p>
+                                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 transition-colors group-hover:bg-white dark:group-hover:bg-slate-900">
+                                        <CalendarIcon className="w-4 h-4 text-brand-500" />
+                                        <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight tabular-nums">
+                                            {new Date(leave.fromDate).toLocaleDateString([], { month: 'short', day: 'numeric' })} — {new Date(leave.toDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 px-1">Residential Risk</p>
+                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-brand-500"></div>
+                                            <span className="text-sm font-bold text-slate-900 dark:text-white uppercase">{leave.leavePercentage}% SEM</span>
+                                        </div>
+                                        <ArrowUpRightIcon className="w-3.5 h-3.5 text-slate-300" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">ID Verified</span>
+                                </div>
+                                {(isAdmin || isWarden) && leave.status === 'Pending' ? (
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => handleUpdateStatus(leave._id, 'Rejected')}
+                                            className="px-5 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700"
+                                        >
+                                            Deny
+                                        </button>
+                                        <button 
+                                            onClick={() => handleUpdateStatus(leave._id, 'Approved')}
+                                            className="px-6 py-2.5 bg-brand-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-500/20 hover:bg-brand-700 transition-all border border-brand-500"
+                                        >
+                                            Authorize
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button 
+                                        onClick={() => setSelectedLeave(leave)}
+                                        className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider flex items-center gap-1.5 hover:gap-2.5 transition-all"
                                     >
-                                        Details
+                                        View Dossier <ChevronRightIcon className="w-4 h-4" />
                                     </button>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </Table>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
-            {/* Leave Detail Modal */}
-            <Modal
-                isOpen={showDetailModal}
-                onClose={() => setShowDetailModal(false)}
-                title="Leave Request Details"
-                footer={(
-                    <div className="flex gap-2 justify-end w-full">
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            className="flex-1 max-w-[100px]"
-                            onClick={() => setShowDetailModal(false)}
-                        >
-                            Close
-                        </Button>
+            {/* Decision Modal */}
+            {selectedLeave && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedLeave(null)}>
+                    <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-premium modal-panel overflow-hidden border border-white/5" onClick={e => e.stopPropagation()}>
+                        <div className="p-8 bg-slate-900 text-white relative overflow-hidden">
+                            <div className="absolute -right-12 -top-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl"></div>
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-bold uppercase tracking-wider mb-1">Authorization Dossier</h2>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide opacity-80">Reference: {selectedLeave._id.slice(-8)}</p>
+                                </div>
+                                <button onClick={() => setSelectedLeave(null)} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
+                                    <XIcon className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
 
-                        {(isAdmin || isWarden) && (
-                            <div className="flex gap-2 flex-1 justify-end">
-                                {selectedLeave?.status === 'Pending' && (
-                                    <>
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            loading={actionLoading}
-                                            onClick={() => handleUpdateStatus(selectedLeave._id, 'Rejected')}
+                        <div className="p-10 space-y-8">
+                            <div className="flex items-center gap-6">
+                                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl flex items-center justify-center text-3xl font-bold text-slate-300">
+                                    {selectedLeave.studentName.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{selectedLeave.studentName}</h3>
+                                    <p className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mt-1">
+                                        {selectedLeave.hostelName} • {selectedLeave.floor}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Authorization Reason</p>
+                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                                        "{selectedLeave.reason}"
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Departure</p>
+                                        <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{new Date(selectedLeave.fromDate).toDateString()}</p>
+                                    </div>
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Exp. Return</p>
+                                        <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{new Date(selectedLeave.toDate).toDateString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {(isAdmin || isWarden) && (
+                                <div className="flex flex-col gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                    {selectedLeave.status === 'Pending' ? (
+                                        <div className="flex gap-3">
+                                            <button 
+                                                disabled={actionLoading}
+                                                onClick={() => handleUpdateStatus(selectedLeave._id, 'Rejected')}
+                                                className="flex-1 py-4 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-600 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700"
+                                            >
+                                                DECLINE REQUEST
+                                            </button>
+                                            <button 
+                                                disabled={actionLoading}
+                                                onClick={() => handleUpdateStatus(selectedLeave._id, 'Approved')}
+                                                className="flex-[2] py-4 bg-brand-600 text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all"
+                                            >
+                                                {actionLoading ? 'PROCESSING...' : 'GRANT AUTHORIZATION'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            disabled={actionLoading}
+                                            onClick={() => handleUpdateStatus(selectedLeave._id, selectedLeave.status === 'Approved' ? 'Cancelled' : 'Approved')}
+                                            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all"
                                         >
-                                            Reject
-                                        </Button>
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            loading={actionLoading}
-                                            onClick={() => handleUpdateStatus(selectedLeave._id, 'Approved')}
-                                        >
-                                            Approve
-                                        </Button>
-                                    </>
-                                )}
-                                {selectedLeave?.status === 'Approved' && (
-                                    <Button
-                                        variant="danger"
-                                        size="sm"
-                                        loading={actionLoading}
-                                        onClick={() => handleUpdateStatus(selectedLeave._id, 'Cancelled')}
-                                    >
-                                        Revoke / Cancel
-                                    </Button>
-                                )}
-                                {(selectedLeave?.status === 'Cancelled' || selectedLeave?.status === 'Rejected') && (
-                                    <Button
-                                        variant="primary"
-                                        size="sm"
-                                        loading={actionLoading}
-                                        onClick={() => handleUpdateStatus(selectedLeave._id, 'Approved')}
-                                    >
-                                        Re-Approve
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-            >
-                {selectedLeave && (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Student</span>
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedLeave.studentName}</span>
-                            </div>
-                            <div>
-                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Hostel & Floor</span>
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedLeave.hostelName}, {selectedLeave.floor}</span>
-                            </div>
-                        </div>
-                        <div>
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Duration</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedLeave.fromDate} to {selectedLeave.toDate} ({selectedLeave.days} days)</span>
-                        </div>
-                        <div>
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Reason for Leave</span>
-                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
-                                {selectedLeave.reason}
-                            </p>
-                        </div>
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 flex items-center justify-between transition-colors">
-                            <div>
-                                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">Leave Statistics</span>
-                                <span className="text-xs font-medium text-blue-800 dark:text-blue-200">Current leave percentage for this semester:</span>
-                            </div>
-                            <span className={`text-xl font-bold ${selectedLeave.leavePercentage > 15 ? 'text-red-600 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
-                                {selectedLeave.leavePercentage}%
-                            </span>
+                                            {selectedLeave.status === 'Approved' ? 'REVOKE AUTHORIZATION' : 'RE-APPROVE MISSION'}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
-                )}
-            </Modal>
+                </div>
+            )}
         </div>
+    );
+};
+
+// UI Components
+const StatusBadge = ({ status }) => {
+    const config = {
+        'Pending': 'bg-amber-100/50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800',
+        'Approved': 'bg-emerald-100/50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800',
+        'Rejected': 'bg-rose-100/50 text-rose-600 border-rose-200 dark:bg-rose-900/30 dark:border-rose-800',
+        'Cancelled': 'bg-slate-100/50 text-slate-400 border-slate-200 dark:bg-slate-900/30 dark:border-slate-700'
+    };
+
+    return (
+        <span className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider ${config[status] || config['Pending']}`}>
+            {status}
+        </span>
     );
 };
 

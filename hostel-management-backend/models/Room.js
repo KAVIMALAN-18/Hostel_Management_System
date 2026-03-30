@@ -13,6 +13,14 @@ const roomSchema = new mongoose.Schema(
             trim: true,
             uppercase: true
         },
+        floor: {
+            type: String,
+            required: [true, 'Floor assignment is required'],
+            enum: {
+                values: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor'],
+                message: '{VALUE} is not a valid floor'
+            }
+        },
 
         // References
         hostel: {

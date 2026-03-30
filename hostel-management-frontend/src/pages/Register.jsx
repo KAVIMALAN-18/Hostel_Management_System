@@ -43,18 +43,35 @@ const Register = () => {
         if (!formData.name.trim()) newErrors.name = 'Full name is required';
         if (!formData.email) {
             newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Invalid email';
-        }
-        if (!formData.phone) {
-            newErrors.phone = 'Phone is required';
-        } else if (!/^[0-9]{10}$/.test(formData.phone)) {
-            newErrors.phone = '10-digit phone required';
+        } else {
+            const email = formData.email.toLowerCase();
+            const isValidFormat = /\S+@\S+\.\S+/.test(email);
+            
+            const nameClean = formData.name.toLowerCase().replace(/\s+/g, '');
+            if (!isValidFormat) {
+                newErrors.email = 'Invalid email format';
+            } else {
+                // Name-based domain and pattern checks
+                if (formData.role === 'admin' && email !== 'admin@hostel.ac.in') {
+                    newErrors.email = 'Admin must use admin@hostel.ac.in';
+                } else if (formData.role === 'warden' && email !== `${nameClean}@warden.ac.in`) {
+                    newErrors.email = `Must be ${nameClean}@warden.ac.in`;
+                } else if (formData.role === 'student' && email !== `${nameClean}@student.ac.in`) {
+                    newErrors.email = `Must be ${nameClean}@student.ac.in`;
+                }
+            }
         }
         if (!formData.password) {
             newErrors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Min. 6 characters';
+        } else {
+            const nameClean = formData.name.toLowerCase().replace(/\s+/g, '');
+            if (formData.role === 'student' || formData.role === 'warden') {
+                if (formData.password !== `${nameClean}@123`) {
+                    newErrors.password = `Must be ${nameClean}@123`;
+                }
+            } else if (formData.password.length < 6) {
+                newErrors.password = 'Min. 6 characters';
+            }
         }
         if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = 'Passwords do not match';
@@ -98,7 +115,7 @@ const Register = () => {
             alternateCta="Sign in"
         >
             <div className="auth-form-surface-elevated">
-                <div className="mb-8 border-b border-slate-100/90 pb-6">
+                <div className="mb-8 border-b border-slate-200/90 pb-6">
                     <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Registration</p>
                     <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Your details</h2>
                     <p className="mt-2 text-sm text-slate-500">We validate fields when you submit.</p>
@@ -136,16 +153,23 @@ const Register = () => {
                         />
                     </div>
 
-                    <Input
-                        label="Email"
-                        type="email"
-                        name="email"
-                        placeholder="you@university.edu"
-                        value={formData.email}
-                        onChange={handleChange}
-                        error={errors.email}
-                        autoComplete="email"
-                    />
+                    <div className="relative">
+                        <Input
+                            label="Email"
+                            type="email"
+                            name="email"
+                            placeholder="yourname@student.ac.in"
+                            value={formData.email}
+                            onChange={handleChange}
+                            error={errors.email}
+                            autoComplete="email"
+                        />
+                        {formData.name && (formData.role === 'student' || formData.role === 'warden') && !formData.email && (
+                            <p className="mt-1 text-[10px] text-slate-400 font-medium italic">
+                                Recommended: {formData.name.toLowerCase().replace(/\s+/g, '')}@{formData.role}.ac.in
+                            </p>
+                        )}
+                    </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Input

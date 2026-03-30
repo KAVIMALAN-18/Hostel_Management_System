@@ -29,12 +29,7 @@ const Complaints = () => {
             }
         } catch (err) {
             setError(err.message);
-            // Enhanced mock data
-            setComplaints([
-                { _id: 'C1', title: 'Water Leakage in A-302', description: 'Bathroom pipe burst, immediate attention required.', category: 'Water', status: 'pending', createdAt: '2026-02-10T08:15:00Z', student: { name: 'Rahul Sharma' } },
-                { _id: 'C2', title: 'Power Surge in Wing B', description: 'Regular fluctuations in electrical supply affecting devices.', category: 'Electrical', status: 'in-progress', createdAt: '2026-02-09T14:20:00Z', student: { name: 'Kavimalan K' } },
-                { _id: 'C3', title: 'Broken Window Handle', description: 'Room 204 window handle is loose and won\'t lock.', category: 'Maintenance', status: 'resolved', createdAt: '2026-02-08T10:00:00Z', student: { name: 'Vijay Raman' }, resolution: 'Handle replaced with new hardware.' }
-            ]);
+            setComplaints([]);
         } finally {
             setLoading(false);
         }
@@ -89,7 +84,7 @@ const Complaints = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Complaints System...</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Loading Complaints System...</span>
             </div>
         </div>
     );
@@ -100,7 +95,7 @@ const Complaints = () => {
             <div className="section-header border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-none">Complaint Management</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Tracking and resolution of facility maintenance and utility grievances.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-300 mt-2 font-medium">Tracking and resolution of facility maintenance and utility grievances.</p>
                 </div>
                 {user?.role === 'student' && (
                     <Button variant="primary" onClick={() => setShowForm(true)}>File New Complaint</Button>
@@ -113,9 +108,9 @@ const Complaints = () => {
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all ${activeTab === tab
+                        className={`px-4 py-2 text-sm font-bold uppercase tracking-wider border-b-2 transition-all ${activeTab === tab
                             ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                            : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                            : 'border-transparent text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     >
                         {tab.replace('-', ' ')}
                     </button>
@@ -131,14 +126,14 @@ const Complaints = () => {
                                 <TableCell>
                                     <div className="flex flex-col max-w-md">
                                         <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">{complaint.title}</span>
-                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1">{complaint.description}</span>
+                                        <span className="text-sm text-slate-500 dark:text-slate-300 font-medium line-clamp-1">{complaint.description}</span>
                                         {complaint.student?.name && (
-                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1">Reported by: {complaint.student.name}</span>
+                                            <span className="text-xs text-slate-400 dark:text-slate-300 font-bold uppercase mt-1">Reported by: {complaint.student.name}</span>
                                         )}
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <span className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-200 dark:border-slate-700 uppercase tracking-tighter">
+                                    <span className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-xs font-bold border border-slate-200 dark:border-slate-700 uppercase tracking-tight">
                                         {complaint.category}
                                     </span>
                                 </TableCell>
@@ -154,7 +149,7 @@ const Complaints = () => {
                                         <span className="text-xs font-mono text-slate-600 dark:text-slate-300 font-bold">
                                             {new Date(complaint.createdAt).toLocaleDateString()}
                                         </span>
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                        <span className="text-xs text-slate-400 dark:text-slate-300 font-medium">
                                             {new Date(complaint.createdAt).toLocaleTimeString()}
                                         </span>
                                     </div>
@@ -166,7 +161,7 @@ const Complaints = () => {
                                                 <button
                                                     onClick={() => handleUpdateStatus(complaint._id, 'in-progress')}
                                                     disabled={updatingId === complaint._id}
-                                                    className={`text-[11px] font-bold text-blue-600 hover:underline ${updatingId === complaint._id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    className={`text-sm font-bold text-blue-600 hover:underline ${updatingId === complaint._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
                                                     {updatingId === complaint._id ? 'Starting...' : 'Start Work'}
                                                 </button>
@@ -177,13 +172,13 @@ const Complaints = () => {
                                                     setShowResolveModal(true);
                                                 }}
                                                 disabled={updatingId === complaint._id}
-                                                className={`text-[11px] font-bold text-slate-500 hover:text-slate-900 border border-slate-200 px-2 py-0.5 rounded ${updatingId === complaint._id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                className={`text-sm font-bold text-slate-500 hover:text-slate-900 border border-slate-200 px-2 py-0.5 rounded ${updatingId === complaint._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 Resolve
                                             </button>
                                         </div>
                                     ) : (
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-tight">
                                             {complaint.status === 'resolved' ? 'Resolution recorded' : 'Awaiting Action'}
                                         </span>
                                     )}
@@ -192,7 +187,7 @@ const Complaints = () => {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan="5" className="py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                            <TableCell colSpan="5" className="py-12 text-center text-slate-400 font-bold uppercase tracking-wider text-xs">
                                 No records found in this category
                             </TableCell>
                         </TableRow>
@@ -213,7 +208,7 @@ const Complaints = () => {
                 )}
             >
                 <form id="complaint-form" onSubmit={handleSubmit} className="space-y-4">
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Technical Detail Submission</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-300 font-bold uppercase tracking-tight mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Technical Detail Submission</p>
                     <Input
                         label="Issue Summary"
                         required
@@ -262,7 +257,7 @@ const Complaints = () => {
                 )}
             >
                 <div className="space-y-3">
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">Provide final resolution notes for the resident.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-300 font-bold uppercase tracking-tight">Provide final resolution notes for the resident.</p>
                     <textarea
                         rows="4"
                         placeholder="Details of the fix applied..."

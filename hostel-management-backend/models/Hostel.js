@@ -6,7 +6,11 @@ const hostelSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Hostel name is required'],
             unique: true,
-            trim: true
+            trim: true,
+            enum: {
+                values: ['Sapphire', 'Ruby', 'Pearl', 'Emerald'],
+                message: '{VALUE} is not a valid hostel name. Choose from Sapphire, Ruby, Pearl, or Emerald.'
+            }
         },
         type: {
             type: String,

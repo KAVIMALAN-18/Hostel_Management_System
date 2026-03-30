@@ -9,7 +9,7 @@ const Table = ({ headers, children, className = '' }) => {
                         {headers.map((header, index) => (
                             <th
                                 key={index}
-                                className="px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap"
+                                className="px-5 py-3 text-sm font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap"
                             >
                                 {header}
                             </th>

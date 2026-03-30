@@ -46,6 +46,18 @@ const DashboardLayout = () => {
         return () => window.clearInterval(id);
     }, []);
 
+    // --- Data Synchronization Logic ---
+    // Emit a 'resync-data' event when the window is focused to ensure real-time consistency
+    useEffect(() => {
+        const handleFocus = () => {
+            if (document.visibilityState === 'visible') {
+                window.dispatchEvent(new CustomEvent('resync-data'));
+            }
+        };
+        window.addEventListener('visibilitychange', handleFocus);
+        return () => window.removeEventListener('visibilitychange', handleFocus);
+    }, []);
+
     useEffect(() => {
         setMobileNavOpen(false);
     }, [location.pathname]);
@@ -172,7 +184,7 @@ const DashboardLayout = () => {
                         {showNavLabels && (
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-bold leading-none text-white truncate">HOSTEL-MS</span>
-                                <span className="text-[10px] text-brand-100 dark:text-brand-200 font-medium tracking-tight mt-0.5 truncate">Management Hub</span>
+                                <span className="text-xs text-brand-100 dark:text-brand-200 font-medium tracking-tight mt-0.5 truncate">Management Hub</span>
                             </div>
                         )}
                     </div>
@@ -189,7 +201,7 @@ const DashboardLayout = () => {
                 </div>
 
                 <nav id="app-sidebar-nav" className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
-                    <div className={`px-3 mb-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ${showNavLabels ? '' : 'text-center'}`}>
+                    <div className={`px-3 mb-3 text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider ${showNavLabels ? '' : 'text-center'}`}>
                         {showNavLabels ? 'Navigation' : '•'}
                     </div>
                     {navItems.map((item) => {
@@ -215,13 +227,13 @@ const DashboardLayout = () => {
                 {showNavLabels && (
                     <div className="p-3 mx-3 mb-3 bg-emerald-50/90 dark:bg-emerald-900/30 border border-emerald-200/80 dark:border-emerald-800 rounded-lg">
                         <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wide">System status</span>
+                            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wide">System status</span>
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
                         </div>
-                        <div className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">All systems operational</div>
+                        <div className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">All systems operational</div>
                     </div>
                 )}
 
@@ -259,7 +271,7 @@ const DashboardLayout = () => {
                             <MenuIcon className="w-5 h-5" />
                         </button>
                         <div className="flex flex-col min-w-0">
-                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300 font-medium flex-wrap">
                                 <span>Hostel Management</span>
                                 <span className="text-slate-300 dark:text-slate-600" aria-hidden>•</span>
                                 <span className="capitalize text-brand-600 dark:text-brand-400 font-semibold">{user?.role}</span>
@@ -298,7 +310,7 @@ const DashboardLayout = () => {
                         <div className="flex items-center gap-3">
                             <div className="flex flex-col items-end min-w-0">
                                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-none truncate max-w-[10rem] sm:max-w-xs">{user?.name}</span>
-                                <span className="text-[10px] text-brand-600 dark:text-brand-400 font-bold uppercase tracking-tight mt-0.5">{user?.role}</span>
+                                <span className="text-xs text-brand-600 dark:text-brand-400 font-bold uppercase tracking-tight mt-0.5">{user?.role}</span>
                             </div>
                             <div
                                 className="w-9 h-9 bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-800 dark:to-brand-900 text-brand-700 dark:text-brand-300 rounded-full flex items-center justify-center font-bold text-sm ring-2 ring-white dark:ring-slate-800 shadow-soft shrink-0"

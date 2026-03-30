@@ -119,7 +119,7 @@ const HostelView = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mapping Facilities...</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mapping Facilities...</span>
             </div>
         </div>
     );
@@ -159,13 +159,13 @@ const HostelView = () => {
                 {/* Status Filter Bar */}
                 <div className="bg-slate-50 border-b border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Filters:</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Filters:</span>
                         <div className="flex gap-2">
                             {['all', 'available', 'full'].map((status) => (
                                 <button
                                     key={status}
                                     onClick={() => setFilterStatus(status)}
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter border transition-all ${filterStatus === status
+                                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight border transition-all ${filterStatus === status
                                         ? 'bg-slate-900 text-white border-slate-900'
                                         : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                                         }`}
@@ -175,7 +175,7 @@ const HostelView = () => {
                             ))}
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
                         <div className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-green-500"></span> Available
                         </div>
@@ -192,11 +192,11 @@ const HostelView = () => {
                     {loading ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-2">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanning Units...</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Scanning Units...</span>
                         </div>
                     ) : filteredRooms.length === 0 ? (
                         <div className="py-20 text-center">
-                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs italic">No units match the selected criteria</p>
+                            <p className="text-slate-400 font-bold uppercase tracking-wider text-xs italic">No units match the selected criteria</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3">
@@ -209,7 +209,7 @@ const HostelView = () => {
                                             ? 'bg-red-50 border-red-200'
                                             : 'bg-white border-slate-200 hover:border-blue-400'}`}
                                     >
-                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-tighter mb-1">R-{room.roomNumber}</div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-tight mb-1">R-{room.roomNumber}</div>
                                         <div className={`text-sm font-bold ${isFull ? 'text-red-700' : 'text-slate-700'}`}>
                                             {room.occupied}/{room.capacity}
                                         </div>
@@ -223,7 +223,7 @@ const HostelView = () => {
                                         </div>
                                         {/* Hover Tooltip/Label */}
                                         <div className="absolute inset-x-0 bottom-full mb-2 hidden group-hover:block z-20">
-                                            <div className="bg-slate-900 text-white text-[9px] py-1 px-2 rounded whitespace-nowrap opacity-90 shadow-lg mx-auto w-max">
+                                            <div className="bg-slate-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap opacity-90 shadow-lg mx-auto w-max">
                                                 {isFull ? 'CAPACITY REACHED' : 'VACANCY AVAILABLE'}
                                             </div>
                                         </div>
@@ -248,7 +248,7 @@ const HostelView = () => {
                 )}
             >
                 <form id="add-hostel-form" onSubmit={handleAddHostel} className="space-y-4">
-                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight mb-4 border-b border-slate-100 pb-2">Building Specifications</p>
+                    <p className="text-sm text-slate-500 font-bold uppercase tracking-tight mb-4 border-b border-slate-200 pb-2">Building Specifications</p>
                     <Input label="Block Name / ID" required value={hostelData.name} onChange={(e) => setHostelData({ ...hostelData, name: e.target.value })} />
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">
@@ -280,7 +280,7 @@ const HostelView = () => {
                 )}
             >
                 <form id="add-room-form" onSubmit={handleAddRoom} className="space-y-4">
-                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight mb-4 border-b border-slate-100 pb-2">Unit Configuration</p>
+                    <p className="text-sm text-slate-500 font-bold uppercase tracking-tight mb-4 border-b border-slate-200 pb-2">Unit Configuration</p>
                     <Input label="Room Inventory Number" required value={roomData.roomNumber} onChange={(e) => setRoomData({ ...roomData, roomNumber: e.target.value })} />
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">

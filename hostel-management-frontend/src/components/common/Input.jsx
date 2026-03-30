@@ -12,7 +12,7 @@ const Input = ({ label, error, type = 'text', className = '', ...props }) => {
         : 'focus:border-brand-500 dark:focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25'
     }`;
 
-    const eyeCls = 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-brand-500';
+    const eyeCls = 'text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-brand-500';
 
     const errCls = 'text-red-600 dark:text-red-400';
 

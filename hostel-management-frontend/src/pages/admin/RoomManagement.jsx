@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import { hostelAPI, studentAPI } from '../../services/api';
-import { BuildingIcon, DoorIcon, UsersIcon, CheckIcon, XIcon } from '../../components/common/Icons';
+import { 
+    BuildingIcon, 
+    DoorIcon, 
+    UsersIcon, 
+    CheckIcon, 
+    XIcon, 
+    PlusIcon, 
+    SearchIcon,
+    FilterIcon,
+    CheckCircleIcon,
+    AlertCircleIcon,
+    MapPinIcon
+} from '../../components/common/Icons';
+import Modal from '../../components/common/Modal';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
 
 const RoomManagement = () => {
     const [hostels, setHostels] = useState([]);
@@ -9,12 +24,22 @@ const RoomManagement = () => {
     const [selectedHostelId, setSelectedHostelId] = useState('');
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showRoomModal, setShowRoomModal] = useState(false);
     const [selectedBed, setSelectedBed] = useState(null);
     const [selectedStudentId, setSelectedStudentId] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
-    // Fetch Hostels on Mount
+    const [roomData, setRoomData] = useState({
+        roomNumber: '',
+        roomType: 'single',
+        floor: 'Ground Floor',
+        totalBeds: 4,
+        hostel: ''
+    });
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -31,10 +56,9 @@ const RoomManagement = () => {
         fetchInitialData();
     }, []);
 
-    // Fetch Rooms when Hostel changes
     useEffect(() => {
         if (!selectedHostelId) return;
-        
+        setRoomData(prev => ({ ...prev, hostel: selectedHostelId }));
         const fetchRooms = async () => {
             setLoading(true);
             try {
@@ -51,14 +75,12 @@ const RoomManagement = () => {
         fetchRooms();
     }, [selectedHostelId]);
 
-    // Fetch Unassigned Students when modal opens
     useEffect(() => {
         if (showAssignModal) {
             const fetchStudents = async () => {
                 try {
                     const response = await studentAPI.getAll();
                     if (response.success) {
-                        // Filter for students without rooms
                         const unassigned = response.data.filter(s => 
                             !s.profile || s.profile.allocationStatus !== 'allocated'
                         );
@@ -74,7 +96,7 @@ const RoomManagement = () => {
 
     const handleAssignStudent = async () => {
         if (!selectedStudentId || !selectedBed) return;
-
+        setSubmitting(true);
         try {
             const payload = {
                 studentId: selectedStudentId,
@@ -85,11 +107,9 @@ const RoomManagement = () => {
 
             const response = await hostelAPI.allocateBed(payload);
             if (response.success) {
-                // Refresh data
                 const roomRes = await hostelAPI.getRooms(selectedHostelId);
                 if (roomRes.success) {
                     setRooms(roomRes.data);
-                    // Update current selected room modal if open
                     const updatedRoom = roomRes.data.find(r => r._id === selectedBed.roomId);
                     if (updatedRoom) setSelectedRoom(updatedRoom);
                 }
@@ -97,232 +117,328 @@ const RoomManagement = () => {
                 setShowAssignModal(false);
                 setSelectedStudentId('');
                 setSelectedBed(null);
-                alert('Student successfully assigned to room!');
             }
         } catch (err) {
-            alert(err.message || 'Error assigning student');
+            console.error(err);
+            alert(err.message || 'Error occurred while assigning bed');
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const getOccupancyColor = (room) => {
-        if (room.occupiedBeds === 0) return 'bg-slate-100 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700';
-        if (room.occupiedBeds >= room.totalBeds) return 'bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800';
-        return 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-300 dark:border-emerald-800';
+    const handleAddRoom = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            const response = await hostelAPI.createRoom(roomData);
+            if (response.success) {
+                setShowRoomModal(false);
+                setRoomData({ roomNumber: '', roomType: 'single', floor: 'Ground Floor', totalBeds: 4, hostel: selectedHostelId });
+                const roomRes = await hostelAPI.getRooms(selectedHostelId);
+                if (roomRes.success) setRooms(roomRes.data);
+            }
+        } catch (err) {
+            alert(err.message || 'Error creating room');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const filteredRooms = rooms.filter(r => 
+        (r.roomNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.roomType || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getOccupancyStats = (room) => {
+        const percentage = (room.occupiedBeds / room.totalBeds) * 100;
+        if (percentage === 0) return { label: 'Empty', color: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200', progress: 'bg-slate-200 dark:bg-slate-600' };
+        if (percentage >= 100) return { label: 'Full', color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200', progress: 'bg-red-500' };
+        return { label: 'Active', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200', progress: 'bg-blue-500' };
     };
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">Global Unit Management</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium italic">Authorized residential inventory and occupancy monitoring.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Room Management</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-300 mt-1">Manage hostel rooms and assignments</p>
+                </div>
+                <div className="flex gap-3">
+                    <Button variant="primary" onClick={() => setShowRoomModal(true)} className="flex items-center gap-2">
+                        <PlusIcon className="w-4 h-4" /> Add Room
+                    </Button>
                 </div>
             </div>
 
-            {/* Selection Bar */}
-            <div className="bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 p-4 shadow-sm transition-colors">
-                <div className="flex flex-col md:flex-row gap-4 items-end">
-                    <div className="flex-1">
-                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Facilities Block</label>
-                        <select
-                            value={selectedHostelId}
-                            onChange={(e) => setSelectedHostelId(e.target.value)}
-                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded text-sm text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-1 focus:ring-blue-600 transition-all"
-                        >
-                            <option value="">Select a Hostel</option>
-                            {hostels.map((hostel) => (
-                                <option key={hostel._id} value={hostel._id}>{hostel.name} ({hostel.type})</option>
-                            ))}
-                        </select>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm flex flex-col md:flex-row gap-4">
+                <div className="flex-1 flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <BuildingIcon className="w-5 h-5 text-slate-400" />
+                    <select
+                        value={selectedHostelId}
+                        onChange={(e) => setSelectedHostelId(e.target.value)}
+                        className="bg-transparent border-none text-sm font-semibold text-slate-900 dark:text-white focus:outline-none w-full cursor-pointer"
+                    >
+                        {hostels.map((hostel) => (
+                            <option key={hostel._id} value={hostel._id} className="dark:bg-slate-800">{hostel.name} Center • {hostel.type}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="flex-1 flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 focus-within:border-blue-500 transition-colors">
+                    <SearchIcon className="w-4 h-4 text-slate-400" />
+                    <input 
+                        type="text" 
+                        placeholder="Search by room no. or type..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-transparent border-none text-sm font-medium text-slate-900 dark:text-white focus:outline-none w-full placeholder:text-slate-400"
+                    />
+                </div>
+
+                <div className="flex items-center gap-6 px-4 py-2 border-l border-slate-200 dark:border-slate-700">
+                    <div className="text-center">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Total</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white leading-none mt-1">{rooms.length}</p>
                     </div>
-                    <div className="flex gap-4 px-6 border-l border-slate-100 dark:border-slate-800">
-                        <div className="text-center">
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Total Units</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white">{rooms.length}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Available</p>
-                            <p className="text-xl font-black text-blue-600">{rooms.filter(r => r.occupiedBeds < r.totalBeds).length}</p>
-                        </div>
+                    <div className="text-center">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Vacant</p>
+                        <p className="text-lg font-bold text-green-600 dark:text-green-400 leading-none mt-1">{rooms.filter(r => r.occupiedBeds < r.totalBeds).length}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Rooms Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {loading ? (
-                    <div className="col-span-full py-20 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Querying Inventory...</p>
-                    </div>
-                ) : rooms.length === 0 ? (
-                    <div className="col-span-full py-20 text-center bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-800 rounded">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No units found for this facility</p>
-                    </div>
-                ) : (
-                    rooms.map((room) => (
-                        <div
-                            key={room._id}
-                            onClick={() => setSelectedRoom(room)}
-                            className={`${getOccupancyColor(room)} border rounded p-4 cursor-pointer hover:border-blue-400 transition-all`}
-                        >
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <DoorIcon className="w-4 h-4 text-slate-600" />
-                                    <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tighter">Room {room.roomNumber}</span>
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+            ) : filteredRooms.length === 0 ? (
+                <div className="py-20 text-center bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <DoorIcon className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">No rooms found in this criteria.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {filteredRooms.map((room) => {
+                        const style = getOccupancyStats(room);
+                        return (
+                            <div
+                                key={room._id}
+                                onClick={() => setSelectedRoom(room)}
+                                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all group"
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="w-10 h-10 bg-slate-50 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        <DoorIcon className="w-5 h-5" />
+                                    </div>
+                                    <span className={`text-xs font-semibold px-2 py-1 rounded-md ${style.color}`}>
+                                        {style.label}
+                                    </span>
                                 </div>
-                                <span className={`text-[10px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded ${
-                                    room.occupiedBeds >= room.totalBeds ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                                }`}>
-                                    {room.occupiedBeds >= room.totalBeds ? 'FULL' : 'VACANCY'}
-                                </span>
-                            </div>
 
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between text-[11px] font-bold">
-                                    <span className="text-slate-400 uppercase">Class:</span>
-                                    <span className="text-slate-700 dark:text-slate-300 uppercase">{room.roomType}</span>
+                                <div className="mb-4">
+                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">Room {room.roomNumber}</h4>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{room.floor}</span>
+                                        <span className="text-xs font-medium text-slate-400 dark:text-slate-400">•</span>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-300">{room.roomType}</p>
+                                    </div>
                                 </div>
-                                <div className="flex items-center justify-between text-[11px] font-bold">
-                                    <span className="text-slate-400 uppercase">Load:</span>
-                                    <span className="text-slate-700 dark:text-slate-300">{room.occupiedBeds}/{room.totalBeds}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
-                                    <div
-                                        className={`h-full ${room.occupiedBeds >= room.totalBeds ? 'bg-red-500' : 'bg-blue-600'}`}
-                                        style={{ width: `${(room.occupiedBeds / room.totalBeds) * 100}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* Room Details Modal */}
-            {selectedRoom && (
-                <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedRoom(null)}>
-                    <div className="bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/40 rounded flex items-center justify-center">
-                                    <DoorIcon className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase">ROOM {selectedRoom.roomNumber}</h2>
-                                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">{selectedRoom.hostel?.name} Block</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setSelectedRoom(null)} className="text-slate-400 hover:text-slate-900"><XIcon className="w-5 h-5" /></button>
-                        </div>
-
-                        <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded text-center border border-slate-100 dark:border-slate-800">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Type</p>
-                                    <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{selectedRoom.roomType}</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded text-center border border-slate-100 dark:border-slate-800">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Capacity</p>
-                                    <p className="text-xs font-bold text-slate-900 dark:text-white">{selectedRoom.totalBeds} Units</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded text-center border border-slate-100 dark:border-slate-800">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Status</p>
-                                    <p className={`text-xs font-bold ${selectedRoom.occupiedBeds >= selectedRoom.totalBeds ? 'text-red-600' : 'text-blue-600'}`}>
-                                        {selectedRoom.occupiedBeds >= selectedRoom.totalBeds ? 'FULL' : 'VACANCY'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <UsersIcon className="w-3 h-3" />
-                                    Authorized Occupants ({selectedRoom.occupiedBeds}/{selectedRoom.totalBeds})
-                                </h3>
 
                                 <div className="space-y-2">
-                                    {selectedRoom.beds && selectedRoom.beds.map((bed, index) => (
-                                        <div key={bed._id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded flex items-center justify-center text-[10px] font-black ${
-                                                    bed.status === 'occupied' ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
-                                                }`}>
-                                                    {bed.bedNumber}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">
-                                                        {bed.status === 'occupied' ? (bed.student?.name || 'Assigned Student') : 'Vacant Bed'}
-                                                    </p>
-                                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tight">
-                                                        {bed.status === 'occupied' ? `ID: ${bed.student?._id?.substring(0,8)}` : 'Available for Provisioning'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            {bed.status === 'available' && (
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedBed({ roomId: selectedRoom._id, bedId: bed._id });
-                                                        setShowAssignModal(true);
-                                                    }}
-                                                    className="px-3 py-1 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded shadow-sm hover:bg-blue-700 transition-all"
-                                                >
-                                                    Provision
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    {(!selectedRoom.beds || selectedRoom.beds.length === 0) && (
-                                        <p className="text-center py-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">No bed infrastructure initialization found</p>
-                                    )}
+                                    <div className="flex items-center justify-between text-xs font-semibold">
+                                        <span className="text-slate-500 dark:text-slate-300">Occupancy</span>
+                                        <span className={room.occupiedBeds >= room.totalBeds ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}>
+                                            {room.occupiedBeds} / {room.totalBeds} BEDS
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full transition-all duration-500 ${style.progress}`}
+                                            style={{ width: `${(room.occupiedBeds / room.totalBeds) * 100}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Room Addition Modal */}
+            <Modal
+                isOpen={showRoomModal}
+                onClose={() => setShowRoomModal(false)}
+                title="Initialize New Room"
+                footer={(
+                    <>
+                        <Button variant="secondary" onClick={() => setShowRoomModal(false)}>Cancel</Button>
+                        <Button variant="primary" type="submit" form="add-room-form" loading={submitting}>Add Room</Button>
+                    </>
+                )}
+            >
+                <form id="add-room-form" onSubmit={handleAddRoom} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input 
+                            label="Room Number" 
+                            placeholder="e.g. 101"
+                            required 
+                            value={roomData.roomNumber} 
+                            onChange={(e) => setRoomData({ ...roomData, roomNumber: e.target.value })} 
+                        />
+                        <div className="flex flex-col gap-1.5">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Floor</label>
+                            <select
+                                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all placeholder:text-slate-400 font-medium"
+                                value={roomData.floor}
+                                onChange={(e) => setRoomData({ ...roomData, floor: e.target.value })}
+                            >
+                                <option value="Ground Floor">Ground Floor</option>
+                                <option value="1st Floor">1st Floor</option>
+                                <option value="2nd Floor">2nd Floor</option>
+                                <option value="3rd Floor">3rd Floor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Room Type</label>
+                            <select
+                                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all placeholder:text-slate-400 font-medium"
+                                value={roomData.roomType}
+                                onChange={(e) => setRoomData({ ...roomData, roomType: e.target.value })}
+                            >
+                                <option value="single">Single</option>
+                                <option value="double">Double</option>
+                                <option value="triple">Triple</option>
+                                <option value="quad">Quad</option>
+                                <option value="dormitory">Dormitory</option>
+                            </select>
+                        </div>
+                        <Input 
+                            label="Bed Capacity" 
+                            type="number" 
+                            min="1"
+                            max="10"
+                            required
+                            value={roomData.totalBeds} 
+                            onChange={(e) => setRoomData({ ...roomData, totalBeds: e.target.value })} 
+                        />
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Room Details Modal */}
+            <Modal
+                isOpen={!!selectedRoom}
+                onClose={() => setSelectedRoom(null)}
+                title={`Room ${selectedRoom?.roomNumber} Details`}
+            >
+                {selectedRoom && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-center">
+                                <p className="text-xs text-slate-500 dark:text-slate-300 font-semibold mb-1">Status</p>
+                                <p className={`text-sm font-bold ${selectedRoom.occupiedBeds >= selectedRoom.totalBeds ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                    {selectedRoom.occupiedBeds >= selectedRoom.totalBeds ? 'FULL' : 'AVAILABLE'}
+                                </p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-center">
+                                <p className="text-xs text-slate-500 dark:text-slate-300 font-semibold mb-1">Capacity</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRoom.occupiedBeds}/{selectedRoom.totalBeds}</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-center">
+                                <p className="text-xs text-slate-500 dark:text-slate-300 font-semibold mb-1">Type/Floor</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{selectedRoom.roomType} / {selectedRoom.floor}</p>
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 flex justify-end">
-                            <button onClick={() => setSelectedRoom(null)} className="px-4 py-1 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 transition-colors">Dismiss</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Assign Student Modal */}
-            {showAssignModal && (
-                <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => setShowAssignModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase">Unit Provisioning</h2>
-                        </div>
-                        <div className="p-6">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Candidate Selection</label>
-                            <select 
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded px-4 py-2 text-sm font-bold focus:ring-1 focus:ring-blue-600 outline-none transition-all"
-                                value={selectedStudentId}
-                                onChange={(e) => setSelectedStudentId(e.target.value)}
-                            >
-                                <option value="">-- AUTHORIZE CANDIDATE --</option>
-                                {unassignedStudents.map(student => (
-                                    <option key={student._id} value={student._id}>{student.name} ({student.email.split('@')[0]})</option>
+                        <div>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                                <UsersIcon className="w-4 h-4 text-slate-500" /> Allocated Beds
+                            </h3>
+                            <div className="space-y-3">
+                                {selectedRoom.beds && selectedRoom.beds.map((bed) => (
+                                    <div key={bed._id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center ${
+                                                bed.status === 'occupied' 
+                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-300'
+                                            }`}>
+                                                <span className="text-xs font-bold">{bed.bedNumber}</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                    {bed.status === 'occupied' ? (bed.student?.name || 'Resident') : 'Available'}
+                                                </p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-300 mt-0.5">
+                                                    {bed.status === 'occupied' && bed.student ? `ID: ${bed.student.registrationNumber || bed.student._id.substring(0,8)}` : 'Ready for allocation'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        {bed.status === 'available' ? (
+                                            <Button 
+                                                variant="primary"
+                                                onClick={() => {
+                                                    setSelectedBed({ roomId: selectedRoom._id, bedId: bed._id });
+                                                    setShowAssignModal(true);
+                                                }}
+                                                className="text-xs py-1.5 px-3"
+                                            >
+                                                Assign
+                                            </Button>
+                                        ) : (
+                                            <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600 dark:text-green-400 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 rounded-md">
+                                                <CheckCircleIcon className="w-3.5 h-3.5" /> Allocated
+                                            </span>
+                                        )}
+                                    </div>
                                 ))}
-                            </select>
-                            {unassignedStudents.length === 0 && (
-                                <p className="text-[10px] text-red-600 font-bold uppercase tracking-tight mt-3 italic">No eligible candidates awaiting allocation.</p>
-                            )}
-                        </div>
-                        <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50 dark:bg-slate-950/50">
-                            <button onClick={() => setShowAssignModal(false)} className="px-4 py-1 text-[10px] font-black text-slate-500 uppercase tracking-widest">Cancel</button>
-                            <button 
-                                onClick={handleAssignStudent} 
-                                disabled={!selectedStudentId}
-                                className={`px-6 py-2 rounded text-[10px] font-black uppercase tracking-widest text-white transition-all ${
-                                    !selectedStudentId ? 'bg-slate-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-md'
-                                }`}
-                            >
-                                Finalize Provisioning
-                            </button>
+                            </div>
                         </div>
                     </div>
+                )}
+            </Modal>
+
+            {/* Assignment Modal */}
+            <Modal
+                isOpen={showAssignModal}
+                onClose={() => setShowAssignModal(false)}
+                title="Assign Bed to Student"
+                footer={(
+                    <>
+                        <Button variant="secondary" onClick={() => setShowAssignModal(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={handleAssignStudent} loading={submitting} disabled={!selectedStudentId}>Confirm Assignment</Button>
+                    </>
+                )}
+            >
+                <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 p-3 rounded-lg flex items-start gap-3">
+                        <AlertCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                        <p className="text-sm text-blue-800 dark:text-blue-300">You are about to assign an explicit bed unit to a student. Only authorized students without an active room will appear here.</p>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 mt-4">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Select Student Candidate</label>
+                        <select 
+                            className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                            value={selectedStudentId}
+                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                        >
+                            <option value="">-- Select Student --</option>
+                            {unassignedStudents.map(student => (
+                                <option key={student._id} value={student._id}>
+                                    {student.name} • {student.registrationNumber || student.email}
+                                </option>
+                            ))}
+                        </select>
+                        {unassignedStudents.length === 0 && (
+                            <p className="text-xs text-red-500 dark:text-red-400 font-medium mt-1">No pending students available for assignment.</p>
+                        )}
+                    </div>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

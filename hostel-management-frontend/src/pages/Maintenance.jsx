@@ -1,63 +1,36 @@
 import { useState, useEffect, useMemo } from 'react';
-import { complaintAPI, studentAPI } from '../services/api';
+import { complaintAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
-import Modal from '../components/common/Modal';
-import Table, { TableRow, TableCell } from '../components/common/Table';
-import mockData from '../utils/mockData';
 import {
-    ToolIcon,
+    WrenchIcon,
     ClockIcon,
     CheckCircleIcon,
     AlertCircleIcon,
     FilterIcon,
-    ChevronDownIcon
+    ChevronRightIcon,
+    ArrowUpRightIcon,
+    XIcon,
+    PlusIcon,
+    ZapIcon,
+    DropletIcon,
+    LightbulbIcon,
+    HomeIcon
 } from '../components/common/Icons';
 
 const Maintenance = () => {
     const { user } = useAuth();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
-    // ... rest of state ...
-    const [exporting, setExporting] = useState(false);
-    const [showForm, setShowForm] = useState(false);
-    const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
-    const [updateData, setUpdateData] = useState({
-        status: '',
-        priority: '',
-        resolutionNotes: '',
-        staffNotes: ''
-    });
-    const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        category: 'Other',
-        priority: 'Medium'
-    });
     const [submitting, setSubmitting] = useState(false);
-
-    // Filters state
-    const [filters, setFilters] = useState({
-        hostel: 'All',
-        priority: 'All',
-        status: 'All'
-    });
+    const [filters, setFilters] = useState({ hostel: 'All', priority: 'All', status: 'All' });
 
     const fetchTickets = async () => {
         setLoading(true);
         try {
-            const params = {
-                hostel: filters.hostel,
-                priority: filters.priority,
-                status: filters.status
-            };
-            const response = await complaintAPI.getAll(params);
-            if (response.success && response.data.length > 0) {
+            const response = await complaintAPI.getAll(filters);
+            if (response.success) {
                 setTickets(response.data);
-            } else {
-                throw new Error('No data');
             }
         } catch (err) {
             console.error('Failed to fetch tickets:', err);
@@ -67,434 +40,244 @@ const Maintenance = () => {
         }
     };
 
-    useEffect(() => {
-        fetchTickets();
-    }, [filters]);
+    useEffect(() => { fetchTickets(); }, [filters]);
 
-    const stats = useMemo(() => {
-        const open = tickets.filter(t => t.status === 'Pending' || t.status === 'In Progress').length;
-        const highPriority = tickets.filter(t => t.priority === 'High' && t.status !== 'Resolved' && t.status !== 'Closed').length;
-        const inProgress = tickets.filter(t => t.status === 'In Progress').length;
-
-        // This is a simplified "Resolved This Month" stat
-        const resolvedThisMonth = tickets.filter(t => t.status === 'Resolved' && new Date(t.updatedAt).getMonth() === new Date().getMonth()).length;
-
-        return { open, highPriority, inProgress, resolvedThisMonth };
-    }, [tickets]);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleUpdateStatus = async (id, status) => {
         setSubmitting(true);
         try {
-            const response = await complaintAPI.create(formData);
+            const response = await complaintAPI.updateStatus(id, { status });
             if (response.success) {
-                setShowForm(false);
-                setFormData({ title: '', description: '', category: 'Other', priority: 'Medium' });
-                fetchTickets();
+                setTickets(prev => prev.map(t => t._id === id ? { ...t, status } : t));
+                setSelectedTicket(null);
             }
         } catch (err) {
-            console.error('Submission failed:', err);
+            alert('Operation failed');
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleUpdateTicket = async () => {
-        setSubmitting(true);
-        try {
-            const response = await complaintAPI.updateStatus(selectedTicket._id, updateData);
-            if (response.success) {
-                setShowUpdateModal(false);
-                fetchTickets();
-            }
-        } catch (err) {
-            console.error('Update failed:', err);
-        } finally {
-            setSubmitting(true);
-        }
-    };
-
-    const openUpdateModal = (ticket) => {
-        setSelectedTicket(ticket);
-        setUpdateData({
-            status: ticket.status,
-            priority: ticket.priority,
-            resolutionNotes: ticket.resolutionNotes || '',
-            staffNotes: ticket.staffNotes || ''
-        });
-        setShowUpdateModal(true);
-    };
-
-    const StatusBadge = ({ status }) => {
-        const styles = {
-            'Pending': 'bg-amber-50 text-amber-600 border-amber-100',
-            'In Progress': 'bg-blue-50 text-blue-600 border-blue-100',
-            'Resolved': 'bg-emerald-50 text-emerald-600 border-emerald-100',
-            'Closed': 'bg-slate-50 text-slate-500 border-slate-100'
-        };
-        return (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${styles[status] || styles['Pending']}`}>
-                {status}
-            </span>
-        );
-    };
-
-    const PriorityBadge = ({ priority }) => {
-        const styles = {
-            'High': 'text-rose-600 bg-rose-50 border-rose-100',
-            'Medium': 'text-amber-600 bg-amber-50 border-amber-100',
-            'Low': 'text-emerald-600 bg-emerald-50 border-emerald-100'
-        };
-        return (
-            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase tracking-tighter ${styles[priority] || styles['Medium']}`}>
-                {priority}
-            </span>
-        );
-    };
+    const stats = useMemo(() => ({
+        open: tickets.filter(t => t.status === 'Pending').length,
+        active: tickets.filter(t => t.status === 'In Progress').length,
+        critical: tickets.filter(t => t.priority === 'High' && t.status !== 'Resolved').length,
+        resolved: tickets.filter(t => t.status === 'Resolved').length
+    }), [tickets]);
 
     return (
-        <div className="space-y-6">
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Maintenance {user?.role === 'student' ? 'Requests' : 'Management'}</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Tracking and resolution of facility maintenance and utility grievances.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">Service Console</h1>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-300 mt-2">Centralized diagnostic and resolution queue for facility infrastructure.</p>
                 </div>
-                {user?.role === 'student' && (
-                    <Button variant="primary" onClick={() => setShowForm(true)}>Raise New Request</Button>
+                {user?.role !== 'student' && (
+                    <div className="flex items-center gap-4">
+                        <select 
+                            value={filters.status} 
+                            onChange={e => setFilters({...filters, status: e.target.value})}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2 text-xs font-bold uppercase tracking-wider outline-none shadow-soft"
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
                 )}
             </div>
 
-            {/* KPI Cards (Hidden for students) */}
+            {/* KPI Row */}
             {user?.role !== 'student' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="data-card !p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center text-amber-500 dark:text-amber-400">
-                            <ClockIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Open Tickets</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.open}</p>
-                        </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard label="Pending Analysis" value={stats.open} icon={<ClockIcon className="w-4 h-4" />} color="amber" />
+                    <StatCard label="Active Missions" value={stats.active} icon={<WrenchIcon className="w-4 h-4" />} color="blue" />
+                    <StatCard label="Critical Issues" value={stats.critical} icon={<AlertCircleIcon className="w-4 h-4" />} color="rose" />
+                    <StatCard label="Closed Cycles" value={stats.resolved} icon={<CheckCircleIcon className="w-4 h-4" />} color="emerald" />
+                </div>
+            )}
+
+            {/* Ticket Stream */}
+            <div className="grid grid-cols-1 gap-4">
+                {loading ? (
+                    [1,2,3].map(i => <div key={i} className="h-32 bg-slate-100 dark:bg-slate-800 rounded-[2rem] animate-pulse"></div>)
+                ) : tickets.length === 0 ? (
+                    <div className="py-20 text-center bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-700 rounded-[2.5rem]">
+                        <WrenchIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">System Operational. No active service tickets.</p>
                     </div>
-                    <div className="data-card !p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 rounded-lg flex items-center justify-center text-rose-500 dark:text-rose-400">
-                            <AlertCircleIcon className="w-5 h-5" />
+                ) : (
+                    tickets.map((ticket) => (
+                        <div key={ticket._id} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[2.5rem] p-6 pr-8 shadow-soft hover:shadow-premium transition-all duration-500 flex items-center gap-6 overflow-hidden">
+                            {/* Category Icon */}
+                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl flex items-center justify-center text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all duration-500">
+                                <CategoryIcon category={ticket.category} />
+                            </div>
+
+                            {/* Core Info */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <span className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded-md">#{ticket._id.slice(-6)}</span>
+                                    <PriorityBadge priority={ticket.priority} />
+                                </div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">{ticket.title}</h3>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-1.5 opacity-60">
+                                        <HomeIcon className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-bold uppercase tracking-wider">{ticket.hostelName} • {ticket.roomNumber}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 opacity-60">
+                                        <ClockIcon className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-bold uppercase tracking-wider">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Status & Action */}
+                            <div className="flex items-center gap-8">
+                                <StatusTag status={ticket.status} />
+                                <button 
+                                    onClick={() => setSelectedTicket(ticket)}
+                                    className="w-12 h-12 bg-slate-50 dark:bg-slate-800 hover:bg-brand-600 hover:text-white border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center transition-all shadow-sm"
+                                >
+                                    <ChevronRightIcon className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">High Priority</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.highPriority}</p>
+                    ))
+                )}
+            </div>
+
+            {/* Resolution/Detail Modal */}
+            {selectedTicket && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedTicket(null)}>
+                    <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-premium modal-panel overflow-hidden border border-white/5" onClick={e => e.stopPropagation()}>
+                        <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold uppercase tracking-wider mb-1">Service Ticket Dossier</h2>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider opacity-80">Reference ID: {selectedTicket._id}</p>
+                            </div>
+                            <button onClick={() => setSelectedTicket(null)} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
+                                <XIcon className="w-5 h-5" />
+                            </button>
                         </div>
-                    </div>
-                    <div className="data-card !p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-500 dark:text-blue-400">
-                            <ToolIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">In Progress</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.inProgress}</p>
-                        </div>
-                    </div>
-                    <div className="data-card !p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-500 dark:text-emerald-400">
-                            <CheckCircleIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Resolved (MTD)</p>
-                            <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{stats.resolvedThisMonth}</p>
+
+                        <div className="p-10 space-y-8">
+                            <div className="space-y-4">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Headline</span>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedTicket.title}</h3>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Student Disclosure</span>
+                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                                        "{selectedTicket.description}"
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Origin Details</span>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-white uppercase leading-tight">
+                                        {selectedTicket.student?.name}<br/>
+                                        Room {selectedTicket.roomNumber}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">System Priority</span>
+                                    <PriorityBadge priority={selectedTicket.priority} />
+                                </div>
+                            </div>
+
+                            {user?.role !== 'student' && (
+                                <div className="pt-6 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-3">
+                                    {selectedTicket.status === 'Pending' && (
+                                        <button 
+                                            disabled={submitting}
+                                            onClick={() => handleUpdateStatus(selectedTicket._id, 'In Progress')}
+                                            className="col-span-2 py-4 bg-brand-600 text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-xl shadow-brand-500/20 hover:bg-brand-700 transition-all border border-brand-500"
+                                        >
+                                            Incept Resolution
+                                        </button>
+                                    )}
+                                    {selectedTicket.status === 'In Progress' && (
+                                        <button 
+                                            disabled={submitting}
+                                            onClick={() => handleUpdateStatus(selectedTicket._id, 'Resolved')}
+                                            className="col-span-2 py-4 bg-emerald-600 text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 transition-all border border-emerald-500"
+                                        >
+                                            Confirm Rectification
+                                        </button>
+                                    )}
+                                    {selectedTicket.status === 'Resolved' && (
+                                        <button 
+                                            disabled={submitting}
+                                            onClick={() => handleUpdateStatus(selectedTicket._id, 'Closed')}
+                                            className="col-span-2 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all"
+                                        >
+                                            Close Cycle
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
+        </div>
+    );
+};
 
-            {/* Main Content Area */}
-            <div className="table-container shadow-premium flex flex-col !bg-transparent !p-0">
-                {/* FiltersRow (Warden/Admin only) */}
-                {user?.role !== 'student' && (
-                    <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-4 bg-white dark:bg-slate-800">
-                        <div className="flex items-center gap-3">
-                            <select
-                                value={filters.hostel}
-                                onChange={(e) => setFilters({ ...filters, hostel: e.target.value })}
-                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-brand-500/20"
-                            >
-                                <option>All Hostels</option>
-                                <option>Diamond</option>
-                                <option>Sapphire</option>
-                            </select>
-                            <select
-                                value={filters.priority}
-                                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-brand-500/20"
-                            >
-                                <option>All Priority</option>
-                                <option>High</option>
-                                <option>Medium</option>
-                                <option>Low</option>
-                            </select>
-                            <select
-                                value={filters.status}
-                                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-brand-500/20"
-                            >
-                                <option>All Status</option>
-                                <option>Pending</option>
-                                <option>In Progress</option>
-                                <option>Resolved</option>
-                                <option>Closed</option>
-                            </select>
-                        </div>
-                    </div>
-                )}
-
-                {/* Tickets Table */}
-                <div className="flex-1">
-                    <Table headers={user?.role === 'student'
-                        ? ['Ticket ID', 'Issue Type', 'Description', 'Priority', 'Status', 'Reported Date']
-                        : ['Ticket ID', 'Student', 'Room Info', 'Issue Type', 'Priority', 'Status', 'Actions']
-                    }>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={user?.role === 'student' ? 6 : 7} className="py-20 text-center">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fetching Tickets...</span>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ) : tickets.length > 0 ? (
-                            tickets.map((ticket) => (
-                                <TableRow key={ticket._id} className="table-row-hover">
-                                    <TableCell>
-                                        <span className="font-mono text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">
-                                            #{ticket._id.slice(-6)}
-                                        </span>
-                                    </TableCell>
-
-                                    {user?.role !== 'student' && (
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-slate-900 dark:text-white">{ticket.student?.name || 'Unknown'}</span>
-                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{ticket.student?.phone || '-'}</span>
-                                            </div>
-                                        </TableCell>
-                                    )}
-
-                                    {user?.role !== 'student' && (
-                                        <TableCell>
-                                            <div className="flex flex-col text-[11px] font-medium text-slate-600">
-                                                <span>{ticket.hostelName}</span>
-                                                <span>Floor {ticket.floor}, Room {ticket.roomNumber}</span>
-                                            </div>
-                                        </TableCell>
-                                    )}
-
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-black text-slate-800 dark:text-slate-200">{ticket.category}</span>
-                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1">{ticket.title}</span>
-                                        </div>
-                                    </TableCell>
-
-                                    {user?.role === 'student' && (
-                                        <TableCell>
-                                            <span className="text-[11px] text-slate-500 font-medium max-w-xs line-clamp-1">
-                                                {ticket.description}
-                                            </span>
-                                        </TableCell>
-                                    )}
-
-                                    <TableCell>
-                                        <PriorityBadge priority={ticket.priority} />
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <StatusBadge status={ticket.status} />
-                                    </TableCell>
-
-                                    {user?.role === 'student' ? (
-                                        <TableCell>
-                                            <span className="text-[11px] text-slate-400 font-mono">
-                                                {new Date(ticket.createdAt).toLocaleDateString()}
-                                            </span>
-                                        </TableCell>
-                                    ) : (
-                                        <TableCell>
-                                            <button
-                                                onClick={() => openUpdateModal(ticket)}
-                                                className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm"
-                                            >
-                                                Manage
-                                            </button>
-                                        </TableCell>
-                                    )}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={user?.role === 'student' ? 6 : 7} className="py-20 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
-                                            <ToolIcon className="w-6 h-6" />
-                                        </div>
-                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">No Maintenance Tickets Found</span>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </Table>
-                </div>
+// Sub-components
+const StatCard = ({ label, value, icon, color }) => (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 rounded-[2rem] shadow-soft">
+        <div className="flex items-center justify-between mb-4">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-${color}-600 bg-${color}-50 dark:bg-${color}-900/20`}>
+                {icon}
             </div>
+            <ArrowUpRightIcon className="w-3 h-3 text-slate-300" />
+        </div>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+        <p className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{value}</p>
+    </div>
+);
 
-            {/* Raise New Request Modal (Student Only) */}
-            <Modal
-                isOpen={showForm}
-                onClose={() => setShowForm(false)}
-                title="Raise Facility Request"
-                footer={(
-                    <div className="flex gap-3 justify-end px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                        <Button variant="secondary" onClick={() => setShowForm(false)}>Discard Action</Button>
-                        <Button variant="primary" onClick={handleSubmit} loading={submitting}>Submit Ticket</Button>
-                    </div>
-                )}
-            >
-                <form id="maintenance-form" onSubmit={handleSubmit} className="p-6 space-y-6 bg-white dark:bg-slate-800 transition-colors">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <Input
-                                label="Issue Headline"
-                                required
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                placeholder="E.g. Electrical Short Circuit in A-302"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Problem Category</label>
-                            <select
-                                className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            >
-                                <option>Electrical</option>
-                                <option>Plumbing</option>
-                                <option>Furniture</option>
-                                <option>Cleaning</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Severity Level</label>
-                            <select
-                                className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
-                                value={formData.priority}
-                                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                            >
-                                <option>Low</option>
-                                <option>Medium</option>
-                                <option>High</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Technical Description</label>
-                        <textarea
-                            required
-                            rows="4"
-                            placeholder="Please provide specific details about the issue..."
-                            className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all resize-none"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        ></textarea>
-                    </div>
-                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 p-4 rounded-xl flex items-start gap-3">
-                        <div className="mt-0.5 text-emerald-600 dark:text-emerald-400">
-                            <CheckCircleIcon className="w-4 h-4" />
-                        </div>
-                        <p className="text-[11px] text-emerald-700 font-medium">
-                            Staff from your assigned hostel/floor will be notified immediately upon submission.
-                            Your room details will be automatically attached to this ticket.
-                        </p>
-                    </div>
-                </form>
-            </Modal>
+const CategoryIcon = ({ category }) => {
+    switch(category) {
+        case 'Electrical': return <ZapIcon className="w-7 h-7" />;
+        case 'Plumbing': return <DropletIcon className="w-7 h-7" />;
+        case 'Furniture': return <HomeIcon className="w-7 h-7" />;
+        case 'Lighting': return <LightbulbIcon className="w-7 h-7" />;
+        default: return <WrenchIcon className="w-7 h-7" />;
+    }
+};
 
-            {/* Update Ticket Modal (Staff Only) */}
-            <Modal
-                isOpen={showUpdateModal}
-                onClose={() => setShowUpdateModal(false)}
-                title="Manage Maintenance Ticket"
-                footer={(
-                    <div className="flex gap-3 justify-end px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                        <Button variant="secondary" onClick={() => setShowUpdateModal(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleUpdateTicket} loading={submitting}>Save Updates</Button>
-                    </div>
-                )}
-            >
-                {selectedTicket && (
-                    <div className="p-6 space-y-6 bg-white dark:bg-slate-800 transition-colors">
-                        {/* Ticket Info Summary */}
-                        <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl p-4 border border-slate-100 dark:border-slate-700 flex flex-col gap-2">
-                            <div className="flex justify-between items-start">
-                                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">#{selectedTicket._id.slice(-6)}</span>
-                                <StatusBadge status={updateData.status} />
-                            </div>
-                            <h3 className="text-sm font-black text-slate-900 dark:text-white">{selectedTicket.title}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{selectedTicket.description}</p>
-                        </div>
+const PriorityBadge = ({ priority }) => {
+    const config = {
+        'High': 'text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800',
+        'Medium': 'text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800',
+        'Low': 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800'
+    };
+    return (
+        <span className={`px-2 py-0.5 rounded text-xs font-bold border uppercase tracking-wide ${config[priority] || config['Medium']}`}>
+            {priority} RISK
+        </span>
+    );
+};
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Workflow Status</label>
-                                <select
-                                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
-                                    value={updateData.status}
-                                    onChange={(e) => setUpdateData({ ...updateData, status: e.target.value })}
-                                >
-                                    <option>Pending</option>
-                                    <option>In Progress</option>
-                                    <option>Resolved</option>
-                                    <option>Closed</option>
-                                </select>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Priority Override</label>
-                                <select
-                                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none"
-                                    value={updateData.priority}
-                                    onChange={(e) => setUpdateData({ ...updateData, priority: e.target.value })}
-                                >
-                                    <option>Low</option>
-                                    <option>Medium</option>
-                                    <option>High</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Resolution Detail (Visible to Student)</label>
-                            <textarea
-                                rows="3"
-                                placeholder="Explain what fix was applied..."
-                                className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none resize-none"
-                                value={updateData.resolutionNotes}
-                                onChange={(e) => setUpdateData({ ...updateData, resolutionNotes: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Internal Staff Notes</label>
-                            <textarea
-                                rows="2"
-                                placeholder="Private notes for administration..."
-                                className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white outline-none resize-none"
-                                value={updateData.staffNotes}
-                                onChange={(e) => setUpdateData({ ...updateData, staffNotes: e.target.value })}
-                            ></textarea>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+const StatusTag = ({ status }) => {
+    const config = {
+        'Pending': 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]',
+        'In Progress': 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]',
+        'Resolved': 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]',
+        'Closed': 'bg-slate-400'
+    };
+    return (
+        <div className="flex items-center gap-2.5">
+            <div className={`w-2.5 h-2.5 rounded-full ${config[status] || config['Pending']}`}></div>
+            <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">{status}</span>
         </div>
     );
 };

@@ -23,7 +23,7 @@ export default function AuthSplitShell({
     alternateCta,
 }) {
     return (
-        <div className="flex min-h-screen flex-col bg-slate-100 dark:bg-slate-950 lg:flex-row transition-colors">
+        <div className="flex min-h-screen flex-col bg-slate-100 dark:bg-slate-900 lg:flex-row transition-colors">
             <aside className="auth-hero relative flex shrink-0 flex-col px-6 py-10 text-white sm:px-10 sm:py-12 lg:sticky lg:top-0 lg:h-screen lg:min-h-screen lg:w-[min(46%,32rem)] lg:overflow-y-auto lg:py-16">
                 <div className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col lg:mx-0">
                     <div className="mb-8 flex items-center gap-3 lg:mb-12">
@@ -31,7 +31,7 @@ export default function AuthSplitShell({
                             H
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/90">
+                            <p className="text-sm font-semibold uppercase tracking-wide text-sky-200/90">
                                 {heroEyebrow}
                             </p>
                             <p className="truncate text-lg font-bold tracking-tight">Hostel MS</p>

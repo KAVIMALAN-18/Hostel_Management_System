@@ -38,8 +38,16 @@ const Login = () => {
         const newErrors = {};
         if (!formData.email) {
             newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Invalid email address';
+        } else {
+            const email = formData.email.toLowerCase();
+            const isValidDomain = email === 'admin@hostel.ac.in' || 
+                                 email.endsWith('@warden.ac.in') || 
+                                 email.endsWith('@student.ac.in');
+            if (!/\S+@\S+\.\S+/.test(email)) {
+                newErrors.email = 'Invalid email address';
+            } else if (!isValidDomain) {
+                newErrors.email = 'Use @hostel.ac.in, @warden.ac.in, or @student.ac.in';
+            }
         }
         if (!formData.password) {
             newErrors.password = 'Password is required';
@@ -83,10 +91,10 @@ const Login = () => {
             alternateCta="Create an account"
         >
             <div className="auth-form-surface-elevated">
-                <div className="mb-8 border-b border-slate-100/90 dark:border-slate-700/50 pb-6">
+                <div className="mb-8 border-b border-slate-200/90 dark:border-slate-700/50 pb-6">
                     <p className="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">Sign in</p>
                     <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Access your dashboard</h2>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Use your institutional email and password.</p>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">Use your institutional email and password.</p>
                 </div>
 
                 {serverError && (

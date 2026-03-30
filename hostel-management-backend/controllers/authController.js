@@ -1,4 +1,5 @@
-const User = require('../models/User');
+const { User, Student, Warden } = require('../models');
+const Admin = require('../models/Admin');
 const PasswordOtp = require('../models/PasswordOtp');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
@@ -24,6 +25,10 @@ exports.register = async (req, res) => {
         const { name, password, role } = req.body;
         const email = String(req.body.email || '').trim().toLowerCase();
         const phone = normalizePhoneDigits(req.body.phone || req.body.mobile);
+        // Warden-specific optional extras
+        const assignedHostel = req.body.hostel || req.body.assignedHostel || undefined;
+        const assignedFloor = req.body.floor || req.body.assignedFloor || undefined;
+        const gender = req.body.gender || 'Male';
 
         if (!name || !email || !password || !phone) {
             return res.status(400).json({
@@ -31,10 +36,10 @@ exports.register = async (req, res) => {
                 message: 'Name, email, phone, and password are required',
             });
         }
-        if (phone.length !== 10) {
+        if (phone.length < 8 || phone.length > 15) {
             return res.status(400).json({
                 success: false,
-                message: 'Phone number must be 10 digits',
+                message: 'Enter a valid phone number (8-15 digits)',
             });
         }
 
@@ -47,14 +52,68 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Create user
+        // Create user — include warden fields if provided
+        // Enforce name-based email and password patterns
+        const nameClean = name.toLowerCase().replace(/\s+/g, '');
+        if (role === 'student') {
+            const expectedEmail = `${nameClean}@student.ac.in`;
+            const expectedPassword = `${nameClean}@123`;
+            if (email.toLowerCase() !== expectedEmail) {
+                return res.status(400).json({ success: false, message: `Student email MUST be ${expectedEmail}` });
+            }
+            if (password !== expectedPassword) {
+                return res.status(400).json({ success: false, message: `Student password MUST be ${expectedPassword}` });
+            }
+        } else if (role === 'warden') {
+            const expectedEmail = `${nameClean}@warden.ac.in`;
+            const expectedPassword = `${nameClean}@123`;
+            if (email.toLowerCase() !== expectedEmail) {
+                return res.status(400).json({ success: false, message: `Warden email MUST be ${expectedEmail}` });
+            }
+            if (password !== expectedPassword) {
+                return res.status(400).json({ success: false, message: `Warden password MUST be ${expectedPassword}` });
+            }
+        } else if (role === 'admin' && email !== 'admin@hostel.ac.in') {
+            return res.status(400).json({ success: false, message: 'Admin email must be admin@hostel.ac.in' });
+        }
+
         user = await User.create({
             name,
             email,
             phone,
             password,
-            role
+            role,
+            assignedHostel,
+            assignedFloor,
+            gender
         });
+
+        // Create specific profile if student or warden
+        if (role === 'student') {
+            await Student.create({
+                user: user._id,
+                registrationNumber: `REG-${Date.now()}`,
+                department: 'TBD',
+                course: 'TBD',
+                year: 1,
+                semester: 1,
+                guardianName: 'TBD',
+                guardianPhone: '0000000000',
+                guardianRelation: 'TBD'
+            });
+        } else if (role === 'warden') {
+            await Warden.create({
+                user: user._id,
+                employeeId: `EMP-${Date.now()}`
+            });
+        } else if (role === 'admin') {
+            await Admin.create({
+                user: user._id,
+                employeeId: `ADM-${Date.now()}`,
+                department: 'General Administration',
+                permissions: ['manage_users', 'manage_hostels', 'manage_finances', 'manage_notices']
+            });
+        }
 
         // Generate token
         const token = generateToken({ id: user._id, email: user.email, role: user.role });

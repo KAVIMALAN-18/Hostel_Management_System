@@ -6,7 +6,13 @@ const mongoose = require('mongoose');
  */
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI);
+        const uri = process.env.MONGODB_URI;
+        const obfuscatedUri = uri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+        console.log(`Attempting to connect to MongoDB: ${obfuscatedUri}...`);
+        
+        const conn = await mongoose.connect(uri, {
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s
+        });
 
         console.log(`MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
 

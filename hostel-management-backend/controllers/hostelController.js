@@ -1,4 +1,4 @@
-const { Hostel, Room, Bed } = require('../models');
+const { Hostel, Room, Bed, Student } = require('../models');
 
 // --- Hostel Controllers ---
 
@@ -116,24 +116,32 @@ exports.deleteRoom = async (req, res) => {
 // --- Allocation / Status Controllers ---
 
 // @route   PATCH /api/hostels/allocate
-// @desc    Allocate bed to student
+// @desc    Allocate bed to student (High-Integrity Version)
 // @access  Private (Admin, Warden)
 exports.allocateBed = async (req, res) => {
     try {
         const { studentId, hostelId, blockId, roomId, bedId } = req.body;
 
-        // Verify student exists
+        // 1. Verify student exists and is NOT already allocated
         const studentProfile = await Student.findOne({ user: studentId });
         if (!studentProfile) return res.status(404).json({ success: false, message: 'Student profile not found' });
+        
+        if (studentProfile.allocationStatus === 'allocated') {
+            return res.status(400).json({ success: false, message: 'Student already has an active allocation. Deallocate first.' });
+        }
 
-        // Update Bed status
-        const bed = await Bed.findByIdAndUpdate(bedId, { status: 'occupied', student: studentId }, { new: true });
-        if (!bed) return res.status(404).json({ success: false, message: 'Bed not found' });
+        // 2. Update Bed status (Atomically verify it is 'vacant')
+        const bed = await Bed.findOneAndUpdate(
+            { _id: bedId, status: 'vacant' },
+            { status: 'occupied', student: studentId },
+            { new: true }
+        );
+        if (!bed) return res.status(400).json({ success: false, message: 'Bed is either not found or already occupied.' });
 
-        // Update Room occupancy
+        // 3. Update Room occupancy count
         await Room.findByIdAndUpdate(roomId, { $inc: { occupiedBeds: 1 } });
 
-        // Update Student profile
+        // 4. Update Student profile with centralized reference
         studentProfile.hostel = hostelId;
         studentProfile.block = blockId;
         studentProfile.room = roomId;
@@ -144,6 +152,48 @@ exports.allocateBed = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Bed allocated successfully',
+            data: studentProfile
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @route   PATCH /api/hostels/deallocate
+// @desc    Release bed from student
+// @access  Private (Admin, Warden)
+exports.deallocateBed = async (req, res) => {
+    try {
+        const { studentId } = req.body;
+
+        const studentProfile = await Student.findOne({ user: studentId });
+        if (!studentProfile || studentProfile.allocationStatus === 'unallocated') {
+            return res.status(400).json({ success: false, message: 'Student has no active allocation to release.' });
+        }
+
+        const { room: roomId, bed: bedId } = studentProfile;
+
+        // 1. Mark Bed as vacant
+        if (bedId) {
+            await Bed.findByIdAndUpdate(bedId, { status: 'vacant', student: null });
+        }
+
+        // 2. Decrement Room occupancy
+        if (roomId) {
+            await Room.findByIdAndUpdate(roomId, { $inc: { occupiedBeds: -1 } });
+        }
+
+        // 3. Reset Student profile references
+        studentProfile.hostel = null;
+        studentProfile.block = null;
+        studentProfile.room = null;
+        studentProfile.bed = null;
+        studentProfile.allocationStatus = 'unallocated';
+        await studentProfile.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Bed deallocated successfully. Occupancy updated.',
             data: studentProfile
         });
     } catch (error) {

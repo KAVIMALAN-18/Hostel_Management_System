@@ -11,8 +11,10 @@ exports.getStudents = async (req, res) => {
 
         // Fetch all student profiles related to these users
         const profiles = await Student.find({ user: { $in: students.map(s => s._id) } })
-            .populate('hostel', 'name')
-            .populate('room', 'roomNumber');
+            .populate('hostel', 'name type')
+            .populate('block', 'name')
+            .populate('room', 'roomNumber roomType')
+            .populate('bed', 'bedNumber');
 
         // Combine user and profile data
         const combinedData = students.map(user => {
@@ -73,12 +75,14 @@ exports.getMyProfile = async (req, res) => {
             
             roommates = roommateProfiles.map(p => p.user?.name).filter(Boolean);
 
-            // Fetch Warden for this hostel
+            // Fetch Warden for this hostel from the Warden model
             if (profile.hostel) {
-                warden = await User.findOne({ 
-                    role: 'warden', 
-                    assignedHostel: profile.hostel.name 
-                }).select('name phone email');
+                const { Warden } = require('../models');
+                const wardenProfile = await Warden.findOne({ 
+                    assignedHostel: profile.hostel._id 
+                }).populate('user', 'name phone email');
+                
+                warden = wardenProfile ? wardenProfile.user : null;
             }
         }
 

@@ -126,6 +126,16 @@ export const noticeAPI = {
 };
 
 /**
+ * Mess & Culinary API
+ */
+export const messAPI = {
+    getMenu: (date) => api.get(`/mess/menu${date ? `?date=${date}` : ''}`),
+    updateMenu: (date, data) => api.put('/mess/menu', { date, ...data }),
+    submitFeedback: (data) => api.post('/mess/feedback', data),
+    getFeedbacks: (params) => api.get('/mess/feedback', { params })
+};
+
+/**
  * Leave Management API
  */
 export const leaveAPI = {
@@ -184,6 +194,14 @@ export const reportsAPI = {
             Authorization: `Bearer ${localStorage.getItem('token')}`
         }
     })
+};
+
+/**
+ * Payment & Billing API
+ */
+export const paymentAPI = {
+    getAll: () => api.get('/payments'),
+    create: (data) => api.post('/payments', data)
 };
 
 export default api;

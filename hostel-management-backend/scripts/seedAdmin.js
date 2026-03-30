@@ -9,11 +9,15 @@ const seedAdmin = async () => {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB for seeding...');
 
-        const adminEmail = 'admin@hostel.com';
+        const adminEmail = 'admin@gmail.com';
+        const newPassword = 'admin@123';
         const existingAdmin = await User.findOne({ email: adminEmail });
 
         if (existingAdmin) {
-            console.log('Admin user already exists.');
+            console.log('Admin user already exists. Updating password...');
+            existingAdmin.password = newPassword;
+            await existingAdmin.save();
+            console.log('Admin password updated successfully!');
             process.exit(0);
         }
 
@@ -21,15 +25,15 @@ const seedAdmin = async () => {
             name: 'Admin User',
             email: adminEmail,
             phone: '1234567890',
-            password: 'AdminPassword123',
+            password: newPassword,
             role: 'admin',
             isActive: true
         });
 
         await adminUser.save();
         console.log('Admin user created successfully!');
-        console.log('Email: admin@hostel.com');
-        console.log('Password: AdminPassword123');
+        console.log(`Email: ${adminEmail}`);
+        console.log(`Password: ${newPassword}`);
 
         process.exit(0);
     } catch (error) {

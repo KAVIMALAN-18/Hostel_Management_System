@@ -13,7 +13,7 @@ const FeaturePlaceholder = ({ title, subtitle }) => {
                 {subtitle || "This system module is currently under operational maintenance and will be available shortly."}
             </p>
             <div className="mt-8">
-                <div className="px-5 py-2 bg-slate-900 text-white rounded text-[10px] font-bold tracking-widest uppercase border border-slate-800 shadow-sm">
+                <div className="px-5 py-2 bg-slate-900 text-white rounded text-xs font-bold tracking-wider uppercase border border-slate-800 shadow-sm">
                     System Implementation in progress
                 </div>
             </div>

@@ -13,6 +13,10 @@ const complaintRoutes = require('./routes/complaintRoutes');
 const noticeRoutes = require('./routes/announcementRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const messRoutes = require('./routes/messRoutes');
+const wardenRoutes = require('./routes/wardenRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 function createApp() {
     const app = express();
@@ -95,6 +99,10 @@ function createApp() {
     app.use('/api/announcements', noticeRoutes);
     app.use('/api/leave', leaveRoutes);
     app.use('/api/reports', reportsRoutes);
+    app.use('/api/attendance', attendanceRoutes);
+    app.use('/api/mess', messRoutes);
+    app.use('/api/wardens', wardenRoutes);
+    app.use('/api/payments', paymentRoutes);
 
     app.use('*', (_req, res) => {
         res.status(404).json({

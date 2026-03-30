@@ -5,6 +5,8 @@ const Room = require('../models/Room');
 const Bed = require('../models/Bed');
 const Attendance = require('../models/Attendance');
 const Complaint = require('../models/Complaint');
+const MessFeedback = require('../models/MessFeedback');
+const MessMenu = require('../models/MessMenu');
 
 /**
  * @desc    Get dashboard statistics
@@ -64,7 +66,12 @@ exports.getStats = async (req, res) => {
                 awaitingRoomAssign,
                 maintenanceOpen,
                 maintenanceHighPriority,
-                activeComplaints: await Complaint.countDocuments({ status: 'Pending' })
+                activeComplaints: await Complaint.countDocuments({ status: 'Pending' }),
+                trend: [], // Dynamic empty trend list
+                biometricLogs: [], // Dynamic empty bio list
+                messStats: await MessFeedback.aggregate([
+                    { $group: { _id: null, avgRating: { $avg: "$rating" }, total: { $sum: 1 } } }
+                ])
             }
         });
     } catch (error) {
