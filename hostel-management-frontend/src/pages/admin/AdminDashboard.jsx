@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { hostelAPI, reportsAPI } from '../../services/api';
 import { 
     CheckIcon, 
@@ -16,6 +17,7 @@ import {
 } from '../../components/common/Icons';
 
 const AdminDashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [maintenanceRequests, setMaintenanceRequests] = useState([]);
@@ -203,10 +205,10 @@ const AdminDashboard = () => {
 
             {/* Productivity Quick Access */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <QuickActionCard icon={UserPlusIcon} title="Register Resident" subtitle="Provision new student" color="brand" />
-                <QuickActionCard icon={CalendarIcon} title="Census Logs" subtitle="Attendance & Leave" color="emerald" />
-                <QuickActionCard icon={PieChartIcon} title="Inventory Manager" subtitle="Hostels & Units" color="purple" />
-                <QuickActionCard icon={AlertCircleIcon} title="Resolved Cases" subtitle="Maintenance History" color="orange" />
+                <QuickActionCard onClick={() => navigate('/admin/students')} icon={UserPlusIcon} title="Register Resident" subtitle="Provision new student" color="brand" />
+                <QuickActionCard onClick={() => navigate('/attendance')} icon={CalendarIcon} title="Census Logs" subtitle="Attendance & Leave" color="emerald" />
+                <QuickActionCard onClick={() => navigate('/admin/hostels')} icon={PieChartIcon} title="Inventory Manager" subtitle="Hostels & Units" color="purple" />
+                <QuickActionCard onClick={() => navigate('/maintenance')} icon={AlertCircleIcon} title="Resolved Cases" subtitle="Maintenance History" color="orange" />
             </div>
 
             {/* Analytics Grid */}
@@ -352,7 +354,7 @@ const AdminDashboard = () => {
 };
 
 // Internal Helper Components for Pixel-Perfect Layout
-const QuickActionCard = ({ icon: Icon, title, subtitle, color }) => {
+const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
     const colorMap = {
         brand: 'bg-brand-500 group-hover:bg-brand-600 border-brand-100 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20',
         emerald: 'bg-emerald-500 group-hover:bg-emerald-600 border-emerald-100 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20',
@@ -368,7 +370,7 @@ const QuickActionCard = ({ icon: Icon, title, subtitle, color }) => {
     };
     
     return (
-        <div className={`p-4 border rounded-2xl cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1 group ${bgMap[color]}`}>
+        <div onClick={onClick} className={`p-4 border rounded-2xl cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1 group ${bgMap[color]}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${color === 'brand' ? 'bg-brand-500' : color === 'emerald' ? 'bg-emerald-500' : color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'} text-white`}>
                 <Icon className="w-5 h-5" />
             </div>
