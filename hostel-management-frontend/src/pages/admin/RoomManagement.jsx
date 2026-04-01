@@ -100,9 +100,17 @@ const RoomManagement = () => {
                 try {
                     const response = await studentAPI.getAll();
                     if (response.success) {
-                        const unassigned = response.data.filter(s => 
-                            !s.profile || s.profile.allocationStatus !== 'allocated'
-                        );
+                        // Filter specifically for students who are ready to be assigned
+                        // We allow students with no profile (new users) OR those not currently 'allocated' or 'checked-in'
+                        const allStudents = response.data || [];
+                        const unassigned = allStudents.filter(s => {
+                            const isAllocated = s.profile && (s.profile.allocationStatus === 'allocated' || s.profile.allocationStatus === 'checked-in');
+                            const isInactive = s.isActive === false;
+                            return !isAllocated && !isInactive;
+                        });
+                        
+                        // If we have students but none pass the filter, we'll keep unassigned empty
+                        // but if the fetch was successful, we set the state
                         setUnassignedStudents(unassigned);
                     }
                 } catch (err) {
@@ -120,8 +128,8 @@ const RoomManagement = () => {
             const payload = {
                 studentId: selectedStudentId,
                 hostelId: selectedHostelId,
-                roomId: selectedBed.roomId,
-                bedId: selectedBed.bedId
+                roomId: selectedRoom._id,
+                bedId: selectedBed
             };
 
             const response = await hostelAPI.allocateBed(payload);
@@ -515,14 +523,14 @@ const RoomManagement = () => {
                                 }}
                             >
                                 <option value="">-- Select an unassigned student to add --</option>
-                                {unassignedStudents
-                                    .filter(s => s && s._id && !roomData.students.includes(s._id))
-                                    .map(student => (
-                                        <option key={student._id} value={student._id}>
-                                            {student.name}
-                                        </option>
-                                    ))
-                                }
+                                    {unassignedStudents
+                                        .filter(s => s && s._id && !roomData.students.includes(s._id))
+                                        .map(student => (
+                                            <option key={student._id} value={student._id}>
+                                                {student.name} • {student.profile?.registrationNumber || student.email}
+                                            </option>
+                                        ))
+                                    }
                             </select>
 
                             {/* Selected Student Chips */}
@@ -749,7 +757,7 @@ const RoomManagement = () => {
                             <option value="">-- Select Student --</option>
                             {unassignedStudents.map(student => (
                                 <option key={student._id} value={student._id}>
-                                    {student.name} • {student.registrationNumber || student.email}
+                                    {student.name} • {student.profile?.registrationNumber || student.email}
                                 </option>
                             ))}
                         </select>

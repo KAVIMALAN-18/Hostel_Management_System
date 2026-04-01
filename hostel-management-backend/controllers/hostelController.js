@@ -145,13 +145,33 @@ exports.updateRoom = async (req, res) => {
 };
 
 // @route   DELETE /api/rooms/:id
-// @desc    Delete a room
+// @desc    Delete a room (with student deallocation and bed cleanup)
 // @access  Private (Admin)
 exports.deleteRoom = async (req, res) => {
     try {
-        const room = await Room.findByIdAndDelete(req.params.id);
+        const roomId = req.params.id;
+
+        // 1. Find and Unassign all students currently in this room
+        await Student.updateMany(
+            { room: roomId },
+            { 
+                hostel: null, 
+                block: null, 
+                room: null, 
+                bed: null, 
+                allocationStatus: 'pending' 
+            }
+        );
+
+        // 2. Delete all Bed records for this room
+        await Bed.deleteMany({ room: roomId });
+
+        // 3. Delete the Room itself
+        const room = await Room.findByIdAndDelete(roomId);
+        
         if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
-        res.status(200).json({ success: true, message: 'Room deleted successfully' });
+        
+        res.status(200).json({ success: true, message: 'Room deleted successfully, students unassigned, and beds removed.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -174,9 +194,9 @@ exports.allocateBed = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Student already has an active allocation. Deallocate first.' });
         }
 
-        // 2. Update Bed status (Atomically verify it is 'vacant')
+        // 2. Update Bed status (Atomically verify it is 'available')
         const bed = await Bed.findOneAndUpdate(
-            { _id: bedId, status: 'vacant' },
+            { _id: bedId, status: 'available' },
             { status: 'occupied', student: studentId },
             { new: true }
         );
@@ -211,15 +231,15 @@ exports.deallocateBed = async (req, res) => {
         const { studentId } = req.body;
 
         const studentProfile = await Student.findOne({ user: studentId });
-        if (!studentProfile || studentProfile.allocationStatus === 'unallocated') {
+        if (!studentProfile || studentProfile.allocationStatus === 'pending') {
             return res.status(400).json({ success: false, message: 'Student has no active allocation to release.' });
         }
 
         const { room: roomId, bed: bedId } = studentProfile;
 
-        // 1. Mark Bed as vacant
+        // 1. Mark Bed as available
         if (bedId) {
-            await Bed.findByIdAndUpdate(bedId, { status: 'vacant', student: null });
+            await Bed.findByIdAndUpdate(bedId, { status: 'available', student: null });
         }
 
         // 2. Decrement Room occupancy
@@ -232,7 +252,7 @@ exports.deallocateBed = async (req, res) => {
         studentProfile.block = null;
         studentProfile.room = null;
         studentProfile.bed = null;
-        studentProfile.allocationStatus = 'unallocated';
+        studentProfile.allocationStatus = 'pending';
         await studentProfile.save();
 
         res.status(200).json({
