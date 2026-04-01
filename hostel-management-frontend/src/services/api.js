@@ -175,6 +175,8 @@ export const userService = {
  */
 export const reportsAPI = {
     getStats: () => api.get('/reports/stats'),
+    getHostelBlockStats: () => api.get('/reports/hostel-block-stats'),
+    getStudentDistribution: () => api.get('/reports/student-distribution'),
     getAttendance: () => api.get('/reports/attendance'),
     getLeave: () => api.get('/reports/leave'),
     getMaintenance: () => api.get('/reports/maintenance'),

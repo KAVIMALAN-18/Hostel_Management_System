@@ -19,16 +19,21 @@ import {
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState(null);
+    const [blockStats, setBlockStats] = useState([]);
+    const [studentDist, setStudentDist] = useState({ distribution: [], total: 0 });
     const [loading, setLoading] = useState(true);
-    const [maintenanceRequests, setMaintenanceRequests] = useState([]);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await reportsAPI.getStats();
-                if (response.success) {
-                    setStats(response.data);
-                }
+                const [statsRes, blockRes, distRes] = await Promise.all([
+                    reportsAPI.getStats(),
+                    reportsAPI.getHostelBlockStats(),
+                    reportsAPI.getStudentDistribution()
+                ]);
+                if (statsRes.success) setStats(statsRes.data);
+                if (blockRes.success) setBlockStats(blockRes.data);
+                if (distRes.success) setStudentDist(distRes.data);
             } catch (err) {
                 console.error('Failed to fetch dashboard stats:', err);
                 setStats({
@@ -43,32 +48,26 @@ const AdminDashboard = () => {
                     maintenanceHighPriority: 0,
                     messStats: [{ avgRating: 0, total: 0 }]
                 });
+                setBlockStats([
+                    { block: 'A Block', count: 0, capacity: 0 },
+                    { block: 'B Block', count: 0, capacity: 0 },
+                    { block: 'C Block', count: 0, capacity: 0 },
+                    { block: 'D Block', count: 0, capacity: 0 }
+                ]);
+                setStudentDist({
+                    total: 0,
+                    distribution: [
+                        { status: 'pending', count: 0 },
+                        { status: 'allocated', count: 0 },
+                        { status: 'checked-in', count: 0 },
+                        { status: 'checked-out', count: 0 }
+                    ]
+                });
             } finally {
                 setLoading(false);
             }
         };
         fetchStats();
-    }, []);
-
-    useEffect(() => {
-        const fetchMaintenance = async () => {
-            try {
-                const res = await reportsAPI.getMaintenance();
-                if (res.success) {
-                    setMaintenanceRequests(res.data.slice(0, 5).map(item => ({
-                        id: item._id.toString().slice(-7).toUpperCase(),
-                        location: `Room ${item.roomNumber || 'N/A'}`,
-                        issueType: item.category,
-                        reportedBy: item.student?.name || 'Resident',
-                        status: item.status,
-                        priority: item.priority || 'Medium'
-                    })));
-                }
-            } catch (error) {
-                console.error('Failed to fetch maintenance data:', error);
-            }
-        };
-        fetchMaintenance();
     }, []);
 
     if (loading) return (
@@ -83,16 +82,14 @@ const AdminDashboard = () => {
         </div>
     );
 
-    const onboardingTrend = stats?.trend || [
-        { day: 'Mon', count: 0 },
-        { day: 'Tue', count: 0 },
-        { day: 'Wed', count: 0 },
-        { day: 'Thu', count: 0 },
-        { day: 'Fri', count: 0 },
-        { day: 'Sat', count: 0 },
-        { day: 'Sun', count: 0 }
+    // ── Student Distribution (real allocationStatus counts) ──────────────
+    const DIST_CONFIG = [
+        { status: 'allocated',    label: 'Allocated',   color: '#10b981' },
+        { status: 'checked-in',  label: 'Checked-In',  color: '#6366f1' },
+        { status: 'checked-out', label: 'Checked-Out', color: '#f59e0b' },
+        { status: 'pending',     label: 'Pending',     color: '#ef4444' },
     ];
-    const maxTrend = Math.max(...onboardingTrend.map(d => d.count), 1);
+    const distTotal = studentDist?.total || 0;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -212,142 +209,12 @@ const AdminDashboard = () => {
             </div>
 
             {/* Analytics Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Onboarding Trend (2/3 width) */}
-                <div className="lg:col-span-2 data-card !p-0 overflow-hidden border-slate-200 dark:border-slate-700">
-                    <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide uppercase">Onboarding Trend <span className="text-xs font-normal text-slate-400 block tracking-normal normal-case">Last 7 days registration volume</span></h3>
-                        <div className="flex items-center gap-2">
-                             <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
-                                <div className="w-2 h-2 bg-brand-500 rounded-full animate-pulse"></div>
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Real-time</span>
-                             </div>
-                        </div>
-                    </div>
-                    <div className="p-8 h-64 flex items-end gap-3 lg:gap-6">
-                        {onboardingTrend.map(d => (
-                            <div key={d.day} className="flex-1 flex flex-col items-center gap-3 group">
-                                <div className="w-full relative">
-                                    <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-t-xl absolute inset-0"></div>
-                                    <div 
-                                        className="w-full bg-gradient-to-t from-brand-600 to-brand-400 rounded-t-xl transition-all duration-700 ease-out relative group-hover:from-brand-500 group-hover:to-brand-300 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
-                                        style={{ height: `${(d.count / maxTrend) * 100}%`, minHeight: '8px' }}
-                                    >
-                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-2 py-1 rounded-md text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
-                                            {d.count} Users
-                                        </div>
-                                    </div>
-                                </div>
-                                <span className="text-xs font-bold text-slate-400 dark:text-slate-300 group-hover:text-brand-500 transition-colors uppercase tracking-wider">{d.day}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Student Distribution Pie Chart — real allocationStatus data */}
+                <StudentDistributionChart distConfig={DIST_CONFIG} distribution={studentDist?.distribution || []} total={distTotal} />
 
-                {/* Mess Analysis & Quick Health */}
-                <div className="space-y-6">
-                    <div className="data-card bg-slate-900 dark:bg-slate-900 border-slate-800 shadow-2xl">
-                        <h3 className="text-sm font-bold text-white mb-6 uppercase tracking-wider">Dietary Quality Feed</h3>
-                        <div className="space-y-6 text-center">
-                            <div className="relative inline-flex items-center justify-center p-8 border-4 border-slate-800 rounded-full">
-                                <div className="absolute inset-0 rotate-12 border-4 border-brand-500 rounded-full border-t-transparent border-r-transparent"></div>
-                                <div className="text-center">
-                                    <p className="text-4xl font-bold text-white tracking-tight">{(stats?.messStats?.[0]?.avgRating || 0).toFixed(1)}</p>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Rating</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-800/50 p-3 rounded-2xl border border-slate-800">
-                                    <p className="text-xl font-bold text-white">{stats?.messStats?.[0]?.total || 0}</p>
-                                    <p className="text-xs font-bold text-slate-500 uppercase">Reviews</p>
-                                </div>
-                                <div className="bg-slate-800/50 p-3 rounded-2xl border border-slate-800">
-                                    <p className="text-xl font-bold text-emerald-500">92%</p>
-                                    <p className="text-xs font-bold text-slate-500 uppercase">Hygiene</p>
-                                </div>
-                            </div>
-                            <button className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all border border-slate-700">Audit Detailed Data</button>
-                        </div>
-                    </div>
-
-                    <div className="data-card !p-0 overflow-hidden">
-                        <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Server Health</span>
-                        </div>
-                        <div className="p-5 flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-slate-900 dark:text-white">API Core Status</span>
-                                <span className="text-xs text-slate-500">Responding in 42ms</span>
-                            </div>
-                            <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 font-bold text-xs rounded uppercase">Stable</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Maintenance Command Table */}
-            <div className="table-container shadow-2x-soft border-slate-200/60 dark:border-slate-700 overflow-visible">
-                <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-900/50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-900 dark:text-white shadow-soft">
-                            <WrenchIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Active Maintenance Queue</h3>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-tight">Monitoring last 5 mission-critical items</p>
-                        </div>
-                    </div>
-                    <button className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 px-4 py-2 rounded-xl transition-all">View Full Command Queue</button>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-slate-50/50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700">
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Identifier</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Deployment Location</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Issue Category</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Reported Via</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Current Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
-                            {maintenanceRequests.map((request) => (
-                                <tr key={request.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <span className="text-xs font-mono font-bold text-slate-900 dark:text-white px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md">#{request.id}</span>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{request.location}</span>
-                                            <span className="text-xs text-slate-500 font-medium tracking-tight uppercase">Hostel Alpha • G-Wing</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 bg-brand-500 rounded-full"></div>
-                                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{request.issueType}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{request.reportedBy}</span>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider inline-block ${
-                                            request.status === 'In Progress' 
-                                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50' 
-                                            : request.status === 'Pending'
-                                            ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50'
-                                            : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50'
-                                        }`}>
-                                            {request.status}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                {/* Hostel Block (A/B/C/D) Pie Chart */}
+                <HostelBlockChart blockStats={blockStats} />
             </div>
         </div>
     );
@@ -379,5 +246,156 @@ const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
         </div>
     );
 }
+
+// ── Student Distribution Chart (allocationStatus) ─────────────────────────
+const StudentDistributionChart = ({ distConfig, distribution, total }) => {
+    const denom = total > 0 ? total : 1;
+
+    // Build conic-gradient stops
+    let cursor = 0;
+    const stops = distConfig.map(({ status, color }) => {
+        const item = distribution.find((d) => d.status === status);
+        const count = item ? item.count : 0;
+        const pct = (count / denom) * 100;
+        const stop = `${color} ${cursor.toFixed(2)}% ${(cursor + pct).toFixed(2)}%`;
+        cursor += pct;
+        return stop;
+    });
+    const gradient = total > 0
+        ? `conic-gradient(${stops.join(', ')})`
+        : `conic-gradient(#e2e8f0 0% 100%)`;
+
+    return (
+        <div className="data-card border-slate-200 dark:border-slate-700 h-full flex flex-col pt-8 pb-8">
+            <div className="flex items-center justify-between mb-10">
+                <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">Student Distribution</h3>
+                    <p className="text-xs font-normal text-slate-500 mt-1">Live allocation status of all students</p>
+                </div>
+                <div className="w-10 h-10 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center text-brand-600 dark:text-brand-400">
+                    <PieChartIcon className="w-5 h-5" />
+                </div>
+            </div>
+
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-10">
+                {/* Donut pie */}
+                <div
+                    className="relative w-56 h-56 rounded-full shadow-inner border-[6px] border-white dark:border-slate-800/50 transition-all hover:scale-105 flex-shrink-0"
+                    style={{ background: gradient }}
+                >
+                    <div className="absolute inset-0 m-auto w-[150px] h-[150px] bg-white dark:bg-slate-900 rounded-full shadow-[inset_0_-2px_10px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center">
+                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{total}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Total Students</span>
+                    </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex flex-col gap-3 w-full md:w-48">
+                    {distConfig.map(({ status, label, color }) => {
+                        const item = distribution.find((d) => d.status === status);
+                        const count = item ? item.count : 0;
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        return (
+                            <div key={status} className="flex items-center justify-between gap-4 p-3.5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: color, boxShadow: `0 2px 6px ${color}60` }}
+                                    />
+                                    <div>
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">{label}</span>
+                                        <span className="text-[10px] font-medium text-slate-400">{pct}% of total</span>
+                                    </div>
+                                </div>
+                                <span className="text-lg font-black text-slate-900 dark:text-white">{count}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Dynamic color palette for any number of blocks
+const BLOCK_COLORS = [
+    '#6366f1', '#f59e0b', '#10b981', '#ef4444', 
+    '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', 
+    '#14b8a6', '#84cc16'
+];
+
+const HostelBlockChart = ({ blockStats }) => {
+    // blockStats is dynamically populated from the database
+    const total = blockStats.reduce((sum, b) => sum + b.count, 0);
+    const denom = total > 0 ? total : 1;
+
+    // Build conic-gradient stops dynamically mapped to available blocks
+    let cursor = 0;
+    const stops = blockStats.map((b, i) => {
+        const pct = (b.count / denom) * 100;
+        const color = BLOCK_COLORS[i % BLOCK_COLORS.length];
+        const stop = `${color} ${cursor.toFixed(2)}% ${(cursor + pct).toFixed(2)}%`;
+        cursor += pct;
+        return stop;
+    });
+    const gradient = total > 0
+        ? `conic-gradient(${stops.join(', ')})`
+        : `conic-gradient(#e2e8f0 0% 100%)`;
+
+    return (
+        <div className="data-card border-slate-200 dark:border-slate-700 h-full flex flex-col pt-8 pb-8">
+            <div className="flex items-center justify-between mb-10">
+                <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">Hostel Block Distribution</h3>
+                    <p className="text-xs font-normal text-slate-500 mt-1">Students across active blocks</p>
+                </div>
+                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <BuildingIcon className="w-5 h-5" />
+                </div>
+            </div>
+
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-10">
+                {/* Donut pie chart */}
+                <div
+                    className="relative w-56 h-56 rounded-full shadow-inner border-[6px] border-white dark:border-slate-800/50 transition-all hover:scale-105 flex-shrink-0"
+                    style={{ background: gradient }}
+                >
+                    <div className="absolute inset-0 m-auto w-[150px] h-[150px] bg-white dark:bg-slate-900 rounded-full shadow-[inset_0_-2px_10px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center">
+                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{total}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Total Students</span>
+                    </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex flex-col gap-3 w-full md:w-48 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    {blockStats.map((stat, i) => {
+                        const pct = total > 0 ? Math.round((stat.count / total) * 100) : 0;
+                        const color = BLOCK_COLORS[i % BLOCK_COLORS.length];
+                        return (
+                            <div key={stat.block || i} className="flex items-center justify-between gap-4 p-3.5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: color, boxShadow: `0 2px 6px ${color}60` }}
+                                    />
+                                    <div>
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block truncate max-w-[80px]" title={stat.block}>{stat.block}</span>
+                                        <span className="text-[10px] font-medium text-slate-400">{pct}% of total</span>
+                                    </div>
+                                </div>
+                                <span className="text-lg font-black text-slate-900 dark:text-white">{stat.count}</span>
+                            </div>
+                        );
+                    })}
+                    {blockStats.length === 0 && (
+                        <div className="text-center p-4">
+                            <span className="text-xs font-medium text-slate-500">No blocks available</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default AdminDashboard;

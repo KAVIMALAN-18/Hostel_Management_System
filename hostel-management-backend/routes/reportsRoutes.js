@@ -6,7 +6,9 @@ const {
     getLeaveReport,
     getMaintenanceReport,
     getOccupancyReport,
-    getMessFeedbackReport
+    getMessFeedbackReport,
+    getHostelBlockStats,
+    getStudentDistribution
 } = require('../controllers/reportsController');
 const { exportMonthlyReport } = require('../controllers/exportController');
 const { authenticate, authorize } = require('../middleware/auth');
@@ -21,6 +23,8 @@ router.get('/leave', getLeaveReport);
 router.get('/maintenance', getMaintenanceReport);
 router.get('/occupancy', getOccupancyReport);
 router.get('/mess-feedback', getMessFeedbackReport);
+router.get('/hostel-block-stats', getHostelBlockStats);
+router.get('/student-distribution', getStudentDistribution);
 router.get('/export', exportMonthlyReport);
 
 module.exports = router;

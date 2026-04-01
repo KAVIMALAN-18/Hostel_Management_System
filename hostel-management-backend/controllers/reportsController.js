@@ -7,6 +7,7 @@ const Attendance = require('../models/Attendance');
 const Complaint = require('../models/Complaint');
 const MessFeedback = require('../models/MessFeedback');
 const MessMenu = require('../models/MessMenu');
+const Hostel = require('../models/Hostel');
 
 /**
  * @desc    Get dashboard statistics
@@ -129,4 +130,96 @@ exports.getOccupancyReport = async (req, res) => {
 
 exports.getMessFeedbackReport = async (req, res) => {
     res.status(200).json({ success: true, data: [] });
+};
+
+/**
+ * @desc    Get student count per hostel block (A, B, C, D)
+ * @route   GET /api/reports/hostel-block-stats
+ * @access  Private (Admin/Warden)
+ */
+exports.getHostelBlockStats = async (req, res) => {
+    try {
+        // Get all hostels
+        const hostels = await Hostel.find();
+
+        // Build a map: hostelId => blockName
+        const hostelMap = {};
+        hostels.forEach((h) => {
+            hostelMap[h._id.toString()] = h;
+        });
+
+        // Count students per hostel using aggregation
+        const studentCounts = await Student.aggregate([
+            {
+                $match: {
+                    hostel: { $in: hostels.map((h) => h._id) },
+                    allocationStatus: { $in: ['allocated', 'checked-in'] }
+                }
+            },
+            {
+                $group: {
+                    _id: '$hostel',
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Build final result for all blocks
+        const blockStats = hostels.map((hostel) => {
+            const found = studentCounts.find((s) => s._id.toString() === hostel._id.toString());
+            return {
+                block: hostel.name,
+                count: found ? found.count : 0,
+                capacity: hostel.capacity || 0
+            };
+        });
+
+        res.status(200).json({ success: true, data: blockStats });
+    } catch (error) {
+        console.error('Hostel Block Stats Error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching hostel block statistics'
+        });
+    }
+};
+
+/**
+ * @desc    Get student count by allocation status
+ * @route   GET /api/reports/student-distribution
+ * @access  Private (Admin/Warden)
+ */
+exports.getStudentDistribution = async (req, res) => {
+    try {
+        const STATUSES = ['pending', 'allocated', 'checked-in', 'checked-out'];
+
+        // Aggregate students grouped by allocationStatus
+        const rawCounts = await Student.aggregate([
+            {
+                $group: {
+                    _id: '$allocationStatus',
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Map into a clean object keyed by status
+        const countMap = {};
+        rawCounts.forEach((r) => { countMap[r._id] = r.count; });
+
+        const distribution = STATUSES.map((status) => ({
+            status,
+            count: countMap[status] || 0
+        }));
+
+        const total = distribution.reduce((sum, d) => sum + d.count, 0);
+
+        res.status(200).json({ success: true, data: { distribution, total } });
+    } catch (error) {
+        console.error('Student Distribution Error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching student distribution'
+        });
+    }
 };

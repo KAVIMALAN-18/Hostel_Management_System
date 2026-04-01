@@ -59,7 +59,51 @@ exports.deleteHostel = async (req, res) => {
 // @access  Private (Admin)
 exports.createRoom = async (req, res) => {
     try {
-        const room = await Room.create(req.body);
+        const { students, ...roomPayload } = req.body;
+        const room = await Room.create(roomPayload);
+
+        // Auto-generate underlying bed allocations based on the room size (totalBeds)
+        if (room.totalBeds > 0) {
+            const Bed = require('../models/Bed');
+            const Student = require('../models/Student');
+            const newBeds = [];
+            
+            for (let i = 1; i <= room.totalBeds; i++) {
+                const assignedStudentId = (students && students[i - 1]) ? students[i - 1] : null;
+                
+                newBeds.push({
+                    bedNumber: `${room.roomNumber}-${String.fromCharCode(64 + i)}`,
+                    room: room._id,
+                    status: assignedStudentId ? 'occupied' : 'available',
+                    student: assignedStudentId
+                });
+            }
+            const createdBeds = await Bed.insertMany(newBeds);
+
+            // Update student profiles if any were assigned
+            if (students && students.length > 0) {
+                for (let i = 0; i < Math.min(students.length, room.totalBeds); i++) {
+                    const studentId = students[i];
+                    const bedId = createdBeds[i]._id;
+                    await Student.findOneAndUpdate(
+                        { user: studentId },
+                        {
+                            hostel: room.hostel,
+                            room: room._id,
+                            bed: bedId,
+                            allocationStatus: 'allocated'
+                        }
+                    );
+                }
+            }
+            
+            // Update room occupancy
+            if (students && students.length > 0) {
+                room.occupiedBeds = Math.min(students.length, room.totalBeds);
+                await room.save();
+            }
+        }
+
         res.status(201).json({ success: true, data: room });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
