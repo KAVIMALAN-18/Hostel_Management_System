@@ -129,8 +129,8 @@ export const noticeAPI = {
  * Mess & Culinary API
  */
 export const messAPI = {
-    getMenu: (date) => api.get(`/mess/menu${date ? `?date=${date}` : ''}`),
-    updateMenu: (date, data) => api.put('/mess/menu', { date, ...data }),
+    getMenu: () => api.get('/mess/menu'),
+    updateMenu: (day, data) => api.put(`/mess/menu/${day}`, data),
     submitFeedback: (data) => api.post('/mess/feedback', data),
     getFeedbacks: (params) => api.get('/mess/feedback', { params })
 };

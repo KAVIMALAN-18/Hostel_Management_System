@@ -92,7 +92,6 @@ const DashboardLayout = () => {
             'Hostels': BuildingIcon,
             'Rooms & Beds': DoorIcon,
             'Students': UsersIcon,
-            'Student Directory': UsersIcon,
             'Warden Directory': UsersIcon,
             'Attendance': ClipboardIcon,
             'Leave Requests': CalendarIcon,
@@ -117,7 +116,6 @@ const DashboardLayout = () => {
         const roleSpecificItems = {
             admin: [
                 { name: 'Room Management', path: '/admin/rooms' },
-                { name: 'Student Directory', path: '/student-directory' },
                 { name: 'Warden Directory', path: '/staff-management' },
                 { name: 'Students', path: '/admin/students' },
                 { name: 'Attendance', path: '/attendance' },
@@ -128,7 +126,6 @@ const DashboardLayout = () => {
                 { name: 'Reports', path: '/reports' },
             ],
             warden: [
-                { name: 'Student Directory', path: '/student-directory' },
                 { name: 'Attendance', path: '/attendance' },
                 { name: 'Leave Requests', path: '/warden/leave-requests' },
                 { name: 'Maintenance', path: '/maintenance' },

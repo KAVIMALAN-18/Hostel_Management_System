@@ -8,20 +8,20 @@ const messMenuSchema = new mongoose.Schema(
             required: true
         },
         breakfast: {
-            type: String,
-            required: true
+            items: [{ type: String }],
+            time: { type: String, default: '08:00 AM - 09:30 AM' }
         },
         lunch: {
-            type: String,
-            required: true
+            items: [{ type: String }],
+            time: { type: String, default: '12:30 PM - 02:00 PM' }
         },
         snacks: {
-            type: String,
-            required: true
+            items: [{ type: String }],
+            time: { type: String, default: '04:30 PM - 05:30 PM' }
         },
         dinner: {
-            type: String,
-            required: true
+            items: [{ type: String }],
+            time: { type: String, default: '07:30 PM - 09:00 PM' }
         },
         lastUpdatedBy: {
             type: mongoose.Schema.Types.ObjectId,

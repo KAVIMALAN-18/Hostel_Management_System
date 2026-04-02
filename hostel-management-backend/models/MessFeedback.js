@@ -21,9 +21,9 @@ const messFeedbackSchema = new mongoose.Schema(
             type: Date,
             default: Date.now
         },
-        mealType: {
+        day: {
             type: String,
-            enum: ['Breakfast', 'Lunch', 'Snacks', 'Dinner'],
+            enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             required: true
         }
     },

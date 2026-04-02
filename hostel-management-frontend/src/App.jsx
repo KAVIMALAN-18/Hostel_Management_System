@@ -23,7 +23,6 @@ import Maintenance from './pages/Maintenance';
 import Announcements from './pages/Announcements';
 import Attendance from './pages/Attendance';
 import LeaveManagement from './pages/LeaveManagement';
-import StudentDirectory from './pages/StudentDirectory';
 import Unauthorized from './pages/Unauthorized';
 import FeaturePlaceholder from './pages/FeaturePlaceholder';
 import Reports from './pages/Reports';
@@ -60,7 +59,6 @@ function App() {
               {/* Shared Staff Routes (Admin + Warden) */}
               <Route element={<ProtectedRoute allowedRoles={['admin', 'warden']} />}>
                 <Route path="/attendance" element={<Attendance />} />
-                <Route path="/student-directory" element={<StudentDirectory />} />
               </Route>
 
               {/* Admin-Only Routes */}

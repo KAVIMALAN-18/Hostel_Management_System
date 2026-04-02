@@ -5,8 +5,27 @@ const { MessMenu, MessFeedback } = require('../models');
 // @access  Public
 exports.getMenu = async (req, res) => {
     try {
-        const menu = await MessMenu.find().sort({ day: 1 });
-        res.status(200).json({ success: true, data: menu });
+        const [menu, overallStats] = await Promise.all([
+            MessMenu.find().sort({ day: 1 }),
+            MessFeedback.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        overallRating: { $avg: "$rating" },
+                        totalFeedbacks: { $sum: 1 }
+                    }
+                }
+            ])
+        ]);
+
+        const overall = overallStats[0] || { overallRating: 0, totalFeedbacks: 0 };
+        
+        res.status(200).json({ 
+            success: true, 
+            data: menu,
+            overallRating: overall.overallRating || 0,
+            totalFeedbacks: overall.totalFeedbacks || 0
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -37,7 +56,7 @@ exports.getFeedbackStats = async (req, res) => {
         const stats = await MessFeedback.aggregate([
             {
                 $group: {
-                    _id: "$mealType",
+                    _id: "$day",
                     avgRating: { $avg: "$rating" },
                     totalFeedbacks: { $sum: 1 }
                 }
@@ -54,7 +73,7 @@ exports.getFeedbackStats = async (req, res) => {
 // @access  Private (Student)
 exports.submitFeedback = async (req, res) => {
     try {
-        const { rating, comment, mealType } = req.body;
+        const { rating, comment, day } = req.body;
         
         // Ensure only student can submit
         if (req.user.role !== 'student') {
@@ -65,7 +84,7 @@ exports.submitFeedback = async (req, res) => {
             student: req.user.id,
             rating,
             comment,
-            mealType,
+            day,
             date: new Date()
         });
 
