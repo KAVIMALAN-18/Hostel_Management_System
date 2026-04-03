@@ -86,13 +86,46 @@ exports.getStats = async (req, res) => {
 
 exports.getAttendanceReport = async (req, res) => {
     try {
-        const report = await Attendance.find()
-            .populate({
-                path: 'student',
-                populate: { path: 'user', select: 'name email' }
-            })
-            .sort({ date: -1 });
-        res.status(200).json({ success: true, data: report });
+        const { date, hostel } = req.query;
+        
+        // 1. Setup Date Filter
+        const searchDate = date ? new Date(date) : new Date();
+        searchDate.setHours(0, 0, 0, 0);
+        const nextDate = new Date(searchDate);
+        nextDate.setDate(nextDate.getDate() + 1);
+
+        // 2. Setup Hostel Filter (Find ID if name provided)
+        let studentQuery = { allocationStatus: { $in: ['allocated', 'checked-in'] } };
+        if (hostel && hostel !== 'All Hostels') {
+            const h = await Hostel.findOne({ name: hostel });
+            if (h) studentQuery.hostel = h._id;
+        }
+
+        // 3. Find all students who SHOULD have attendance for this filter
+        const students = await Student.find(studentQuery)
+            .populate('user', 'name email')
+            .populate('hostel', 'name')
+            .populate('room', 'roomNumber');
+
+        // 4. Find existing attendance records for the given date and these students
+        const attendanceRecords = await Attendance.find({
+            date: { $gte: searchDate, $lt: nextDate },
+            student: { $in: students.map(s => s._id) }
+        });
+
+        // 5. Composite Report (Every expected student gets a row)
+        const compositeReport = students.map(student => {
+            const record = attendanceRecords.find(r => r.student.toString() === student._id.toString());
+            return {
+                _id: record ? record._id : `temp-${student._id}`,
+                student: student,
+                status: record ? record.status : 'Not Marked',
+                date: record ? record.date : searchDate,
+                remarks: record ? record.remarks : ''
+            };
+        });
+
+        res.status(200).json({ success: true, data: compositeReport });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

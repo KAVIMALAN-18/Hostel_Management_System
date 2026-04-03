@@ -97,7 +97,7 @@ const StudentDashboard = () => {
         } else {
             setLoading(false);
         }
-    }, [user, profile]);
+    }, [user]);
 
     const handleLeaveSubmit = async (e) => {
         e.preventDefault();

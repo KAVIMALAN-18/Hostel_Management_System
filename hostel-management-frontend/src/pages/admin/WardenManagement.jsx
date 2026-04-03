@@ -15,7 +15,7 @@ import {
     MoreVerticalIcon,
     CheckCircleIcon
 } from '../../components/common/Icons';
-import { authAPI, staffAPI } from '../../services/api';
+import { authAPI, staffAPI, hostelAPI } from '../../services/api';
 
 const WardenManagement = () => {
     const { user } = useAuth();
@@ -28,12 +28,11 @@ const WardenManagement = () => {
     const [selectedWarden, setSelectedWarden] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddMode, setIsAddMode] = useState(false);
+    const [availableHostels, setAvailableHostels] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', email: '', phone: '', hostel: 'Sapphire', floor: '', gender: 'Male', password: 'password123'
+        name: '', email: '', phone: '', hostel: '', floor: '', gender: 'Male', password: ''
     });
-
-    const hostels = ['Sapphire', 'Emerald', 'Ruby', 'Pearl', 'Diamond'];
 
     const fetchWardens = async () => {
         setIsLoading(true);
@@ -59,8 +58,24 @@ const WardenManagement = () => {
         }
     };
 
+    const fetchHostels = async () => {
+        try {
+            const response = await hostelAPI.getHostels();
+            if (response.success) {
+                setAvailableHostels(response.data.map(h => h.name));
+                // Set default hostel if none selected
+                if (response.data.length > 0 && !formData.hostel) {
+                    setFormData(prev => ({ ...prev, hostel: response.data[0].name }));
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch hostels:', err);
+        }
+    };
+
     useEffect(() => {
         fetchWardens();
+        fetchHostels();
     }, []);
 
     const handleEdit = (wrd) => {
@@ -74,7 +89,15 @@ const WardenManagement = () => {
     };
 
     const handleAdd = () => {
-        setFormData({ name: '', email: '', phone: '', hostel: 'Sapphire', floor: '', gender: 'Male', password: 'password123' });
+        setFormData({ 
+            name: '', 
+            email: '', 
+            phone: '', 
+            hostel: availableHostels[0] || '', 
+            floor: '', 
+            gender: 'Male', 
+            password: '' 
+        });
         setIsAddMode(true);
     };
 
@@ -221,7 +244,7 @@ const WardenManagement = () => {
                                 <FormSelect 
                                     label="Assigned Block" 
                                     value={formData.hostel} 
-                                    options={hostels} 
+                                    options={availableHostels} 
                                     onChange={(v) => setFormData({ ...formData, hostel: v })} 
                                 />
                                 <FormInput label="Jurisdictional Floor" value={formData.floor} onChange={(v) => setFormData({ ...formData, floor: v })} />

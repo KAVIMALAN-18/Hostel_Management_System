@@ -97,7 +97,7 @@ const DashboardLayout = () => {
             'Leave Requests': CalendarIcon,
             'Leave Approvals': CalendarIcon,
             'Leave Request': CalendarIcon,
-            'Maintenance': ToolIcon,
+            'Maintenance & Queries': ToolIcon,
             'Announcements': BellIcon,
             'Mess Management': CakeIcon,
             'Mess Menu': CakeIcon,
@@ -120,7 +120,7 @@ const DashboardLayout = () => {
                 { name: 'Students', path: '/admin/students' },
                 { name: 'Attendance', path: '/attendance' },
                 { name: 'Leave Requests', path: '/admin/leave-requests' },
-                { name: 'Maintenance', path: '/maintenance' },
+                { name: 'Maintenance & Queries', path: '/maintenance' },
                 { name: 'Mess Management', path: '/admin/mess' },
                 { name: 'Announcements', path: '/notices' },
                 { name: 'Reports', path: '/reports' },
@@ -128,7 +128,7 @@ const DashboardLayout = () => {
             warden: [
                 { name: 'Attendance', path: '/attendance' },
                 { name: 'Leave Requests', path: '/warden/leave-requests' },
-                { name: 'Maintenance', path: '/maintenance' },
+                { name: 'Maintenance & Queries', path: '/maintenance' },
                 { name: 'Announcements', path: '/notices' },
                 { name: 'Mess Menu', path: '/mess-menu' }
             ],
@@ -136,7 +136,7 @@ const DashboardLayout = () => {
                 { name: 'My Hostel Details', path: '/student/room' },
                 { name: 'Mess Menu', path: '/mess-menu' },
                 { name: 'Announcements', path: '/notices' },
-                { name: 'Maintenance', path: '/maintenance' },
+                { name: 'Maintenance & Queries', path: '/maintenance' },
             ]
         };
 

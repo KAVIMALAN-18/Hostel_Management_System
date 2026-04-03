@@ -87,7 +87,8 @@ export const studentAPI = {
     getAll: () => api.get('/students'),
     getProfile: () => api.get('/students/profile/me'),
     update: (id, data) => api.put(`/students/${id}`, data),
-    deactivate: (id) => api.delete(`/students/${id}`)
+    deactivate: (id) => api.delete(`/students/${id}`),
+    deletePermanent: (id) => api.delete(`/students/${id}/permanent`)
 };
 
 /**
@@ -103,7 +104,8 @@ export const hostelAPI = {
     updateRoom: (id, data) => api.put(`/hostels/rooms/${id}`, data),
     deleteRoom: (id) => api.delete(`/hostels/rooms/${id}`),
     getStats: () => api.get('/hostels/stats'),
-    allocateBed: (data) => api.put('/hostels/allocate', data)
+    allocateBed: (data) => api.put('/hostels/allocate', data),
+    deallocateBed: (data) => api.put('/hostels/deallocate', data)
 };
 
 /**
@@ -202,8 +204,15 @@ export const reportsAPI = {
  * Payment & Billing API
  */
 export const paymentAPI = {
-    getAll: () => api.get('/payments'),
     create: (data) => api.post('/payments', data)
+};
+
+/**
+ * Attendance Management API
+ */
+export const attendanceAPI = {
+    getByJurisdiction: (date) => api.get(`/attendance/by-jurisdiction?date=${date}`),
+    markBulk: (data) => api.post('/attendance/bulk', data)
 };
 
 export default api;

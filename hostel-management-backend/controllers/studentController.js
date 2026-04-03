@@ -196,3 +196,45 @@ exports.deactivateStudent = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// @route   DELETE /api/students/:id/permanent
+// @desc    Permanently delete student
+// @access  Private (Admin)
+exports.deletePermanent = async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        // 1. Find student profile to check for bed assignment
+        const profile = await Student.findOne({ user: userId });
+        
+        if (profile) {
+            // 2. Free up the bed if assigned
+            if (profile.bed) {
+                await Bed.findByIdAndUpdate(profile.bed, {
+                    isOccupied: false,
+                    occupiedBy: null
+                });
+            }
+
+            // 3. Clear historical attendance to avoid "Unknown Student" orphans
+            await Attendance.deleteMany({ student: profile._id });
+            
+            // 4. Delete Student profile
+            await Student.findByIdAndDelete(profile._id);
+        }
+
+        // 4. Delete User record
+        const user = await User.findByIdAndDelete(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Student and profile deleted permanently, bed freed'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

@@ -65,13 +65,8 @@ exports.register = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Student password MUST be ${expectedPassword}` });
             }
         } else if (role === 'warden') {
-            const expectedEmail = `${nameClean}@warden.ac.in`;
-            const expectedPassword = `${nameClean}@123`;
-            if (email.toLowerCase() !== expectedEmail) {
-                return res.status(400).json({ success: false, message: `Warden email MUST be ${expectedEmail}` });
-            }
-            if (password !== expectedPassword) {
-                return res.status(400).json({ success: false, message: `Warden password MUST be ${expectedPassword}` });
+            if (!email.toLowerCase().endsWith('@warden.ac.in')) {
+                return res.status(400).json({ success: false, message: 'Warden email MUST end with @warden.ac.in' });
             }
         } else if (role === 'admin' && email !== 'admin@hostel.ac.in') {
             return res.status(400).json({ success: false, message: 'Admin email must be admin@hostel.ac.in' });

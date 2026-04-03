@@ -5,7 +5,8 @@ const {
     markBulkAttendance,
     markSingleAttendance,
     getAttendanceStats,
-    getDailyAttendance
+    getDailyAttendance,
+    getStudentsByJurisdiction
 } = require('../controllers/attendanceController');
 
 router.use(protect);
@@ -14,5 +15,6 @@ router.post('/mark', authorize('admin', 'warden'), markSingleAttendance);
 router.post('/bulk', authorize('admin', 'warden'), markBulkAttendance);
 router.get('/stats', authorize('admin', 'warden'), getAttendanceStats);
 router.get('/daily', authorize('admin', 'warden'), getDailyAttendance);
+router.get('/by-jurisdiction', authorize('admin', 'warden'), getStudentsByJurisdiction);
 
 module.exports = router;
