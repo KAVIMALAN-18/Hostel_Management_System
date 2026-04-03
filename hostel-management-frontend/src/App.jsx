@@ -17,7 +17,6 @@ import RoomManagement from './pages/admin/RoomManagement';
 import HostelView from './pages/admin/HostelView';
 import WardenManagement from './pages/admin/WardenManagement';
 import MessManagement from './pages/MessManagement';
-import MyRoom from './pages/student/MyRoom';
 import Complaints from './pages/Complaints';
 import Maintenance from './pages/Maintenance';
 import Announcements from './pages/Announcements';
@@ -25,7 +24,7 @@ import Attendance from './pages/Attendance';
 import LeaveManagement from './pages/LeaveManagement';
 import Unauthorized from './pages/Unauthorized';
 import FeaturePlaceholder from './pages/FeaturePlaceholder';
-import Reports from './pages/Reports';
+
 
 /**
  * Main App Component
@@ -50,7 +49,6 @@ function App() {
             <Route element={<DashboardLayout />}>
 
               {/* Common Routes */}
-              <Route path="/profile" element={<FeaturePlaceholder title="Profile" subtitle="Manage your account settings." />} />
               <Route path="/notices" element={<Announcements />} />
               <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/mess-menu" element={<MessManagement />} />
@@ -70,7 +68,7 @@ function App() {
                 <Route path="/staff-management" element={<WardenManagement />} />
                 <Route path="/admin/mess" element={<MessManagement />} />
                 <Route path="/admin/leave-requests" element={<LeaveManagement />} />
-                <Route path="/reports" element={<Reports />} />
+
               </Route>
 
               {/* Warden-Only Routes */}
@@ -82,7 +80,6 @@ function App() {
               {/* Student-Only Routes */}
               <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                 <Route path="/student/dashboard" element={<StudentDashboard />} />
-                <Route path="/student/room" element={<MyRoom />} />
                 <Route path="/student/leave" element={<StudentDashboard />} />
               </Route>
 

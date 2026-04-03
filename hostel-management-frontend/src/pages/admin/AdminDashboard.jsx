@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { hostelAPI, reportsAPI } from '../../services/api';
+import { reportsAPI } from '../../services/api';
 import { 
     CheckIcon, 
     UsersIcon, 
@@ -22,6 +22,31 @@ const AdminDashboard = () => {
     const [blockStats, setBlockStats] = useState([]);
     const [studentDist, setStudentDist] = useState({ distribution: [], total: 0 });
     const [loading, setLoading] = useState(true);
+    const [downloading, setDownloading] = useState(false);
+
+
+    const handleDownloadPDF = async () => {
+        try {
+            setDownloading(true);
+            const response = await reportsAPI.exportPDF(new Date().toISOString());
+            const blob = response instanceof Blob ? response : new Blob([response], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Hostel_Monthly_Report_${new Date().getMonth() + 1}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Download failed:', err);
+            alert('Failed to generate PDF report. Please try again later.');
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -103,9 +128,15 @@ const AdminDashboard = () => {
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Integrated Command Center • {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold text-xs transition-all flex items-center gap-2 border border-slate-200 dark:border-slate-700">
-                        <CalendarIcon className="w-4 h-4" /> Download PDF
+                    <button 
+                        onClick={handleDownloadPDF}
+                        disabled={downloading}
+                        className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold text-xs transition-all flex items-center gap-2 border border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                    >
+                        <CalendarIcon className={`w-4 h-4 ${downloading ? 'animate-spin' : ''}`} /> 
+                        {downloading ? 'Generating Audit...' : 'Download PDF Audit'}
                     </button>
+
                     <button className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-brand-500/20 transition-all transform active:scale-95 flex items-center gap-2">
                         <MegaphoneIcon className="w-4 h-4" /> Broadcast Notice
                     </button>
@@ -221,14 +252,7 @@ const AdminDashboard = () => {
 };
 
 // Internal Helper Components for Pixel-Perfect Layout
-const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
-    const colorMap = {
-        brand: 'bg-brand-500 group-hover:bg-brand-600 border-brand-100 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20',
-        emerald: 'bg-emerald-500 group-hover:bg-emerald-600 border-emerald-100 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20',
-        purple: 'bg-purple-500 group-hover:bg-purple-600 border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20',
-        orange: 'bg-orange-500 group-hover:bg-orange-600 border-orange-100 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20'
-    };
-
+const QuickActionCard = ({ icon: IconComponent, title, subtitle, color, onClick }) => {
     const bgMap = {
         brand: 'bg-brand-50 dark:bg-brand-900/20',
         emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -239,7 +263,7 @@ const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
     return (
         <div onClick={onClick} className={`p-4 border rounded-2xl cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1 group ${bgMap[color]}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${color === 'brand' ? 'bg-brand-500' : color === 'emerald' ? 'bg-emerald-500' : color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'} text-white`}>
-                <Icon className="w-5 h-5" />
+                <IconComponent className="w-5 h-5" />
             </div>
             <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{title}</h4>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-300 mt-1 uppercase tracking-tight">{subtitle}</p>

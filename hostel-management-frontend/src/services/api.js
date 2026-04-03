@@ -184,20 +184,16 @@ export const reportsAPI = {
     getMaintenance: () => api.get('/reports/maintenance'),
     getOccupancy: () => api.get('/reports/occupancy'),
     getMessFeedback: () => api.get('/reports/mess-feedback'),
-    exportPDF: (month) => axios.get(`${API_BASE_URL}/reports/export`, {
+    exportPDF: (month) => api.get('/reports/export', {
         params: { month, format: 'pdf' },
-        responseType: 'blob',
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+        responseType: 'blob'
     }),
-    exportExcel: (month) => axios.get(`${API_BASE_URL}/reports/export`, {
+
+    exportExcel: (month) => api.get('/reports/export', {
         params: { month, format: 'excel' },
-        responseType: 'blob',
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+        responseType: 'blob'
     })
+
 };
 
 /**
@@ -212,7 +208,8 @@ export const paymentAPI = {
  */
 export const attendanceAPI = {
     getByJurisdiction: (date) => api.get(`/attendance/by-jurisdiction?date=${date}`),
-    markBulk: (data) => api.post('/attendance/bulk', data)
+    markBulk: (data) => api.post('/attendance/bulk', data),
+    getMyAttendance: () => api.get('/attendance/me')
 };
 
 export default api;

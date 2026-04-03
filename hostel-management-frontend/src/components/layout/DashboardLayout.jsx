@@ -103,7 +103,7 @@ const DashboardLayout = () => {
             'Mess Menu': CakeIcon,
             'Profile': UserIcon,
             'My Hostel Details': DoorIcon,
-            'Reports': ClipboardIcon,
+
         };
         return iconMap[name] || HomeIcon;
     };
@@ -123,7 +123,7 @@ const DashboardLayout = () => {
                 { name: 'Maintenance & Queries', path: '/maintenance' },
                 { name: 'Mess Management', path: '/admin/mess' },
                 { name: 'Announcements', path: '/notices' },
-                { name: 'Reports', path: '/reports' },
+
             ],
             warden: [
                 { name: 'Attendance', path: '/attendance' },
@@ -133,7 +133,6 @@ const DashboardLayout = () => {
                 { name: 'Mess Menu', path: '/mess-menu' }
             ],
             student: [
-                { name: 'My Hostel Details', path: '/student/room' },
                 { name: 'Mess Menu', path: '/mess-menu' },
                 { name: 'Announcements', path: '/notices' },
                 { name: 'Maintenance & Queries', path: '/maintenance' },
@@ -141,7 +140,6 @@ const DashboardLayout = () => {
         };
 
         const items = [...commonItems, ...(roleSpecificItems[user?.role] || [])];
-        items.push({ name: 'Profile', path: '/profile' });
         return items;
     };
 

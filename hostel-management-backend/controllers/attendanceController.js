@@ -182,3 +182,63 @@ exports.getStudentsByJurisdiction = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// @desc    Get attendance for the logged-in student
+// @route   GET /api/attendance/me
+// @access  Private (Student)
+exports.getStudentAttendance = async (req, res) => {
+    try {
+        const student = await Student.findOne({ user: req.user._id || req.user.id });
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student profile not found' });
+        }
+
+        const stats = await Attendance.aggregate([
+            { $match: { student: student._id } },
+            { $group: { _id: "$status", count: { $sum: 1 } } }
+        ]);
+
+        let totalPresent = 0;
+        let totalAbsent = 0;
+
+        stats.forEach(stat => {
+            if (stat._id === 'Present') totalPresent = stat.count;
+            if (stat._id === 'Absent') totalAbsent = stat.count;
+        });
+
+        const totalDays = totalPresent + totalAbsent;
+        const attendanceRate = totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dailyRecord = await Attendance.findOne({ student: student._id, date: today });
+        const dailyStatus = dailyRecord ? dailyRecord.status : 'Unknown';
+
+        // Assuming no strict biometric logs in DB yet, falling back to recent attendance records
+        const recentLogs = await Attendance.find({ student: student._id })
+            .sort({ date: -1 })
+            .limit(5);
+
+        const biometricLogs = recentLogs.map((log, index) => ({
+            id: log._id.toString(),
+            location: 'Main Hostel Gate',
+            time: new Date(log.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+            type: log.status === 'Present' ? 'In' : 'Out'
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: {
+                dailyStatus,
+                totalPresent,
+                totalAbsent,
+                attendanceRate,
+                biometricLogs
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+

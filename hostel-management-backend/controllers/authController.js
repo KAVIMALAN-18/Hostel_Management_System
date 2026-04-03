@@ -1,4 +1,4 @@
-const { User, Student, Warden } = require('../models');
+const { User, Student, Warden, Hostel } = require('../models');
 const Admin = require('../models/Admin');
 const PasswordOtp = require('../models/PasswordOtp');
 const bcrypt = require('bcryptjs');
@@ -120,7 +120,12 @@ exports.register = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone,
+                assignedHostel: user.assignedHostel,
+                assignedFloor: user.assignedFloor,
+                gender: user.gender,
+                employeeId: user.employeeId
             }
         });
     } catch (error) {
@@ -177,7 +182,12 @@ exports.login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone,
+                assignedHostel: user.assignedHostel,
+                assignedFloor: user.assignedFloor,
+                gender: user.gender,
+                employeeId: user.employeeId
             }
         });
     } catch (error) {
@@ -269,6 +279,18 @@ exports.updateUser = async (req, res) => {
                 success: false,
                 message: 'User not found'
             });
+        }
+
+        if (user.role === 'warden') {
+            await Warden.findOneAndUpdate(
+                { user: user._id },
+                { 
+                    employeeId: user.employeeId,
+                    assignedHostel: req.body.assignedHostel ? (await Hostel.findOne({ name: req.body.assignedHostel }))?._id : undefined,
+                    assignedFloor: user.assignedFloor
+                },
+                { upsert: false }
+            );
         }
 
         res.status(200).json({

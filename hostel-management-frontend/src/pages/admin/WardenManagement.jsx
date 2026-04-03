@@ -3,17 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 import { 
     UsersIcon, 
     BuildingIcon, 
-    ShieldCheckIcon, 
     PhoneIcon, 
     MailIcon, 
     XIcon, 
     UserPlusIcon, 
-    ShieldAlertIcon,
     CalendarIcon,
-    MapPinIcon,
     EditIcon,
     MoreVerticalIcon,
-    CheckCircleIcon
 } from '../../components/common/Icons';
 import { authAPI, staffAPI, hostelAPI } from '../../services/api';
 
@@ -25,13 +21,12 @@ const WardenManagement = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [selectedWarden, setSelectedWarden] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddMode, setIsAddMode] = useState(false);
     const [availableHostels, setAvailableHostels] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', email: '', phone: '', hostel: '', floor: '', gender: 'Male', password: ''
+        name: '', email: '', phone: '', hostel: '', floor: '', gender: 'Male', password: '', employeeId: ''
     });
 
     const fetchWardens = async () => {
@@ -47,6 +42,7 @@ const WardenManagement = () => {
                     hostel: w.assignedHostel,
                     floor: w.assignedFloor,
                     gender: w.gender || 'Male',
+                    employeeId: w.employeeId || 'WARDEN-ID-TBD',
                     joiningDate: new Date(w.createdAt).toLocaleDateString()
                 })));
             }
@@ -82,9 +78,10 @@ const WardenManagement = () => {
         setFormData({
             ...wrd,
             phone: wrd.mobile,
+            employeeId: wrd.employeeId,
+            gender: wrd.gender,
             id: wrd.id
         });
-        setSelectedWarden(wrd);
         setIsEditMode(true);
     };
 
@@ -96,6 +93,7 @@ const WardenManagement = () => {
             hostel: availableHostels[0] || '', 
             floor: '', 
             gender: 'Male', 
+            employeeId: `EMP-${Date.now()}`,
             password: '' 
         });
         setIsAddMode(true);
@@ -117,13 +115,14 @@ const WardenManagement = () => {
                     phone: formData.phone,
                     assignedHostel: formData.hostel,
                     assignedFloor: formData.floor,
+                    gender: formData.gender,
+                    employeeId: formData.employeeId,
                     role: 'warden'
                 });
             }
             fetchWardens();
             setIsEditMode(false);
             setIsAddMode(false);
-            setSelectedWarden(null);
         } catch (err) {
             alert(err.message || 'Error saving warden details');
         } finally {
@@ -154,6 +153,25 @@ const WardenManagement = () => {
                     </button>
                 )}
             </div>
+
+            {/* Error Alert */}
+            {error && (
+                <div className="p-6 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-[2rem] flex items-center gap-4 text-rose-600 dark:text-rose-400 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-soft">
+                        <ShieldAlertIcon className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-xs font-bold uppercase tracking-wider opacity-60 mb-0.5">System Alert</p>
+                        <p className="text-sm font-bold uppercase tracking-tight">{error}</p>
+                    </div>
+                    <button 
+                        onClick={() => setError(null)}
+                        className="p-3 hover:bg-rose-100 dark:hover:bg-rose-800/40 rounded-2xl transition-all"
+                    >
+                        <XIcon className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
 
             {/* Warden Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -254,6 +272,7 @@ const WardenManagement = () => {
                                     options={['Male', 'Female', 'Other']} 
                                     onChange={(v) => setFormData({ ...formData, gender: v })} 
                                 />
+                                <FormInput label="Employee Identity ID" value={formData.employeeId} onChange={(v) => setFormData({ ...formData, employeeId: v })} required />
                                 {isAddMode && (
                                     <div className="md:col-span-2">
                                         <FormInput label="Initial Auth Password" type="password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} required />
