@@ -252,7 +252,7 @@ const AdminDashboard = () => {
 };
 
 // Internal Helper Components for Pixel-Perfect Layout
-const QuickActionCard = ({ icon: IconComponent, title, subtitle, color, onClick }) => {
+const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
     const bgMap = {
         brand: 'bg-brand-50 dark:bg-brand-900/20',
         emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -263,7 +263,7 @@ const QuickActionCard = ({ icon: IconComponent, title, subtitle, color, onClick 
     return (
         <div onClick={onClick} className={`p-4 border rounded-2xl cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1 group ${bgMap[color]}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${color === 'brand' ? 'bg-brand-500' : color === 'emerald' ? 'bg-emerald-500' : color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'} text-white`}>
-                <IconComponent className="w-5 h-5" />
+                <Icon className="w-5 h-5" />
             </div>
             <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{title}</h4>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-300 mt-1 uppercase tracking-tight">{subtitle}</p>
@@ -304,7 +304,7 @@ const StudentDistributionChart = ({ distConfig, distribution, total }) => {
             <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-10">
                 {/* Donut pie */}
                 <div
-                    className="relative w-56 h-56 rounded-full shadow-inner border-[6px] border-white dark:border-slate-800/50 transition-all hover:scale-105 flex-shrink-0"
+                    className="relative w-56 h-56 rounded-full transition-all hover:scale-105 flex-shrink-0"
                     style={{ background: gradient }}
                 >
                     <div className="absolute inset-0 m-auto w-[150px] h-[150px] bg-white dark:bg-slate-900 rounded-full shadow-[inset_0_-2px_10px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center">
@@ -381,7 +381,7 @@ const HostelBlockChart = ({ blockStats }) => {
             <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-10">
                 {/* Donut pie chart */}
                 <div
-                    className="relative w-56 h-56 rounded-full shadow-inner border-[6px] border-white dark:border-slate-800/50 transition-all hover:scale-105 flex-shrink-0"
+                    className="relative w-56 h-56 rounded-full transition-all hover:scale-105 flex-shrink-0"
                     style={{ background: gradient }}
                 >
                     <div className="absolute inset-0 m-auto w-[150px] h-[150px] bg-white dark:bg-slate-900 rounded-full shadow-[inset_0_-2px_10px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center">
