@@ -38,7 +38,7 @@ const roomSchema = new mongoose.Schema(
         roomType: {
             type: String,
             enum: {
-                values: ['single', 'double', 'triple', 'quad', 'dormitory'],
+                values: ['single', 'double', 'triple', 'quad', 'dormitory', 'single cart', '2 cart', 'four cart'],
                 message: '{VALUE} is not a valid room type'
             },
             required: [true, 'Room type is required']
@@ -177,6 +177,16 @@ roomSchema.virtual('beds', {
     ref: 'Bed',
     localField: '_id',
     foreignField: 'room'
+});
+
+roomSchema.pre('save', async function() {
+  console.log(`--- Room pre-save hook for ${this.roomNumber} ---`);
+  // 1. Set totalBeds based on roomType if cart types are used
+  if (this.isModified('roomType')) {
+    if (this.roomType === 'single cart') this.totalBeds = 1;
+    else if (this.roomType === '2 cart') this.totalBeds = 2;
+    else if (this.roomType === 'four cart') this.totalBeds = 4;
+  }
 });
 
 module.exports = mongoose.model('Room', roomSchema);

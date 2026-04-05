@@ -90,6 +90,20 @@ const StudentManagement = () => {
         }
     };
 
+    const handlePermanentDelete = async (id, name) => {
+        if (window.confirm(`CRITICAL: Are you sure you want to PERMANENTLY DELETE student "${name}"? This will also free up their assigned bed and cannot be undone.`)) {
+            try {
+                const response = await studentAPI.deletePermanent(id);
+                if (response.success) {
+                    setIsViewModalOpen(false);
+                    fetchData();
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    };
+
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -247,6 +261,13 @@ const StudentManagement = () => {
                                                 >
                                                     {student.isActive ? 'DEACTIVATE' : 'AUTHORIZE'}
                                                 </button>
+                                                <button 
+                                                    onClick={() => handlePermanentDelete(student._id, student.name)}
+                                                    className="p-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all border border-rose-100 dark:border-rose-900/50"
+                                                    title="Permanent Delete"
+                                                >
+                                                    <TrashIcon className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -281,7 +302,10 @@ const StudentManagement = () => {
                                     <button className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-slate-400 hover:text-brand-600 transition-all border border-slate-200 dark:border-slate-700">
                                         <EditIcon className="w-5 h-5" />
                                     </button>
-                                    <button className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all border border-slate-200 dark:border-slate-700">
+                                    <button 
+                                        onClick={() => handlePermanentDelete(selectedStudent._id, selectedStudent.name)}
+                                        className="p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100 dark:border-rose-900/50 rounded-2xl"
+                                    >
                                         <TrashIcon className="w-5 h-5" />
                                     </button>
                                 </div>

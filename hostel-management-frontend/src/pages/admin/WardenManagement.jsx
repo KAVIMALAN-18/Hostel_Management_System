@@ -3,19 +3,15 @@ import { useAuth } from '../../context/AuthContext';
 import { 
     UsersIcon, 
     BuildingIcon, 
-    ShieldCheckIcon, 
     PhoneIcon, 
     MailIcon, 
     XIcon, 
     UserPlusIcon, 
-    ShieldAlertIcon,
     CalendarIcon,
-    MapPinIcon,
     EditIcon,
     MoreVerticalIcon,
-    CheckCircleIcon
 } from '../../components/common/Icons';
-import { authAPI, staffAPI } from '../../services/api';
+import { authAPI, staffAPI, hostelAPI } from '../../services/api';
 
 const WardenManagement = () => {
     const { user } = useAuth();
@@ -25,15 +21,13 @@ const WardenManagement = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [selectedWarden, setSelectedWarden] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddMode, setIsAddMode] = useState(false);
+    const [availableHostels, setAvailableHostels] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', email: '', phone: '', hostel: 'Sapphire', floor: '', gender: 'Male', password: 'password123'
+        name: '', email: '', phone: '', hostel: '', floor: '', gender: 'Male', password: '', employeeId: ''
     });
-
-    const hostels = ['Sapphire', 'Emerald', 'Ruby', 'Pearl', 'Diamond'];
 
     const fetchWardens = async () => {
         setIsLoading(true);
@@ -48,6 +42,7 @@ const WardenManagement = () => {
                     hostel: w.assignedHostel,
                     floor: w.assignedFloor,
                     gender: w.gender || 'Male',
+                    employeeId: w.employeeId || 'WARDEN-ID-TBD',
                     joiningDate: new Date(w.createdAt).toLocaleDateString()
                 })));
             }
@@ -59,22 +54,48 @@ const WardenManagement = () => {
         }
     };
 
+    const fetchHostels = async () => {
+        try {
+            const response = await hostelAPI.getHostels();
+            if (response.success) {
+                setAvailableHostels(response.data.map(h => h.name));
+                // Set default hostel if none selected
+                if (response.data.length > 0 && !formData.hostel) {
+                    setFormData(prev => ({ ...prev, hostel: response.data[0].name }));
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch hostels:', err);
+        }
+    };
+
     useEffect(() => {
         fetchWardens();
+        fetchHostels();
     }, []);
 
     const handleEdit = (wrd) => {
         setFormData({
             ...wrd,
             phone: wrd.mobile,
+            employeeId: wrd.employeeId,
+            gender: wrd.gender,
             id: wrd.id
         });
-        setSelectedWarden(wrd);
         setIsEditMode(true);
     };
 
     const handleAdd = () => {
-        setFormData({ name: '', email: '', phone: '', hostel: 'Sapphire', floor: '', gender: 'Male', password: 'password123' });
+        setFormData({ 
+            name: '', 
+            email: '', 
+            phone: '', 
+            hostel: availableHostels[0] || '', 
+            floor: '', 
+            gender: 'Male', 
+            employeeId: `EMP-${Date.now()}`,
+            password: '' 
+        });
         setIsAddMode(true);
     };
 
@@ -94,13 +115,14 @@ const WardenManagement = () => {
                     phone: formData.phone,
                     assignedHostel: formData.hostel,
                     assignedFloor: formData.floor,
+                    gender: formData.gender,
+                    employeeId: formData.employeeId,
                     role: 'warden'
                 });
             }
             fetchWardens();
             setIsEditMode(false);
             setIsAddMode(false);
-            setSelectedWarden(null);
         } catch (err) {
             alert(err.message || 'Error saving warden details');
         } finally {
@@ -131,6 +153,25 @@ const WardenManagement = () => {
                     </button>
                 )}
             </div>
+
+            {/* Error Alert */}
+            {error && (
+                <div className="p-6 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-[2rem] flex items-center gap-4 text-rose-600 dark:text-rose-400 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-soft">
+                        <ShieldAlertIcon className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-xs font-bold uppercase tracking-wider opacity-60 mb-0.5">System Alert</p>
+                        <p className="text-sm font-bold uppercase tracking-tight">{error}</p>
+                    </div>
+                    <button 
+                        onClick={() => setError(null)}
+                        className="p-3 hover:bg-rose-100 dark:hover:bg-rose-800/40 rounded-2xl transition-all"
+                    >
+                        <XIcon className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
 
             {/* Warden Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -215,13 +256,24 @@ const WardenManagement = () => {
 
                         <form onSubmit={saveWarden} className="p-10 space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <FormInput label="Full Name" value={formData.name} onChange={(v) => setFormData({ ...formData, name: v })} required />
+                                <FormInput 
+                                    label="Full Name" 
+                                    value={formData.name} 
+                                    onChange={(v) => {
+                                        setFormData(prev => ({ 
+                                            ...prev, 
+                                            name: v,
+                                            ...(isAddMode && { password: v.replace(/\s+/g, '').toLowerCase() + '@123' })
+                                        }))
+                                    }} 
+                                    required 
+                                />
                                 <FormInput label="Official Email" type="email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} required />
                                 <FormInput label="Direct Phone" value={formData.phone} onChange={(v) => setFormData({ ...formData, phone: v })} />
                                 <FormSelect 
                                     label="Assigned Block" 
                                     value={formData.hostel} 
-                                    options={hostels} 
+                                    options={availableHostels} 
                                     onChange={(v) => setFormData({ ...formData, hostel: v })} 
                                 />
                                 <FormInput label="Jurisdictional Floor" value={formData.floor} onChange={(v) => setFormData({ ...formData, floor: v })} />
@@ -231,6 +283,7 @@ const WardenManagement = () => {
                                     options={['Male', 'Female', 'Other']} 
                                     onChange={(v) => setFormData({ ...formData, gender: v })} 
                                 />
+                                <FormInput label="Employee Identity ID" value={formData.employeeId} onChange={(v) => setFormData({ ...formData, employeeId: v })} required />
                                 {isAddMode && (
                                     <div className="md:col-span-2">
                                         <FormInput label="Initial Auth Password" type="password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} required />
@@ -257,30 +310,59 @@ const WardenManagement = () => {
 };
 
 // UI Components
-const WardenInfoRow = ({ icon: Icon, label, value }) => (
-    <div className="flex items-center gap-4 group/row">
-        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 group-hover/row:text-brand-600 transition-colors">
-            <Icon className="w-4 h-4" />
+const WardenInfoRow = ({ icon, label, value }) => {
+    const IconComponent = icon;
+    return (
+        <div className="flex items-center gap-4 group/row">
+            <div className="w-10 h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 group-hover/row:text-brand-600 transition-colors">
+                <IconComponent className="w-4 h-4" />
+            </div>
+            <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{value}</p>
+            </div>
         </div>
-        <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</p>
-            <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{value}</p>
-        </div>
-    </div>
-);
+    );
+};
 
-const FormInput = ({ label, value, onChange, type = "text", required }) => (
-    <div className="space-y-2">
-        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>
-        <input
-            type={type}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            required={required}
-            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 py-4 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400 uppercase tracking-tight"
-        />
-    </div>
-);
+const FormInput = ({ label, value, onChange, type = "text", required }) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === "password";
+    const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+
+    return (
+        <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>
+            <div className="relative">
+                <input
+                    type={inputType}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    required={required}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 py-4 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400 tracking-tight ${isPassword ? '' : 'uppercase'}`}
+                />
+                {isPassword && (
+                    <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                    >
+                        {showPassword ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        )}
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const FormSelect = ({ label, value, options, onChange }) => (
     <div className="space-y-2">

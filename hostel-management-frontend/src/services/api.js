@@ -87,7 +87,8 @@ export const studentAPI = {
     getAll: () => api.get('/students'),
     getProfile: () => api.get('/students/profile/me'),
     update: (id, data) => api.put(`/students/${id}`, data),
-    deactivate: (id) => api.delete(`/students/${id}`)
+    deactivate: (id) => api.delete(`/students/${id}`),
+    deletePermanent: (id) => api.delete(`/students/${id}/permanent`)
 };
 
 /**
@@ -103,7 +104,8 @@ export const hostelAPI = {
     updateRoom: (id, data) => api.put(`/hostels/rooms/${id}`, data),
     deleteRoom: (id) => api.delete(`/hostels/rooms/${id}`),
     getStats: () => api.get('/hostels/stats'),
-    allocateBed: (data) => api.put('/hostels/allocate', data)
+    allocateBed: (data) => api.put('/hostels/allocate', data),
+    deallocateBed: (data) => api.put('/hostels/deallocate', data)
 };
 
 /**
@@ -129,8 +131,8 @@ export const noticeAPI = {
  * Mess & Culinary API
  */
 export const messAPI = {
-    getMenu: (date) => api.get(`/mess/menu${date ? `?date=${date}` : ''}`),
-    updateMenu: (date, data) => api.put('/mess/menu', { date, ...data }),
+    getMenu: () => api.get('/mess/menu'),
+    updateMenu: (day, data) => api.put(`/mess/menu/${day}`, data),
     submitFeedback: (data) => api.post('/mess/feedback', data),
     getFeedbacks: (params) => api.get('/mess/feedback', { params })
 };
@@ -182,28 +184,32 @@ export const reportsAPI = {
     getMaintenance: () => api.get('/reports/maintenance'),
     getOccupancy: () => api.get('/reports/occupancy'),
     getMessFeedback: () => api.get('/reports/mess-feedback'),
-    exportPDF: (month) => axios.get(`${API_BASE_URL}/reports/export`, {
+    exportPDF: (month) => api.get('/reports/export', {
         params: { month, format: 'pdf' },
-        responseType: 'blob',
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+        responseType: 'blob'
     }),
-    exportExcel: (month) => axios.get(`${API_BASE_URL}/reports/export`, {
+
+    exportExcel: (month) => api.get('/reports/export', {
         params: { month, format: 'excel' },
-        responseType: 'blob',
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+        responseType: 'blob'
     })
+
 };
 
 /**
  * Payment & Billing API
  */
 export const paymentAPI = {
-    getAll: () => api.get('/payments'),
     create: (data) => api.post('/payments', data)
+};
+
+/**
+ * Attendance Management API
+ */
+export const attendanceAPI = {
+    getByJurisdiction: (date) => api.get(`/attendance/by-jurisdiction?date=${date}`),
+    markBulk: (data) => api.post('/attendance/bulk', data),
+    getMyAttendance: () => api.get('/attendance/me')
 };
 
 export default api;

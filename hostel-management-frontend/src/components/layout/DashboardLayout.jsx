@@ -92,19 +92,18 @@ const DashboardLayout = () => {
             'Hostels': BuildingIcon,
             'Rooms & Beds': DoorIcon,
             'Students': UsersIcon,
-            'Student Directory': UsersIcon,
             'Warden Directory': UsersIcon,
             'Attendance': ClipboardIcon,
             'Leave Requests': CalendarIcon,
             'Leave Approvals': CalendarIcon,
             'Leave Request': CalendarIcon,
-            'Maintenance': ToolIcon,
+            'Maintenance & Queries': ToolIcon,
             'Announcements': BellIcon,
             'Mess Management': CakeIcon,
             'Mess Menu': CakeIcon,
             'Profile': UserIcon,
             'My Hostel Details': DoorIcon,
-            'Reports': ClipboardIcon,
+
         };
         return iconMap[name] || HomeIcon;
     };
@@ -117,34 +116,30 @@ const DashboardLayout = () => {
         const roleSpecificItems = {
             admin: [
                 { name: 'Room Management', path: '/admin/rooms' },
-                { name: 'Student Directory', path: '/student-directory' },
                 { name: 'Warden Directory', path: '/staff-management' },
                 { name: 'Students', path: '/admin/students' },
                 { name: 'Attendance', path: '/attendance' },
                 { name: 'Leave Requests', path: '/admin/leave-requests' },
-                { name: 'Maintenance', path: '/maintenance' },
+                { name: 'Maintenance & Queries', path: '/maintenance' },
                 { name: 'Mess Management', path: '/admin/mess' },
                 { name: 'Announcements', path: '/notices' },
-                { name: 'Reports', path: '/reports' },
+
             ],
             warden: [
-                { name: 'Student Directory', path: '/student-directory' },
                 { name: 'Attendance', path: '/attendance' },
                 { name: 'Leave Requests', path: '/warden/leave-requests' },
-                { name: 'Maintenance', path: '/maintenance' },
+                { name: 'Maintenance & Queries', path: '/maintenance' },
                 { name: 'Announcements', path: '/notices' },
                 { name: 'Mess Menu', path: '/mess-menu' }
             ],
             student: [
-                { name: 'My Hostel Details', path: '/student/room' },
                 { name: 'Mess Menu', path: '/mess-menu' },
                 { name: 'Announcements', path: '/notices' },
-                { name: 'Maintenance', path: '/maintenance' },
+                { name: 'Maintenance & Queries', path: '/maintenance' },
             ]
         };
 
         const items = [...commonItems, ...(roleSpecificItems[user?.role] || [])];
-        items.push({ name: 'Profile', path: '/profile' });
         return items;
     };
 

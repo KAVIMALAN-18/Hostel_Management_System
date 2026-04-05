@@ -45,16 +45,15 @@ exports.getComplaints = async (req, res) => {
         if (req.user.role === 'student') {
             filter.student = req.user.id;
         } else if (req.user.role === 'warden') {
-            const warden = await User.findById(req.user.id);
+            const { Warden } = require('../models');
+            const warden = await Warden.findOne({ user: req.user._id || req.user.id });
             if (warden && warden.assignedHostel) {
-                filter.hostelName = warden.assignedHostel;
+                // Since we store hostelName as string, we need to find the name of the assignedHostel ID
+                const { Hostel } = require('../models');
+                const h = await Hostel.findById(warden.assignedHostel);
+                if (h) filter.hostelName = h.name;
             }
         }
-
-        // Additional query filters
-        if (hostel && hostel !== 'All Hostels' && hostel !== 'All') filter.hostelName = hostel;
-        if (priority && priority !== 'All') filter.priority = priority;
-        if (status && status !== 'all' && status !== 'All') filter.status = status;
 
         const complaints = await Complaint.find(filter)
             .populate('student', 'name email phone')

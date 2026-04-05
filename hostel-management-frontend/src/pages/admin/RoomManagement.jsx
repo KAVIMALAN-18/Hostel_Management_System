@@ -11,7 +11,8 @@ import {
     FilterIcon,
     CheckCircleIcon,
     AlertCircleIcon,
-    MapPinIcon
+    MapPinIcon,
+    UserXIcon
 } from '../../components/common/Icons';
 import Modal from '../../components/common/Modal';
 import Button from '../../components/common/Button';
@@ -38,22 +39,29 @@ const RoomManagement = () => {
         startRoomNo: '',
         endRoomNo: '',
         roomPrefix: '',
-        roomType: 'single',
+        roomType: 'single cart',
         floor: 'Ground Floor',
-        totalBeds: 4,
+        totalBeds: 1,
         hostel: '',
         students: []
     });
 
-    const [isBulkMode, setIsBulkMode] = useState(false);
+    const [isBulkMode, setIsBulkMode] = useState(true);
     const [isEditingRoom, setIsEditingRoom] = useState(false);
     const [editingRoomData, setEditingRoomData] = useState(null);
 
+    const [isAutoGenerate, setIsAutoGenerate] = useState(false);
     const [hostelData, setHostelData] = useState({
         name: '',
         type: 'Boys',
         capacity: 100,
-        description: ''
+        description: '',
+        startRoomNo: '',
+        endRoomNo: '',
+        singleCotCount: 0,
+        doubleCotCount: 0,
+        fourCotCount: 0,
+        defaultFloor: 'Ground Floor'
     });
 
     useEffect(() => {
@@ -153,6 +161,31 @@ const RoomManagement = () => {
         }
     };
 
+    const handleDeallocate = async (studentId) => {
+        if (!studentId) return;
+        if (!window.confirm("Are you sure you want to deallocate this student? This will release the bed and update room occupancy.")) return;
+        
+        setSubmitting(true);
+        try {
+            const response = await hostelAPI.deallocateBed({ studentId });
+            if (response.success) {
+                // Refresh rooms
+                const roomRes = await hostelAPI.getRooms(selectedHostelId);
+                if (roomRes.success) {
+                    setRooms(roomRes.data);
+                    const updatedRoom = roomRes.data.find(r => r._id === selectedRoom._id);
+                    if (updatedRoom) setSelectedRoom(updatedRoom);
+                }
+                alert('Student deallocated successfully');
+            }
+        } catch (err) {
+            console.error(err);
+            alert(err.message || 'Error occurred while deallocating student');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const handleAddRoom = async (e) => {
         e.preventDefault();
         if (!roomData.hostel) {
@@ -225,10 +258,23 @@ const RoomManagement = () => {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const response = await hostelAPI.createHostel(hostelData);
+            const payload = { ...hostelData };
+            if (!isAutoGenerate) {
+                delete payload.startRoomNo;
+                delete payload.endRoomNo;
+                delete payload.singleCotCount;
+                delete payload.doubleCotCount;
+                delete payload.fourCotCount;
+                delete payload.defaultFloor;
+            }
+            const response = await hostelAPI.createHostel(payload);
             if (response.success) {
                 setShowHostelModal(false);
-                setHostelData({ name: '', type: 'Boys', capacity: 100, description: '' });
+                setIsAutoGenerate(false);
+                setHostelData({ 
+                    name: '', type: 'Boys', capacity: 100, description: '',
+                    startRoomNo: '', endRoomNo: '', singleCotCount: 0, doubleCotCount: 0, fourCotCount: 0, defaultFloor: 'Ground Floor'
+                });
                 const res = await hostelAPI.getHostels();
                 if (res.success && res.data.length > 0) {
                     setHostels(res.data);
@@ -482,12 +528,22 @@ const RoomManagement = () => {
                             <select
                                 className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                                 value={roomData.roomType}
-                                onChange={(e) => setRoomData({ ...roomData, roomType: e.target.value })}
+                                onChange={(e) => {
+                                    const type = e.target.value;
+                                    let capacity = roomData.totalBeds;
+                                    if (type === 'single cart') capacity = 1;
+                                    else if (type === '2 cart') capacity = 2;
+                                    else if (type === 'four cart') capacity = 4;
+                                    setRoomData({ ...roomData, roomType: type, totalBeds: capacity });
+                                }}
                             >
-                                <option value="single">Single</option>
-                                <option value="double">Double</option>
-                                <option value="triple">Triple</option>
-                                <option value="quad">Quad</option>
+                                <option value="single cart">Single Cart (1 Bed)</option>
+                                <option value="2 cart">2 Cart (2 Beds)</option>
+                                <option value="four cart">Four Cart (4 Beds)</option>
+                                <option value="single">Standard Single</option>
+                                <option value="double">Standard Double</option>
+                                <option value="triple">Standard Triple</option>
+                                <option value="quad">Standard Quad</option>
                                 <option value="dormitory">Dormitory</option>
                             </select>
                         </div>
@@ -497,6 +553,7 @@ const RoomManagement = () => {
                             min="1"
                             max="10"
                             required
+                            disabled={['single cart', '2 cart', 'four cart'].includes(roomData.roomType)}
                             value={roomData.totalBeds} 
                             onChange={(e) => setRoomData({ ...roomData, totalBeds: e.target.value })} 
                         />
@@ -640,10 +697,19 @@ const RoomManagement = () => {
                                             <div>
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase">Bed {bed.bedNumber}</p>
                                                 {bed.status === 'occupied' && bed.student ? (
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                                                        <CheckCircleIcon className="w-3 h-3 text-green-500" />
-                                                        Allocated • ID: {bed.student?.profile?.enrollmentNumber || bed.student.name || 'Student'}
-                                                    </p>
+                                                    <div className="flex items-center justify-between w-full mt-1">
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                            <CheckCircleIcon className="w-3 h-3 text-green-500" />
+                                                            Allocated • ID: {bed.student?.profile?.registrationNumber || bed.student.name || 'Student'}
+                                                        </p>
+                                                        <button 
+                                                            onClick={() => handleDeallocate(bed.student._id || bed.student)}
+                                                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                            title="Deallocate Student"
+                                                        >
+                                                            <UserXIcon className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
                                                 ) : (
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">Available for allocation</p>
                                                 )}
@@ -702,12 +768,22 @@ const RoomManagement = () => {
                                 <select
                                     className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all placeholder:text-slate-400 font-medium"
                                     value={editingRoomData.roomType}
-                                    onChange={(e) => setEditingRoomData({ ...editingRoomData, roomType: e.target.value })}
+                                    onChange={(e) => {
+                                        const type = e.target.value;
+                                        let capacity = editingRoomData.totalBeds;
+                                        if (type === 'single cart') capacity = 1;
+                                        else if (type === '2 cart') capacity = 2;
+                                        else if (type === 'four cart') capacity = 4;
+                                        setEditingRoomData({ ...editingRoomData, roomType: type, totalBeds: capacity });
+                                    }}
                                 >
-                                    <option value="single">Single</option>
-                                    <option value="double">Double</option>
-                                    <option value="triple">Triple</option>
-                                    <option value="quad">Quad</option>
+                                    <option value="single cart">Single Cart (1 Bed)</option>
+                                    <option value="2 cart">2 Cart (2 Beds)</option>
+                                    <option value="four cart">Four Cart (4 Beds)</option>
+                                    <option value="single">Standard Single</option>
+                                    <option value="double">Standard Double</option>
+                                    <option value="triple">Standard Triple</option>
+                                    <option value="quad">Standard Quad</option>
                                     <option value="dormitory">Dormitory</option>
                                 </select>
                             </div>
@@ -717,6 +793,7 @@ const RoomManagement = () => {
                                 min="1"
                                 max="10"
                                 required
+                                disabled={['single cart', '2 cart', 'four cart'].includes(editingRoomData.roomType)}
                                 value={editingRoomData.totalBeds} 
                                 onChange={(e) => setEditingRoomData({ ...editingRoomData, totalBeds: e.target.value })} 
                             />
@@ -812,6 +889,74 @@ const RoomManagement = () => {
                         value={hostelData.description} 
                         onChange={(e) => setHostelData({ ...hostelData, description: e.target.value })} 
                     />
+
+                    {/* Bulk Generation Toggle */}
+                    <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 p-3 rounded-xl">
+                        <div>
+                            <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Auto-generate Rooms?</p>
+                            <p className="text-xs text-blue-600 dark:text-blue-400">Initialize room inventory now</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" className="sr-only peer" checked={isAutoGenerate} onChange={() => setIsAutoGenerate(!isAutoGenerate)} />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    {isAutoGenerate && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input 
+                                    label="Start Room No." 
+                                    type="number" 
+                                    required={isAutoGenerate}
+                                    value={hostelData.startRoomNo} 
+                                    onChange={(e) => setHostelData({ ...hostelData, startRoomNo: e.target.value })} 
+                                />
+                                <Input 
+                                    label="End Room No." 
+                                    type="number" 
+                                    required={isAutoGenerate}
+                                    value={hostelData.endRoomNo} 
+                                    onChange={(e) => setHostelData({ ...hostelData, endRoomNo: e.target.value })} 
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                <Input 
+                                    label="Single Cot" 
+                                    type="number" 
+                                    value={hostelData.singleCotCount} 
+                                    onChange={(e) => setHostelData({ ...hostelData, singleCotCount: e.target.value })} 
+                                />
+                                <Input 
+                                    label="Double Cot" 
+                                    type="number" 
+                                    value={hostelData.doubleCotCount} 
+                                    onChange={(e) => setHostelData({ ...hostelData, doubleCotCount: e.target.value })} 
+                                />
+                                <Input 
+                                    label="Four Cot" 
+                                    type="number" 
+                                    value={hostelData.fourCotCount} 
+                                    onChange={(e) => setHostelData({ ...hostelData, fourCotCount: e.target.value })} 
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Default Floor</label>
+                                <select
+                                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                                    value={hostelData.defaultFloor}
+                                    onChange={(e) => setHostelData({ ...hostelData, defaultFloor: e.target.value })}
+                                >
+                                    <option value="Ground Floor">Ground Floor</option>
+                                    <option value="1st Floor">1st Floor</option>
+                                    <option value="2nd Floor">2nd Floor</option>
+                                    <option value="3rd Floor">3rd Floor</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
                 </form>
             </Modal>
         </div>

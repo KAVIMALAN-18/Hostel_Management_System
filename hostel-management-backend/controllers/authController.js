@@ -1,4 +1,4 @@
-const { User, Student, Warden } = require('../models');
+const { User, Student, Warden, Hostel } = require('../models');
 const Admin = require('../models/Admin');
 const PasswordOtp = require('../models/PasswordOtp');
 const bcrypt = require('bcryptjs');
@@ -65,13 +65,8 @@ exports.register = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Student password MUST be ${expectedPassword}` });
             }
         } else if (role === 'warden') {
-            const expectedEmail = `${nameClean}@warden.ac.in`;
-            const expectedPassword = `${nameClean}@123`;
-            if (email.toLowerCase() !== expectedEmail) {
-                return res.status(400).json({ success: false, message: `Warden email MUST be ${expectedEmail}` });
-            }
-            if (password !== expectedPassword) {
-                return res.status(400).json({ success: false, message: `Warden password MUST be ${expectedPassword}` });
+            if (!email.toLowerCase().endsWith('@warden.ac.in')) {
+                return res.status(400).json({ success: false, message: 'Warden email MUST end with @warden.ac.in' });
             }
         } else if (role === 'admin' && email !== 'admin@hostel.ac.in') {
             return res.status(400).json({ success: false, message: 'Admin email must be admin@hostel.ac.in' });
@@ -125,7 +120,12 @@ exports.register = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone,
+                assignedHostel: user.assignedHostel,
+                assignedFloor: user.assignedFloor,
+                gender: user.gender,
+                employeeId: user.employeeId
             }
         });
     } catch (error) {
@@ -182,7 +182,12 @@ exports.login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone,
+                assignedHostel: user.assignedHostel,
+                assignedFloor: user.assignedFloor,
+                gender: user.gender,
+                employeeId: user.employeeId
             }
         });
     } catch (error) {
@@ -274,6 +279,18 @@ exports.updateUser = async (req, res) => {
                 success: false,
                 message: 'User not found'
             });
+        }
+
+        if (user.role === 'warden') {
+            await Warden.findOneAndUpdate(
+                { user: user._id },
+                { 
+                    employeeId: user.employeeId,
+                    assignedHostel: req.body.assignedHostel ? (await Hostel.findOne({ name: req.body.assignedHostel }))?._id : undefined,
+                    assignedFloor: user.assignedFloor
+                },
+                { upsert: false }
+            );
         }
 
         res.status(200).json({

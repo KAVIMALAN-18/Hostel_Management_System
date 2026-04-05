@@ -63,7 +63,7 @@ function createApp() {
 
     const globalRateLimit = rateLimit({
         windowMs: 15 * 60 * 1000,
-        max: isProd ? 300 : 2000,
+        max: isProd ? 300 : 5000,
         standardHeaders: true,
         legacyHeaders: false,
         message: {

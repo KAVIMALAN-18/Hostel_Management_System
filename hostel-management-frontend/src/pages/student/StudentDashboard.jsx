@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { studentAPI, leaveAPI, noticeAPI } from '../../services/api';
+import { studentAPI, leaveAPI, noticeAPI, attendanceAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
     PhoneIcon,
@@ -53,19 +53,43 @@ const StudentDashboard = () => {
     const [submitError, setSubmitError] = useState('');
     const [submitSuccess, setSubmitSuccess] = useState(false);
 
+    // Profile Update States
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [updateForm, setUpdateForm] = useState({
+        phone: '',
+        bloodGroup: '',
+        guardianName: '',
+        guardianPhone: '',
+        guardianRelation: '',
+        nativePlace: ''
+    });
+    const [updatingProfile, setUpdatingProfile] = useState(false);
+    const [updateError, setUpdateError] = useState('');
+    const [updateSuccess, setUpdateSuccess] = useState(false);
+
     useEffect(() => {
         const fetchDashboardData = async () => {
             // Only set loading on initial fetch to avoid flickering on re-sync
             if (!profile) setLoading(true);
             try {
-                const [profileRes, leavesRes, noticesRes] = await Promise.all([
+                const [profileRes, leavesRes, noticesRes, attendanceRes] = await Promise.all([
                     studentAPI.getProfile(),
                     leaveAPI.getAll(),
-                    noticeAPI.getAll({ limit: 5 })
+                    noticeAPI.getAll({ limit: 5 }),
+                    attendanceAPI.getMyAttendance().catch(() => null)
                 ]);
 
                 if (profileRes.success && profileRes.data) {
                     setProfile(profileRes.data);
+                    const p = profileRes.data.profile || {};
+                    setUpdateForm({
+                        phone: profileRes.data.phone || user?.phone || '',
+                        bloodGroup: p.bloodGroup || '',
+                        guardianName: p.guardianName || '',
+                        guardianPhone: p.guardianPhone || '',
+                        guardianRelation: p.guardianRelation || '',
+                        nativePlace: p.nativePlace || ''
+                    });
                 }
 
                 if (leavesRes.success && leavesRes.data.length > 0) {
@@ -78,6 +102,10 @@ const StudentDashboard = () => {
                     setNotices(noticesRes.data);
                 } else {
                     setNotices([]);
+                }
+                
+                if (attendanceRes && attendanceRes.success && attendanceRes.data) {
+                    setAttendanceStats(attendanceRes.data);
                 }
 
             } catch (error) {
@@ -97,7 +125,7 @@ const StudentDashboard = () => {
         } else {
             setLoading(false);
         }
-    }, [user, profile]);
+    }, [user]);
 
     const handleLeaveSubmit = async (e) => {
         e.preventDefault();
@@ -123,6 +151,33 @@ const StudentDashboard = () => {
         }
     };
 
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setUpdatingProfile(true);
+        setUpdateError('');
+        try {
+            const userId = user?.id || user?._id;
+            const res = await studentAPI.update(userId, updateForm);
+            if (res.success) {
+                setProfile(prev => ({
+                    ...prev,
+                    phone: updateForm.phone,
+                    profile: { ...prev.profile, ...updateForm }
+                }));
+                setShowUpdateModal(false);
+                setUpdateSuccess(true);
+                setTimeout(() => setUpdateSuccess(false), 4000);
+            } else {
+                setUpdateError(res.message || 'Failed to update profile.');
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            setUpdateError(error.message || 'Network error.');
+        } finally {
+            setUpdatingProfile(false);
+        }
+    };
+
     if (loading) return (
         <div className="flex h-[60vh] items-center justify-center bg-slate-50 dark:bg-slate-900 transition-colors">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-white"></div>
@@ -135,10 +190,12 @@ const StudentDashboard = () => {
         <div className="max-w-[1400px] mx-auto p-6 bg-[#f8fafc] dark:bg-slate-900 min-h-screen space-y-8 transition-colors">
 
             {/* Success Toast */}
-            {submitSuccess && (
+            {(submitSuccess || updateSuccess) && (
                 <div className="fixed top-6 right-6 z-[100] flex items-center gap-3 bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl animate-pulse">
                     <CheckCircleIcon className="w-5 h-5" />
-                    <span className="font-bold text-sm uppercase tracking-wider">Leave submitted successfully!</span>
+                    <span className="font-bold text-sm uppercase tracking-wider">
+                        {submitSuccess ? 'Leave submitted successfully!' : 'Profile updated successfully!'}
+                    </span>
                 </div>
             )}
 
@@ -177,6 +234,9 @@ const StudentDashboard = () => {
                                 </div>
                             </div>
                             <div className="text-right">
+                                <Button size="sm" variant="outline" className="mb-2 !rounded-xl !text-xs !font-bold uppercase tracking-wider" onClick={() => setShowUpdateModal(true)}>
+                                    Update Details
+                                </Button>
                                 <p className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider leading-none mb-1">Registration ID</p>
                                 <p className="text-sm font-bold text-slate-900 dark:text-white font-mono">{studentProfile.registrationNumber || 'N/A'}</p>
                             </div>
@@ -223,10 +283,10 @@ const StudentDashboard = () => {
 
                                     <div className="space-y-6">
                                         <div>
-                                            <p className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-2">Guardian / Parent Details</p>
+                                            <p className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-2">Parent / Guardian Details</p>
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{studentProfile.guardianName || 'Guardian Name TBD'}</span>
+                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{studentProfile.guardianName || 'Parent/Guardian Name TBD'}</span>
                                                     <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-tight">
                                                         {studentProfile.guardianRelation || 'Relation'}
                                                     </span>
@@ -298,7 +358,9 @@ const StudentDashboard = () => {
                                     </div>
                                     <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                                         <p className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-2">Block & Floor</p>
-                                        <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 tracking-tight">{studentProfile.block?.name || 'N/A'}</h4>
+                                        <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+                                            {studentProfile.block?.name || ''}{studentProfile.block?.name && studentProfile.room?.floor ? ' - ' : ''}{studentProfile.room?.floor || (!studentProfile.block?.name ? 'Awaiting Allocation' : '')}
+                                        </h4>
                                         <p className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase mt-1">Institutional Wing</p>
                                     </div>
                                     <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
@@ -346,7 +408,7 @@ const StudentDashboard = () => {
                     </div>
 
                     {/* SECTION: Attendance Overview & Analytics */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-8">
                         {/* Attendance Tracker Card */}
                         <div className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-md border border-slate-200 dark:border-slate-700 flex flex-col justify-between h-full transition-colors">
                             <div className="flex items-center justify-between mb-8">
@@ -378,40 +440,6 @@ const StudentDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Biometric Time Logs */}
-                        <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full transition-colors">
-                            <div className="p-6 border-b border-slate-50 dark:border-slate-700 bg-[#f9fafb]/30 dark:bg-slate-900/50 flex items-center gap-3">
-                                <ClockIcon className="w-5 h-5 text-slate-400 dark:text-slate-300" />
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Biometric Activity</h3>
-                            </div>
-                            <div className="flex-1">
-                                <table className="w-full">
-                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                                        {attendanceStats.biometricLogs.map((log) => (
-                                            <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                                                <td className="p-5">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-2 h-2 rounded-full bg-emerald-400 group-hover:animate-pulse"></div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight leading-none mb-1">{log.location}</p>
-                                                            <p className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase leading-none">Security Node Verified</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{log.time}</p>
-                                                    <p className={`text-xs font-bold uppercase tracking-wider ${log.type === 'In' ? 'text-emerald-500' : 'text-slate-400'}`}>SCAN: {log.type}</p>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 flex justify-center border-t border-slate-50 dark:border-slate-700">
-                                <button className="text-xs font-bold text-slate-400 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase tracking-wide transition-colors">Full Scanned Statistics</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -430,9 +458,6 @@ const StudentDashboard = () => {
                                     className="w-full py-4 bg-white dark:bg-slate-100 text-indigo-600 dark:text-indigo-700 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-indigo-50 transition-all shadow-lg active:scale-[0.98]"
                                 >
                                     Apply For Leave
-                                </button>
-                                <button className="w-full py-4 bg-indigo-500/50 dark:bg-indigo-800/50 border border-indigo-400/50 dark:border-indigo-600/50 text-white rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-indigo-500 dark:hover:bg-indigo-600 transition-all">
-                                    Residency Guidelines
                                 </button>
                             </div>
                         </div>
@@ -524,6 +549,62 @@ const StudentDashboard = () => {
                     </div>
                     <div className="pt-4">
                         <Button type="submit" variant="primary" loading={submitting} className="w-full h-16 !rounded-3xl !text-sm !font-bold uppercase tracking-wide shadow-xl shadow-indigo-100">Submit Application</Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Update Profile Modal */}
+            <Modal isOpen={showUpdateModal} onClose={() => { setShowUpdateModal(false); setUpdateError(''); }} title="Update Personal Information">
+                <form onSubmit={handleUpdateProfile} className="space-y-6">
+                    <p className="text-sm font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wide border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">Modify your institutional records</p>
+                    {updateError && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+                            <XIcon className="w-4 h-4 flex-shrink-0" />
+                            {updateError}
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide ml-1">Phone Number</label>
+                            <input type="text" required className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 outline-none transition-all" value={updateForm.phone} onChange={e => setUpdateForm({ ...updateForm, phone: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide ml-1">Blood Group</label>
+                            <select className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all" value={updateForm.bloodGroup} onChange={e => setUpdateForm({ ...updateForm, bloodGroup: e.target.value })}>
+                                <option value="">Select</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide ml-1">Parent/Guardian Name</label>
+                            <input type="text" required className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all" value={updateForm.guardianName} onChange={e => setUpdateForm({ ...updateForm, guardianName: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide ml-1">Parent/Guardian Phone</label>
+                            <input type="text" required className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all" value={updateForm.guardianPhone} onChange={e => setUpdateForm({ ...updateForm, guardianPhone: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide ml-1">Parent/Guardian Relation</label>
+                            <input type="text" required className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all" value={updateForm.guardianRelation} onChange={e => setUpdateForm({ ...updateForm, guardianRelation: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wide ml-1">Native Place</label>
+                            <input type="text" required className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all" value={updateForm.nativePlace} onChange={e => setUpdateForm({ ...updateForm, nativePlace: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="pt-4">
+                        <Button type="submit" variant="primary" loading={updatingProfile} className="w-full h-16 !rounded-3xl !text-sm !font-bold uppercase tracking-wide shadow-xl shadow-indigo-100">Save Changes</Button>
                     </div>
                 </form>
             </Modal>

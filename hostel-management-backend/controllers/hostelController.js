@@ -5,9 +5,64 @@ const { Hostel, Room, Bed, Student } = require('../models');
 // @route   POST /api/hostels
 // @desc    Create a new hostel
 // @access  Private (Admin)
-exports.createHostel = async (req, res) => {
+exports.createHostel = async (req, res, next) => {
+    console.log('--- ENTERED createHostel ---');
     try {
-        const hostel = await Hostel.create(req.body);
+        const { 
+            name, type, capacity, description, 
+            startRoomNo, endRoomNo, 
+            singleCotCount = 0, doubleCotCount = 0, fourCotCount = 0,
+            defaultFloor = 'Ground Floor'
+        } = req.body;
+
+        const hostel = await Hostel.create({ name, type, capacity, description });
+
+        // Bulk Room Creation if requested
+        if (startRoomNo && endRoomNo) {
+            const start = parseInt(startRoomNo);
+            const end = parseInt(endRoomNo);
+            
+            if (!isNaN(start) && !isNaN(end) && start <= end) {
+                let currentRoomNo = start;
+                
+                // Create Single Cot Rooms
+                for (let i = 0; i < parseInt(singleCotCount); i++) {
+                    if (currentRoomNo > end) break;
+                    await _createRoomInternal({
+                        roomNumber: `${currentRoomNo}`,
+                        roomType: 'single cart',
+                        floor: defaultFloor,
+                        hostel: hostel._id
+                    });
+                    currentRoomNo++;
+                }
+
+                // Create Double Cot Rooms
+                for (let i = 0; i < parseInt(doubleCotCount); i++) {
+                    if (currentRoomNo > end) break;
+                    await _createRoomInternal({
+                        roomNumber: `${currentRoomNo}`,
+                        roomType: '2 cart',
+                        floor: defaultFloor,
+                        hostel: hostel._id
+                    });
+                    currentRoomNo++;
+                }
+
+                // Create Four Cot Rooms
+                for (let i = 0; i < parseInt(fourCotCount); i++) {
+                    if (currentRoomNo > end) break;
+                    await _createRoomInternal({
+                        roomNumber: `${currentRoomNo}`,
+                        roomType: 'four cart',
+                        floor: defaultFloor,
+                        hostel: hostel._id
+                    });
+                    currentRoomNo++;
+                }
+            }
+        }
+
         res.status(201).json({ success: true, data: hostel });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -54,56 +109,64 @@ exports.deleteHostel = async (req, res) => {
 
 // --- Room Controllers ---
 
+// Internal helper for room & bed creation logic
+const _createRoomInternal = async (roomPayload, students = []) => {
+    // Auto-calculate totalBeds for cart types if not provided
+    if (roomPayload.roomType === 'single cart') roomPayload.totalBeds = 1;
+    else if (roomPayload.roomType === '2 cart') roomPayload.totalBeds = 2;
+    else if (roomPayload.roomType === 'four cart') roomPayload.totalBeds = 4;
+
+    const room = await Room.create(roomPayload);
+
+    // Auto-generate underlying bed allocations based on the room size (totalBeds)
+    if (room.totalBeds > 0) {
+        const newBeds = [];
+        
+        for (let i = 1; i <= room.totalBeds; i++) {
+            const assignedStudentId = (students && students[i - 1]) ? students[i - 1] : null;
+            
+            newBeds.push({
+                bedNumber: `${room.roomNumber}-${String.fromCharCode(64 + i)}`,
+                room: room._id,
+                status: assignedStudentId ? 'occupied' : 'available',
+                student: assignedStudentId
+            });
+        }
+        const createdBeds = await Bed.insertMany(newBeds);
+
+        // Update student profiles if any were assigned
+        if (students && students.length > 0) {
+            for (let i = 0; i < Math.min(students.length, room.totalBeds); i++) {
+                const studentId = students[i];
+                const bedId = createdBeds[i]._id;
+                await Student.findOneAndUpdate(
+                    { user: studentId },
+                    {
+                        hostel: room.hostel,
+                        room: room._id,
+                        bed: bedId,
+                        allocationStatus: 'allocated'
+                    }
+                );
+            }
+        }
+        
+        // Update room occupancy
+        if (students && students.length > 0) {
+            room.occupiedBeds = Math.min(students.length, room.totalBeds);
+            await room.save();
+        }
+    }
+    return room;
+};
+
 // @route   POST /api/rooms
 // @desc    Create a new room in a hostel
 // @access  Private (Admin)
 exports.createRoom = async (req, res) => {
     try {
         const { students, ...roomPayload } = req.body;
-        const room = await Room.create(roomPayload);
-
-        // Auto-generate underlying bed allocations based on the room size (totalBeds)
-        if (room.totalBeds > 0) {
-            const Bed = require('../models/Bed');
-            const Student = require('../models/Student');
-            const newBeds = [];
-            
-            for (let i = 1; i <= room.totalBeds; i++) {
-                const assignedStudentId = (students && students[i - 1]) ? students[i - 1] : null;
-                
-                newBeds.push({
-                    bedNumber: `${room.roomNumber}-${String.fromCharCode(64 + i)}`,
-                    room: room._id,
-                    status: assignedStudentId ? 'occupied' : 'available',
-                    student: assignedStudentId
-                });
-            }
-            const createdBeds = await Bed.insertMany(newBeds);
-
-            // Update student profiles if any were assigned
-            if (students && students.length > 0) {
-                for (let i = 0; i < Math.min(students.length, room.totalBeds); i++) {
-                    const studentId = students[i];
-                    const bedId = createdBeds[i]._id;
-                    await Student.findOneAndUpdate(
-                        { user: studentId },
-                        {
-                            hostel: room.hostel,
-                            room: room._id,
-                            bed: bedId,
-                            allocationStatus: 'allocated'
-                        }
-                    );
-                }
-            }
-            
-            // Update room occupancy
-            if (students && students.length > 0) {
-                room.occupiedBeds = Math.min(students.length, room.totalBeds);
-                await room.save();
-            }
-        }
-
+        const room = await _createRoomInternal(roomPayload, students);
         res.status(201).json({ success: true, data: room });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -132,12 +195,59 @@ exports.getRooms = async (req, res) => {
 };
 
 // @route   PATCH /api/rooms/:id
-// @desc    Update a room
+// @desc    Update a room (handles bed synchronization for cart-based capacity changes)
 // @access  Private (Admin, Warden)
 exports.updateRoom = async (req, res) => {
     try {
-        const room = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
+        const roomId = req.params.id;
+        const updateData = req.body;
+
+        // 1. Auto-calculate totalBeds for cart types if roomType is updated
+        if (updateData.roomType === 'single cart') updateData.totalBeds = 1;
+        else if (updateData.roomType === '2 cart') updateData.totalBeds = 2;
+        else if (updateData.roomType === 'four cart') updateData.totalBeds = 4;
+
+        const oldRoom = await Room.findById(roomId);
+        if (!oldRoom) return res.status(404).json({ success: false, message: 'Room not found' });
+
+        const room = await Room.findByIdAndUpdate(roomId, updateData, { new: true, runValidators: true });
+
+        // 2. Sync Beds if totalBeds changed
+        if (updateData.totalBeds && updateData.totalBeds !== oldRoom.totalBeds) {
+            const currentBeds = await Bed.find({ room: roomId }).sort({ bedNumber: 1 });
+            
+            if (updateData.totalBeds > oldRoom.totalBeds) {
+                // Add new beds
+                const newBedsCount = updateData.totalBeds - oldRoom.totalBeds;
+                const newBeds = [];
+                for (let i = 1; i <= newBedsCount; i++) {
+                    const bedIndex = oldRoom.totalBeds + i;
+                    newBeds.push({
+                        bedNumber: `${room.roomNumber}-${String.fromCharCode(64 + bedIndex)}`,
+                        room: roomId,
+                        status: 'available'
+                    });
+                }
+                await Bed.insertMany(newBeds);
+            } else {
+                // Remove excess beds (Caution: only if they are available)
+                const excessBeds = currentBeds.slice(updateData.totalBeds);
+                const occupiedBeds = excessBeds.filter(b => b.status === 'occupied');
+                
+                if (occupiedBeds.length > 0) {
+                    // Revert capacity change if occupied beds are in the range to be removed
+                    await Room.findByIdAndUpdate(roomId, { totalBeds: oldRoom.totalBeds, roomType: oldRoom.roomType });
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Cannot reduce capacity. ${occupiedBeds.length} beds in the removal range are currently occupied.` 
+                    });
+                }
+                
+                const excessBedIds = excessBeds.map(b => b._id);
+                await Bed.deleteMany({ _id: { $in: excessBedIds } });
+            }
+        }
+
         res.status(200).json({ success: true, data: room });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

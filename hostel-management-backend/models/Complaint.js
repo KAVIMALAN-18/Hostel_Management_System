@@ -28,7 +28,7 @@ const complaintSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['Pending', 'In Progress', 'Resolved', 'Closed'],
+            enum: ['Pending', 'Solved', 'Invalid', 'Fixed'],
             default: 'Pending'
         },
         hostelName: String,
