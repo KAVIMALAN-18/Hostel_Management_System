@@ -21,7 +21,6 @@ import {
 const Announcements = () => {
     const { user } = useAuth();
     const isStaff = user?.role === 'admin' || user?.role === 'warden';
-    const isStudent = user?.role === 'student';
 
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -55,6 +54,7 @@ const Announcements = () => {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchNotices(); }, [filters]);
 
     const handleSubmit = async (e) => {
@@ -68,6 +68,7 @@ const Announcements = () => {
                 fetchNotices();
             }
         } catch (err) {
+            console.error(err);
             alert('Broadcast failure');
         } finally {
             setSubmitting(false);
@@ -80,6 +81,7 @@ const Announcements = () => {
             await noticeAPI.delete(id);
             setNotices(prev => prev.filter(n => n._id !== id));
         } catch (err) {
+            console.error(err);
             alert('Deletion failed');
         }
     };

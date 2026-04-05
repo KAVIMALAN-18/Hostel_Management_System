@@ -72,6 +72,7 @@ const WardenManagement = () => {
     useEffect(() => {
         fetchWardens();
         fetchHostels();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleEdit = (wrd) => {
