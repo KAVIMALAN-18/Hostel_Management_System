@@ -1,24 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { AuthContext } from './AuthContextCore';
 import { authAPI, tokenService, userService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
-
-/**
- * Authentication Context
- * Manages user authentication state across the application
- */
-const AuthContext = createContext(null);
-
-/**
- * Custom hook to use authentication context
- * @returns {object} Auth context value
- */
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within AuthProvider');
-    }
-    return context;
-};
 
 /**
  * Authentication Provider Component
@@ -193,4 +176,3 @@ export const AuthProvider = ({ children }) => {
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export default AuthContext;

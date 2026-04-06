@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { reportsAPI, attendanceAPI, hostelAPI } from '../services/api';
 import Modal from '../components/common/Modal';
@@ -42,7 +42,7 @@ const Attendance = () => {
     const floors = ['All Floors', 'Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor'];
     const statuses = ['All Status', 'Present', 'Absent', 'Leave', 'Not Marked'];
 
-    const fetchHostels = async () => {
+    const fetchHostels = useCallback(async () => {
         try {
             const res = await hostelAPI.getHostels();
             if (res.success) {
@@ -52,9 +52,9 @@ const Attendance = () => {
         } catch (error) {
             console.error('Failed to fetch hostels:', error);
         }
-    };
+    }, []);
 
-    const fetchAttendance = async (isRefresh = false) => {
+    const fetchAttendance = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
         else setLoading(true);
         
@@ -79,9 +79,9 @@ const Attendance = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, []);  
 
-    const fetchMarkingList = async () => {
+    const fetchMarkingList = useCallback(async () => {
         setLoading(true);
         try {
             const res = await attendanceAPI.getByJurisdiction(markingDate, filters.hostel);
@@ -100,7 +100,7 @@ const Attendance = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [markingDate, filters.hostel]);
 
     useEffect(() => {
         fetchHostels();
@@ -109,7 +109,7 @@ const Attendance = () => {
         } else {
             fetchAttendance();
         }
-    }, [isMarkingMode, markingDate, filters.hostel]);
+    }, [fetchHostels, fetchMarkingList, fetchAttendance, isMarkingMode]);
 
     const handleStatusChange = (studentId, newStatus) => {
         setMarkingList(prev => prev.map(s => 
