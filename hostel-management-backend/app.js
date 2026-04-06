@@ -33,7 +33,7 @@ function createApp() {
         'http://127.0.0.1:5174'
     ];
 
-    // PLACED AT THE ABSOLUTE TOP TO ENSURE PREFLIGHT SUCCESSs
+    // PLACED AT THE ABSOLUTE TOP TO ENSURE PREFLIGHT SUCCESS
     app.use((req, res, next) => {
         const origin = req.header('origin');
         if (allowedOrigins.includes(origin) || !origin || !isProd || origin.includes('localhost') || origin.includes('127.0.0.1')) {
