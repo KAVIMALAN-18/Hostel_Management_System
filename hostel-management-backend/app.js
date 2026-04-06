@@ -33,7 +33,6 @@ function createApp() {
         'http://127.0.0.1:5174'
     ];
 
-    // Manual CORS Headers (FOOLPROOF fallback for Network Errors)
     // PLACED AT THE ABSOLUTE TOP TO ENSURE PREFLIGHT SUCCESS
     app.use((req, res, next) => {
         const origin = req.header('origin');
