@@ -1,7 +1,10 @@
 {
   "name": "hostel-management-backend",
   "version": "1.0.0",
-  "description": "<<<<<<< HEAD # React + Vite",
+  "description": "Hostel Management Backend",
+  "overrides": {
+  "lightningcss-win32-x64-msvc": "0.0.0"
+},
   "main": "app.js",
   "directories": {
     "test": "tests"
@@ -230,7 +233,7 @@
     "leven": "^3.1.0",
     "lie": "^3.3.0",
     "lightningcss": "^1.32.0",
-    "lightningcss-win32-x64-msvc": "^1.32.0",
+
     "linebreak": "^1.1.0",
     "lines-and-columns": "^1.2.4",
     "listenercount": "^1.0.1",
@@ -424,5 +427,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC"
-  
+
 }
