@@ -148,7 +148,7 @@ const Attendance = () => {
     const handleStatusConfirm = async (status) => {
         if (!statusModalRecord) return;
         
-        const { id: studentId, name, mode } = statusModalRecord;
+        const { id: studentId, mode } = statusModalRecord;
         
         if (mode === 'marking') {
             handleStatusChange(studentId, status);
@@ -491,7 +491,8 @@ const Attendance = () => {
 };
 
 // UI Components
-const StatMetric = ({ label, value, trend, percentage, icon: Icon, color }) => {
+const StatMetric = (props) => {
+    const { label, value, trend, percentage, icon: Icon, color } = props;
     const colors = {
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 border-emerald-100',
         rose: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 border-rose-100',
@@ -503,7 +504,7 @@ const StatMetric = ({ label, value, trend, percentage, icon: Icon, color }) => {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-7 rounded-[2.5rem] shadow-soft hover:border-brand-500/30 transition-all group">
             <div className="flex items-start justify-between mb-6">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${colors[color]}`}>
-                    <Icon className="w-6 h-6" />
+                    {Icon && <Icon className="w-6 h-6" />}
                 </div>
                 <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${trend.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
                     {trend.includes('+') ? <ArrowUpRightIcon className="w-3 h-3" /> : <ArrowDownRightIcon className="w-3 h-3" />}
@@ -532,7 +533,7 @@ const FilterDropdown = ({ label, value, options, onChange }) => (
             onChange={(e) => onChange(e.target.value)}
             className="bg-transparent border-none text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider focus:outline-none cursor-pointer w-full"
         >
-            {options.map(o => <option key={o} value={o}>{o.toUpperCase()}</option>)}
+            {options.map(o => <option key={o} value={o} className="bg-white dark:bg-slate-800">{o.toUpperCase()}</option>)}
         </select>
     </div>
 );

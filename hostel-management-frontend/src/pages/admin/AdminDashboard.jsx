@@ -232,10 +232,9 @@ const AdminDashboard = () => {
             </div>
 
             {/* Productivity Quick Access */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <QuickActionCard onClick={() => navigate('/admin/students')} icon={UserPlusIcon} title="Register Resident" subtitle="Provision new student" color="brand" />
                 <QuickActionCard onClick={() => navigate('/attendance')} icon={CalendarIcon} title="Census Logs" subtitle="Attendance & Leave" color="emerald" />
-                <QuickActionCard onClick={() => navigate('/admin/hostels')} icon={PieChartIcon} title="Inventory Manager" subtitle="Hostels & Units" color="purple" />
                 <QuickActionCard onClick={() => navigate('/maintenance')} icon={AlertCircleIcon} title="Resolved Cases" subtitle="Maintenance History" color="orange" />
             </div>
 
@@ -252,7 +251,8 @@ const AdminDashboard = () => {
 };
 
 // Internal Helper Components for Pixel-Perfect Layout
-const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
+const QuickActionCard = (props) => {
+    const { title, subtitle, color, onClick, icon: Icon } = props;
     const bgMap = {
         brand: 'bg-brand-50 dark:bg-brand-900/20',
         emerald: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -263,7 +263,7 @@ const QuickActionCard = ({ icon: Icon, title, subtitle, color, onClick }) => {
     return (
         <div onClick={onClick} className={`p-4 border rounded-2xl cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1 group ${bgMap[color]}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${color === 'brand' ? 'bg-brand-500' : color === 'emerald' ? 'bg-emerald-500' : color === 'purple' ? 'bg-purple-500' : 'bg-orange-500'} text-white`}>
-                <Icon className="w-5 h-5" />
+                {Icon && <Icon className="w-5 h-5" />}
             </div>
             <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{title}</h4>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-300 mt-1 uppercase tracking-tight">{subtitle}</p>

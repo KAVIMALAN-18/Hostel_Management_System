@@ -24,8 +24,8 @@ const StudentManagement = () => {
     const [students, setStudents] = useState([]);
     const [hostels, setHostels] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedHostel, setSelectedHostel] = useState('ALL BLOCKS');
     const [showModal, setShowModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -49,7 +49,7 @@ const StudentManagement = () => {
             if (studentRes.success) setStudents(studentRes.data);
             if (hostelRes.success) setHostels(hostelRes.data);
         } catch (err) {
-            setError(err.message);
+            console.error('Failed to fetch data:', err);
         } finally {
             setLoading(false);
         }
@@ -104,11 +104,13 @@ const StudentManagement = () => {
         }
     };
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.phone && s.phone.includes(searchTerm))
-    );
+    const filteredStudents = students.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (s.phone && s.phone.includes(searchTerm));
+        const matchesHostel = selectedHostel === 'ALL BLOCKS' || s.profile?.hostel?._id === selectedHostel;
+        return matchesSearch && matchesHostel;
+    });
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -119,9 +121,7 @@ const StudentManagement = () => {
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-300 mt-1">Authorized Resident Directory & Identity Management</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs text-slate-700 dark:text-slate-200 shadow-sm transition-all hover:bg-slate-50">
-                        Export Registry
-                    </button>
+
                     <button 
                         onClick={() => setShowModal(true)}
                         className="px-5 py-2.5 bg-brand-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-brand-500/20 transition-all hover:bg-brand-700 flex items-center gap-2"
@@ -154,9 +154,13 @@ const StudentManagement = () => {
                 
                 <div className="flex-1 w-full flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700">
                     <FilterIcon className="w-4 h-4 text-slate-400" />
-                    <select className="bg-transparent border-none text-xs font-bold text-slate-600 dark:text-slate-300 focus:outline-none w-full uppercase tracking-wider cursor-pointer">
-                        <option>ALL BLOCKS</option>
-                        {hostels.map(h => <option key={h._id} value={h._id}>{h.name.toUpperCase()}</option>)}
+                    <select 
+                        value={selectedHostel}
+                        onChange={(e) => setSelectedHostel(e.target.value)}
+                        className="bg-transparent border-none text-xs font-bold text-slate-600 dark:text-slate-300 focus:outline-none w-full uppercase tracking-wider cursor-pointer"
+                    >
+                        <option value="ALL BLOCKS" className="bg-white dark:bg-slate-800">ALL BLOCKS</option>
+                        {hostels.map(h => <option key={h._id} value={h._id} className="bg-white dark:bg-slate-800">{h.name.toUpperCase()}</option>)}
                     </select>
                 </div>
 
@@ -396,32 +400,38 @@ const StudentManagement = () => {
 };
 
 // UI Sub-components
-const StatCard = ({ label, value, sub, icon: Icon, color, bg }) => (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-3xl shadow-soft flex items-start gap-5 hover:border-brand-500/30 transition-all">
-        <div className={`w-14 h-14 ${bg} rounded-2xl flex items-center justify-center ${color}`}>
-            <Icon className="w-7 h-7" />
+const StatCard = (props) => {
+    const { label, value, sub, icon: Icon, color, bg } = props;
+    return (
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-3xl shadow-soft flex items-start gap-5 hover:border-brand-500/30 transition-all">
+            <div className={`w-14 h-14 ${bg} rounded-2xl flex items-center justify-center ${color}`}>
+                {Icon && <Icon className="w-7 h-7" />}
+            </div>
+            <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-tight mt-1">{sub}</p>
+            </div>
         </div>
-        <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</p>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-tight mt-1">{sub}</p>
-        </div>
-    </div>
-);
+    );
+};
 
-const ProfileField = ({ icon: Icon, label, value, status }) => (
-    <div className="flex items-center gap-4">
-        <div className="w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400">
-            <Icon className="w-4 h-4" />
+const ProfileField = (props) => {
+    const { icon: Icon, label, value, status } = props;
+    return (
+        <div className="flex items-center gap-4">
+            <div className="w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400">
+                {Icon && <Icon className="w-4 h-4" />}
+            </div>
+            <div className="flex-1">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</p>
+                <p className={`text-sm font-bold tracking-tight uppercase ${status === 'success' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
+                    {value}
+                </p>
+            </div>
         </div>
-        <div className="flex-1">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</p>
-            <p className={`text-sm font-bold tracking-tight uppercase ${status === 'success' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
-                {value}
-            </p>
-        </div>
-    </div>
-);
+    );
+};
 
 const FormInput = ({ label, value, onChange, type = "text", required }) => (
     <div className="space-y-2">

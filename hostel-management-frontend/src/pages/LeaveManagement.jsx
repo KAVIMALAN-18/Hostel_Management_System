@@ -12,7 +12,6 @@ import {
   AlertCircleIcon,
   MoreVerticalIcon,
   ChevronRightIcon,
-  ArrowUpRightIcon,
   XIcon,
 } from "../components/common/Icons";
 
@@ -175,16 +174,12 @@ const LeaveManagement = () => {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 px-1">
-                    Residential Risk
+                    Leave Description
                   </p>
-                  <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-brand-500"></div>
-                      <span className="text-sm font-bold text-slate-900 dark:text-white uppercase">
-                        {leave.leavePercentage}% SEM
-                      </span>
-                    </div>
-                    <ArrowUpRightIcon className="w-3.5 h-3.5 text-slate-300" />
+                  <div className="flex items-center bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors overflow-hidden">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate" title={leave.reason}>
+                      "{leave.reason}"
+                    </span>
                   </div>
                 </div>
               </div>
@@ -196,28 +191,35 @@ const LeaveManagement = () => {
                     ID Verified
                   </span>
                 </div>
-                {(isAdmin || isWarden) && leave.status === "Pending" ? (
+                {(isAdmin || isWarden) && (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleUpdateStatus(leave._id, "Rejected")}
-                      className="px-5 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700"
-                    >
-                      Deny
-                    </button>
-                    <button
-                      onClick={() => handleUpdateStatus(leave._id, "Approved")}
-                      className="px-6 py-2.5 bg-brand-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-500/20 hover:bg-brand-700 transition-all border border-brand-500"
-                    >
-                      Authorize
-                    </button>
+                    {leave.status === "Pending" ? (
+                      <>
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleUpdateStatus(leave._id, "Rejected", "Denied directly by administration.");
+                          }}
+                          className="px-5 py-2.5 bg-rose-600 text-white hover:bg-rose-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-rose-500/20"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(leave._id, "Approved"); }}
+                          className="px-6 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/20"
+                        >
+                          Approve
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdateStatus(leave._id, "Pending"); }}
+                        className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-200 dark:border-slate-700"
+                      >
+                        Revoke
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setSelectedLeave(leave)}
-                    className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider flex items-center gap-1.5 hover:gap-2.5 transition-all"
-                  >
-                    View Dossier <ChevronRightIcon className="w-4 h-4" />
-                  </button>
                 )}
               </div>
             </div>
