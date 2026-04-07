@@ -69,6 +69,10 @@ const Register = () => {
                 if (formData.password !== `${nameClean}@123`) {
                     newErrors.password = `Must be ${nameClean}@123`;
                 }
+            } else if (formData.role === 'admin') {
+                if (formData.password !== 'admin@123') {
+                    newErrors.password = 'Must be admin@123';
+                }
             } else if (formData.password.length < 6) {
                 newErrors.password = 'Min. 6 characters';
             }
@@ -93,6 +97,7 @@ const Register = () => {
                 setServerError(result.message || 'Registration request denied');
             }
         } catch (err) {
+            console.error(err);
             setServerError('System connection error. Please try again.');
         } finally {
             setIsLoading(false);

@@ -1,5 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect } from 'react';
-import { AuthContext } from './AuthContextCore';
+import { AuthContext, useAuth } from './AuthContextCore';
+export { useAuth, AuthContext };
 import { authAPI, tokenService, userService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 

@@ -48,7 +48,7 @@ const Maintenance = () => {
         }
     };
 
-    useEffect(() => { fetchTickets(); }, [filters]);
+    useEffect(() => { fetchTickets(); }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleCreateTicket = async (e) => {
         e.preventDefault();
@@ -81,6 +81,7 @@ const Maintenance = () => {
                 setSelectedTicket(null);
             }
         } catch (err) {
+            console.error('Update failed:', err);
             alert('Operation failed');
         } finally {
             setSubmitting(false);

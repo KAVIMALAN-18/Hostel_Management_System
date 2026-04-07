@@ -52,24 +52,35 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Create user — include warden fields if provided
         // Enforce name-based email and password patterns
         const nameClean = name.toLowerCase().replace(/\s+/g, '');
         if (role === 'student') {
             const expectedEmail = `${nameClean}@student.ac.in`;
             const expectedPassword = `${nameClean}@123`;
-            if (email.toLowerCase() !== expectedEmail) {
+            if (email !== expectedEmail) {
                 return res.status(400).json({ success: false, message: `Student email MUST be ${expectedEmail}` });
             }
             if (password !== expectedPassword) {
                 return res.status(400).json({ success: false, message: `Student password MUST be ${expectedPassword}` });
             }
         } else if (role === 'warden') {
-            if (!email.toLowerCase().endsWith('@warden.ac.in')) {
-                return res.status(400).json({ success: false, message: 'Warden email MUST end with @warden.ac.in' });
+            const expectedEmail = `${nameClean}@warden.ac.in`;
+            const expectedPassword = `${nameClean}@123`;
+            if (email !== expectedEmail) {
+                return res.status(400).json({ success: false, message: `Warden email MUST be ${expectedEmail}` });
             }
-        } else if (role === 'admin' && email !== 'admin@hostel.ac.in') {
-            return res.status(400).json({ success: false, message: 'Admin email must be admin@hostel.ac.in' });
+            if (password !== expectedPassword) {
+                return res.status(400).json({ success: false, message: `Warden password MUST be ${expectedPassword}` });
+            }
+        } else if (role === 'admin') {
+            const expectedEmail = 'admin@hostel.ac.in';
+            const expectedPassword = 'admin@123';
+            if (email !== expectedEmail) {
+                return res.status(400).json({ success: false, message: `Admin email MUST be ${expectedEmail}` });
+            }
+            if (password !== expectedPassword) {
+                return res.status(400).json({ success: false, message: `Admin password MUST be ${expectedPassword}` });
+            }
         }
 
         user = await User.create({

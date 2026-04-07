@@ -25,6 +25,7 @@ const WardenManagement = () => {
     const [isAddMode, setIsAddMode] = useState(false);
     const [availableHostels, setAvailableHostels] = useState([]);
     const [submitting, setSubmitting] = useState(false);
+    const [modalError, setModalError] = useState('');
     const [formData, setFormData] = useState({
         name: '', email: '', phone: '', hostel: '', floor: '', gender: 'Male', password: '', employeeId: ''
     });
@@ -87,6 +88,7 @@ const WardenManagement = () => {
     };
 
     const handleAdd = () => {
+        setModalError('');
         setFormData({ 
             name: '', 
             email: '', 
@@ -103,12 +105,14 @@ const WardenManagement = () => {
     const saveWarden = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+        setModalError('');
         try {
             if (isAddMode) {
-                await authAPI.register({
-                    ...formData,
-                    role: 'warden'
-                });
+                const res = await authAPI.register({ ...formData, role: 'warden' });
+                if (!res.success) {
+                    setModalError(res.message || 'Failed to provision account. Check credentials.');
+                    return;
+                }
             } else {
                 await staffAPI.updateStaff(formData.id, {
                     name: formData.name,
@@ -125,7 +129,8 @@ const WardenManagement = () => {
             setIsEditMode(false);
             setIsAddMode(false);
         } catch (err) {
-            alert(err.message || 'Error saving warden details');
+            setModalError(err.message || 'Error processing request');
+            console.error(err);
         } finally {
             setSubmitting(false);
         }
@@ -256,15 +261,25 @@ const WardenManagement = () => {
                         </div>
 
                         <form onSubmit={saveWarden} className="p-10 space-y-8">
+                            {modalError && (
+                                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 mb-4 col-span-1 md:col-span-2">
+                                    <XIcon className="w-4 h-4 flex-shrink-0" />
+                                    {modalError}
+                                </div>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <FormInput 
                                     label="Full Name" 
                                     value={formData.name} 
                                     onChange={(v) => {
+                                        const nameClean = v.toLowerCase().replace(/\s+/g, '');
                                         setFormData(prev => ({ 
                                             ...prev, 
                                             name: v,
-                                            ...(isAddMode && { password: v.replace(/\s+/g, '').toLowerCase() + '@123' })
+                                            ...(isAddMode && { 
+                                                password: nameClean ? `${nameClean}@123` : '',
+                                                email: nameClean ? `${nameClean}@warden.ac.in` : ''
+                                            })
                                         }))
                                     }} 
                                     required 

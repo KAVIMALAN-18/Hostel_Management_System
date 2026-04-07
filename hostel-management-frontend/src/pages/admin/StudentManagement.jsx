@@ -30,6 +30,7 @@ const StudentManagement = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [modalError, setModalError] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -62,15 +63,18 @@ const StudentManagement = () => {
     const handleAddStudent = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+        setModalError('');
         try {
-            // Check if student exists in the registry first (optional logic)
             const response = await authAPI.register(formData);
             if (response.success) {
                 setShowModal(false);
                 setFormData({ name: '', email: '', password: '', phone: '', role: 'student' });
                 fetchData();
+            } else {
+                setModalError(response.message || 'Failed to provision account. Check credentials.');
             }
         } catch (err) {
+            setModalError(err.message || 'Network error occurred');
             console.error(err);
         } finally {
             setSubmitting(false);
@@ -370,8 +374,27 @@ const StudentManagement = () => {
                         </div>
                         
                         <form onSubmit={handleAddStudent} className="p-8 space-y-6">
+                            {modalError && (
+                                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+                                    <AlertCircleIcon className="w-4 h-4 flex-shrink-0" />
+                                    {modalError}
+                                </div>
+                            )}
                             <div className="grid grid-cols-1 gap-6">
-                                <FormInput label="Full Name" value={formData.name} onChange={(v) => setFormData({ ...formData, name: v })} required />
+                                <FormInput 
+                                    label="Full Name" 
+                                    value={formData.name} 
+                                    onChange={(v) => {
+                                        const nameClean = v.toLowerCase().replace(/\s+/g, '');
+                                        setFormData(prev => ({ 
+                                            ...prev, 
+                                            name: v,
+                                            email: nameClean ? `${nameClean}@student.ac.in` : '',
+                                            password: nameClean ? `${nameClean}@123` : '' 
+                                        }));
+                                    }} 
+                                    required 
+                                />
                                 <FormInput label="Official Email" type="email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} required />
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormInput label="System Password" type="password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} required />

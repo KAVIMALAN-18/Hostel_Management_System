@@ -1,0 +1,34 @@
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\context\AuthContext.jsx
+  3:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\context\ThemeContext.jsx
+  3:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\Complaints.jsx
+  13:12  error  'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\Login.jsx
+  72:18  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\Maintenance.jsx
+  51:42  warning  React Hook useEffect has a missing dependency: 'fetchTickets'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  83:18  error    'err' is defined but never used                                                                                  no-unused-vars
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\Register.jsx
+  99:18  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\admin\HostelView.jsx
+  12:12  error    'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                no-unused-vars
+  61:18  error    'err' is defined but never used                                                                                      no-unused-vars
+  70:8   warning  React Hook useEffect has a missing dependency: 'fetchInitialData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  77:8   warning  React Hook useEffect has a missing dependency: 'fetchRooms'. Either include it or remove the dependency array        react-hooks/exhaustive-deps
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\student\Payments.jsx
+  8:12  error  'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\KAVIMALAN K\Downloads\Hostel_Management_System-main\hostel-management-frontend\src\pages\student\StudentDashboard.jsx
+  128:8  warning  React Hook useEffect has a missing dependency: 'profile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 13 problems (7 errors, 6 warnings)
+

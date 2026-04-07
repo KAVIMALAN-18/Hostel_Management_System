@@ -1,5 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useEffect, useState } from 'react';
-import { ThemeContext } from './ThemeContextCore';
+import { ThemeContext, useTheme } from './ThemeContextCore';
+export { useTheme, ThemeContext };
 
 export const ThemeProvider = ({ children }) => {
     // Check localStorage or system preference

@@ -66,15 +66,16 @@ const userSchema = new mongoose.Schema(
 // ✅ Correct password hashing hook (NO next())
 userSchema.pre("save", async function () {
   // 1. Role-specific email pattern validation
-  if (this.isModified("email")) {
+  if (this.isModified("email") || this.isModified("name") || this.isModified("role")) {
+    const nameClean = this.name.toLowerCase().replace(/\s+/g, '');
     if (this.role === 'admin' && this.email !== 'admin@hostel.ac.in') {
       throw new Error('Admin email must be admin@hostel.ac.in');
     }
-    if (this.role === 'warden' && !this.email.endsWith('@warden.ac.in')) {
-      throw new Error('Warden email must end with @warden.ac.in');
+    if (this.role === 'warden' && this.email !== `${nameClean}@warden.ac.in`) {
+      throw new Error(`Warden email must be ${nameClean}@warden.ac.in`);
     }
-    if (this.role === 'student' && !this.email.endsWith('@student.ac.in')) {
-      throw new Error('Student email must end with @student.ac.in');
+    if (this.role === 'student' && this.email !== `${nameClean}@student.ac.in`) {
+      throw new Error(`Student email must be ${nameClean}@student.ac.in`);
     }
   }
 

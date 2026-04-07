@@ -9,7 +9,6 @@ const HostelView = () => {
     const [rooms, setRooms] = useState([]);
     const [selectedHostel, setSelectedHostel] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showHostelModal, setShowHostelModal] = useState(false);
     const [showRoomModal, setShowRoomModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -43,7 +42,7 @@ const HostelView = () => {
                 setHostels([]);
             }
         } catch (err) {
-            setError(err.message);
+            console.error(err.message);
             setHostels([]);
         } finally {
             setLoading(false);
@@ -59,6 +58,7 @@ const HostelView = () => {
                 setRooms(roomRes.data);
             }
         } catch (err) {
+            console.error(err);
             setRooms([]);
         } finally {
             setLoading(false);
@@ -67,6 +67,7 @@ const HostelView = () => {
 
     useEffect(() => {
         fetchInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -74,6 +75,7 @@ const HostelView = () => {
             fetchRooms();
             setRoomData(prev => ({ ...prev, hostel: selectedHostel._id }));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedHostel]);
 
     const handleAddHostel = async (e) => {

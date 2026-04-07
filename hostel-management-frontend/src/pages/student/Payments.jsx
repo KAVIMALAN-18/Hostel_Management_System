@@ -5,7 +5,7 @@ import { paymentAPI } from '../../services/api';
 
 const Payments = () => {
     const [transactions, setTransactions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchPayments = async () => {

@@ -10,7 +10,6 @@ const Complaints = () => {
     const { user } = useAuth();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [showResolveModal, setShowResolveModal] = useState(false);
     const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -28,7 +27,7 @@ const Complaints = () => {
                 setComplaints(response.data);
             }
         } catch (err) {
-            setError(err.message);
+            console.error(err.message);
             setComplaints([]);
         } finally {
             setLoading(false);

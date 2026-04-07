@@ -70,6 +70,7 @@ const Login = () => {
                 setServerError(result.message || 'Invalid credentials provided');
             }
         } catch (err) {
+            console.error(err);
             setServerError('System connection error. Please try again.');
         } finally {
             setIsLoading(false);
