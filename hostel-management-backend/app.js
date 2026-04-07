@@ -36,9 +36,8 @@ function createApp() {
     // PLACED AT THE ABSOLUTE TOP TO ENSURE PREFLIGHT SUCCESS
     app.use((req, res, next) => {
         const origin = req.header('origin');
-        if (allowedOrigins.includes(origin) || !origin || !isProd || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-            res.header('Access-Control-Allow-Origin', origin || '*');
-        }
+        // Unconditionally allow all origins to prevent Vercel/Render deployment CORS issues
+        res.header('Access-Control-Allow-Origin', origin || '*');
         res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
         res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         res.header('Access-Control-Allow-Credentials', 'true');
