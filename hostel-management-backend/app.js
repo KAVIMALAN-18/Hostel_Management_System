@@ -17,6 +17,7 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 const messRoutes = require('./routes/messRoutes');
 const wardenRoutes = require('./routes/wardenRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const recordsRoutes = require('./routes/recordsRoutes');
 
 function createApp() {
     const app = express();
@@ -101,6 +102,7 @@ function createApp() {
     app.use('/api/mess', messRoutes);
     app.use('/api/wardens', wardenRoutes);
     app.use('/api/payments', paymentRoutes);
+    app.use('/api/records', recordsRoutes);
 
     app.use('*', (_req, res) => {
         res.status(404).json({
