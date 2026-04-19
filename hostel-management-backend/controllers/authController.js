@@ -280,7 +280,12 @@ exports.getStaff = async (req, res) => {
  */
 exports.updateUser = async (req, res) => {
     try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+        const updateData = { ...req.body };
+        if (updateData.email) {
+            updateData.email = String(updateData.email).toLowerCase();
+        }
+
+        const user = await User.findByIdAndUpdate(req.params.id, updateData, {
             new: true,
             runValidators: true
         }).select('-password');

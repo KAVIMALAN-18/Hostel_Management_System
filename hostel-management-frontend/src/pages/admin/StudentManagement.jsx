@@ -152,7 +152,7 @@ const StudentManagement = () => {
                         placeholder="SEARCH BY NAME, EMAIL, OR REGISTRATION NO..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-transparent border-none text-xs font-bold text-slate-900 dark:text-white focus:outline-none w-full uppercase tracking-wider placeholder:text-slate-400"
+                        className="bg-transparent border-none text-xs font-bold text-slate-900 dark:text-white focus:outline-none w-full tracking-wider placeholder:text-slate-400"
                     />
                 </div>
                 
@@ -395,7 +395,7 @@ const StudentManagement = () => {
                                     }} 
                                     required 
                                 />
-                                <FormInput label="Official Email" type="email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} required />
+                                <FormInput label="Official Email" type="email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v.toLowerCase() })} required />
                                 <div className="grid grid-cols-2 gap-4">
                                     <FormInput label="System Password" type="password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} required />
                                     <FormInput label="Contact Phone" value={formData.phone} onChange={(v) => setFormData({ ...formData, phone: v })} />
@@ -464,7 +464,7 @@ const FormInput = ({ label, value, onChange, type = "text", required }) => (
             value={value}
             onChange={(e) => onChange(e.target.value)}
             required={required}
-            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400 uppercase tracking-tight"
+            className={`w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400 tracking-tight ${type === 'email' || type === 'password' ? '' : 'uppercase'}`}
         />
     </div>
 );

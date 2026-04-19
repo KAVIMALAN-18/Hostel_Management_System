@@ -22,7 +22,7 @@ const Login = () => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: name === 'email' ? value.toLowerCase() : value
         }));
 
         if (errors[name]) {

@@ -157,7 +157,7 @@ exports.updateStudent = async (req, res) => {
         if (req.body.isActive !== undefined) userUpdateParams.isActive = req.body.isActive;
         if (req.body.phone !== undefined) userUpdateParams.phone = req.body.phone;
         if (req.body.name !== undefined) userUpdateParams.name = req.body.name;
-        if (req.body.email !== undefined) userUpdateParams.email = req.body.email;
+        if (req.body.email !== undefined) userUpdateParams.email = String(req.body.email).toLowerCase();
         
         let user;
         if (Object.keys(userUpdateParams).length > 0) {
