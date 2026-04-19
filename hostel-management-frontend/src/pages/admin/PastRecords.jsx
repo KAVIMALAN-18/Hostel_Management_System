@@ -298,7 +298,16 @@ const PastRecords = () => {
                             ) : activeTab === 'attendance' ? (
                                 <>
                                     {attendanceData.length > 0 && (
-                                        <div className="bg-slate-50 dark:bg-slate-800/30 p-4 border-b border-slate-200 dark:border-slate-700 flex gap-6 text-sm font-bold print:hidden">
+                                        <div className="bg-slate-50 dark:bg-slate-800/30 p-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-6 text-sm font-bold print:hidden">
+                                            <div className="text-brand-600 dark:text-brand-400 border-r border-slate-200 dark:border-slate-700 pr-6">
+                                                Latest Status: 
+                                                <span className={`inline-flex ml-2 px-2 py-0.5 rounded-md text-white uppercase text-xs tracking-wider ${
+                                                    attendanceData[0]?.status === 'Present' ? 'bg-emerald-500' : 
+                                                    attendanceData[0]?.status === 'Absent' ? 'bg-red-500' : 'bg-amber-500'
+                                                }`}>
+                                                    {attendanceData[0]?.status}
+                                                </span>
+                                            </div>
                                             <div className="text-slate-600 dark:text-slate-300">Total Records: <span className="text-slate-900 dark:text-white">{attendanceData.length}</span></div>
                                             <div className="text-emerald-600 dark:text-emerald-400">Present: <span className="text-emerald-700 dark:text-emerald-300">{attendanceData.filter(r => r.status === 'Present').length}</span></div>
                                             <div className="text-red-600 dark:text-red-400">Absent: <span className="text-red-700 dark:text-red-300">{attendanceData.filter(r => r.status === 'Absent').length}</span></div>
