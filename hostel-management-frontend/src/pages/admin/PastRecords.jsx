@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import api from '../../services/api';
+import api, { studentAPI, attendanceAPI, leaveAPI } from '../../services/api';
 import { 
     CalendarIcon, 
     SearchIcon, 
@@ -34,9 +34,15 @@ const PastRecords = () => {
 
     const fetchStudents = async () => {
         try {
-            const res = await api.get('/records/students');
-            if (res.data.success) {
-                setStudents(res.data.data);
+            const res = await studentAPI.getAll();
+            if (res.success) {
+                // Ensure consistency in data format
+                const mapped = res.data.map(s => ({
+                    id: s._id,
+                    name: s.user?.name || 'Unknown',
+                    registrationNumber: s.registrationNumber
+                }));
+                setStudents(mapped);
             }
         } catch (err) {
             console.error('Failed to fetch students:', err);
@@ -50,25 +56,25 @@ const PastRecords = () => {
         setHasSearched(true);
 
         try {
-            const params = new URLSearchParams();
-            params.append('student_id', studentId);
+            const queryParams = {};
             
             if (currentTab === 'attendance') {
                 if (currentFilters.dateType === 'specific' && currentFilters.date) {
-                    params.append('date', currentFilters.date);
+                    queryParams.date = currentFilters.date;
                 } else if (currentFilters.dateType === 'range' && currentFilters.from && currentFilters.to) {
-                    params.append('from', currentFilters.from);
-                    params.append('to', currentFilters.to);
+                    queryParams.from = currentFilters.from;
+                    queryParams.to = currentFilters.to;
                 }
                 
-                const res = await api.get(`/records/attendance?${params.toString()}`);
-                if (res.data.success) {
-                    setAttendanceData(res.data.data);
+                const res = await attendanceAPI.getStudentHistory(studentId, queryParams);
+                if (res.success) {
+                    setAttendanceData(res.data);
                 }
             } else {
-                const res = await api.get(`/records/leave?${params.toString()}`);
-                if (res.data.success) {
-                    setLeaveData(res.data.data);
+                // Keep leave history if it was there, but use leaveAPI
+                const res = await api.get(`/records/leave?student_id=${studentId}`);
+                if (res.success) {
+                    setLeaveData(res.data);
                 }
             }
         } catch (err) {

@@ -207,9 +207,10 @@ export const paymentAPI = {
  * Attendance Management API
  */
 export const attendanceAPI = {
-    getByJurisdiction: (date) => api.get(`/attendance/by-jurisdiction?date=${date}`),
+    getByJurisdiction: (date, hostel) => api.get(`/attendance/by-jurisdiction?date=${date}${hostel ? `&hostel=${hostel}` : ''}`),
     markBulk: (data) => api.post('/attendance/bulk', data),
-    getMyAttendance: () => api.get('/attendance/me')
+    getMyAttendance: () => api.get('/attendance/me'),
+    getStudentHistory: (studentId, params) => api.get(`/attendance/student/${studentId}`, { params })
 };
 
 export default api;
