@@ -16,7 +16,7 @@ import StudentManagement from './pages/admin/StudentManagement';
 import RoomManagement from './pages/admin/RoomManagement';
 import HostelView from './pages/admin/HostelView';
 import WardenManagement from './pages/admin/WardenManagement';
-import PastRecords from './pages/admin/PastRecords';
+
 import MessManagement from './pages/MessManagement';
 import Complaints from './pages/Complaints';
 import Maintenance from './pages/Maintenance';
@@ -65,7 +65,7 @@ function App() {
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/rooms" element={<RoomManagement />} />
                 <Route path="/admin/students" element={<StudentManagement />} />
-                <Route path="/admin/records" element={<PastRecords />} />
+
                 <Route path="/admin/hostels" element={<HostelView />} />
                 <Route path="/staff-management" element={<WardenManagement />} />
                 <Route path="/admin/mess" element={<MessManagement />} />

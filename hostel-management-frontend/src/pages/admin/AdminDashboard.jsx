@@ -136,10 +136,6 @@ const AdminDashboard = () => {
                         <CalendarIcon className={`w-4 h-4 ${downloading ? 'animate-spin' : ''}`} /> 
                         {downloading ? 'Generating Audit...' : 'Download PDF Audit'}
                     </button>
-
-                    <button onClick={() => navigate('/admin/records')} className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-brand-500/20 transition-all transform active:scale-95 flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4" /> View Past Records
-                    </button>
                 </div>
             </div>
 
