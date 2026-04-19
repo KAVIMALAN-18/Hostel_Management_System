@@ -40,23 +40,21 @@ const PastRecords = () => {
         }
     };
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
+    const fetchRecords = async (currentFilters = filters, currentTab = activeTab) => {
         setLoading(true);
         setError('');
         setHasSearched(true);
 
         try {
-            // Build query string
             const params = new URLSearchParams();
-            if (filters.student_id) params.append('student_id', filters.student_id);
+            if (currentFilters.student_id) params.append('student_id', currentFilters.student_id);
             
-            if (activeTab === 'attendance') {
-                if (filters.dateType === 'specific' && filters.date) {
-                    params.append('date', filters.date);
-                } else if (filters.dateType === 'range' && filters.from && filters.to) {
-                    params.append('from', filters.from);
-                    params.append('to', filters.to);
+            if (currentTab === 'attendance') {
+                if (currentFilters.dateType === 'specific' && currentFilters.date) {
+                    params.append('date', currentFilters.date);
+                } else if (currentFilters.dateType === 'range' && currentFilters.from && currentFilters.to) {
+                    params.append('from', currentFilters.from);
+                    params.append('to', currentFilters.to);
                 }
                 
                 const res = await api.get(`/records/attendance?${params.toString()}`);
@@ -75,6 +73,22 @@ const PastRecords = () => {
             setError(err.response?.data?.message || 'Failed to fetch records');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        fetchRecords();
+    };
+
+    // Auto-fetch when student is selected
+    const handleStudentChange = (e) => {
+        const newStudentId = e.target.value;
+        setFilters({ ...filters, student_id: newStudentId });
+        
+        // If they selected a student, automatically fetch
+        if (newStudentId) {
+            fetchRecords({ ...filters, student_id: newStudentId }, activeTab);
         }
     };
 
@@ -116,7 +130,7 @@ const PastRecords = () => {
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Student</label>
                         <select 
                             value={filters.student_id}
-                            onChange={(e) => setFilters({...filters, student_id: e.target.value})}
+                            onChange={handleStudentChange}
                             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/20 outline-none"
                         >
                             <option value="">All Students</option>
@@ -197,13 +211,19 @@ const PastRecords = () => {
             <div className="bg-white dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="flex border-b border-slate-200 dark:border-slate-700 print:hidden">
                     <button 
-                        onClick={() => { setActiveTab('attendance'); setAttendanceData([]); setLeaveData([]); }}
+                        onClick={() => { 
+                            setActiveTab('attendance'); 
+                            if (filters.student_id) fetchRecords(filters, 'attendance');
+                        }}
                         className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'attendance' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/50 dark:bg-brand-900/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                     >
                         Attendance History
                     </button>
                     <button 
-                        onClick={() => { setActiveTab('leave'); setAttendanceData([]); setLeaveData([]); }}
+                        onClick={() => { 
+                            setActiveTab('leave'); 
+                            if (filters.student_id) fetchRecords(filters, 'leave');
+                        }}
                         className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'leave' ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/50 dark:bg-brand-900/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                     >
                         Leave History
