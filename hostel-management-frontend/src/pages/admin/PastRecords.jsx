@@ -22,6 +22,7 @@ const PastRecords = () => {
     const [attendanceData, setAttendanceData] = useState([]);
     const [leaveData, setLeaveData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -43,6 +44,7 @@ const PastRecords = () => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setHasSearched(true);
 
         try {
             // Build query string
@@ -58,12 +60,13 @@ const PastRecords = () => {
                 }
                 
                 const res = await api.get(`/records/attendance?${params.toString()}`);
+                console.log('Attendance API Response:', res.data);
                 if (res.data.success) {
                     setAttendanceData(res.data.data);
                 }
             } else {
-                // Leave only uses student filter for now
                 const res = await api.get(`/records/leave?${params.toString()}`);
+                console.log('Leave API Response:', res.data);
                 if (res.data.success) {
                     setLeaveData(res.data.data);
                 }
@@ -209,7 +212,15 @@ const PastRecords = () => {
 
                 <div className="p-0 overflow-x-auto">
                     {activeTab === 'attendance' ? (
-                        <table className="w-full text-left border-collapse">
+                        <>
+                            {attendanceData.length > 0 && (
+                                <div className="bg-slate-50 dark:bg-slate-800/30 p-4 border-b border-slate-200 dark:border-slate-700 flex gap-6 text-sm font-bold print:hidden">
+                                    <div className="text-slate-600 dark:text-slate-300">Total Records: <span className="text-slate-900 dark:text-white">{attendanceData.length}</span></div>
+                                    <div className="text-emerald-600 dark:text-emerald-400">Present: <span className="text-emerald-700 dark:text-emerald-300">{attendanceData.filter(r => r.status === 'Present').length}</span></div>
+                                    <div className="text-red-600 dark:text-red-400">Absent: <span className="text-red-700 dark:text-red-300">{attendanceData.filter(r => r.status === 'Absent').length}</span></div>
+                                </div>
+                            )}
+                            <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                                     <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
@@ -218,7 +229,15 @@ const PastRecords = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {attendanceData.length === 0 ? (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="3" className="p-8 text-center text-slate-500 text-sm">Loading attendance records...</td>
+                                    </tr>
+                                ) : !hasSearched ? (
+                                    <tr>
+                                        <td colSpan="3" className="p-8 text-center text-slate-500 text-sm">Please select filters and click Search.</td>
+                                    </tr>
+                                ) : attendanceData.length === 0 ? (
                                     <tr>
                                         <td colSpan="3" className="p-8 text-center text-slate-500 text-sm">No attendance records found for the selected filters.</td>
                                     </tr>
@@ -250,6 +269,7 @@ const PastRecords = () => {
                                 )}
                             </tbody>
                         </table>
+                        </>
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -261,7 +281,15 @@ const PastRecords = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {leaveData.length === 0 ? (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="4" className="p-8 text-center text-slate-500 text-sm">Loading leave records...</td>
+                                    </tr>
+                                ) : !hasSearched ? (
+                                    <tr>
+                                        <td colSpan="4" className="p-8 text-center text-slate-500 text-sm">Please select filters and click Search.</td>
+                                    </tr>
+                                ) : leaveData.length === 0 ? (
                                     <tr>
                                         <td colSpan="4" className="p-8 text-center text-slate-500 text-sm">No leave records found for the selected filters.</td>
                                     </tr>
