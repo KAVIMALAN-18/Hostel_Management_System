@@ -23,7 +23,7 @@ import Table, { TableRow, TableCell } from '../../components/common/Table';
 import CircularProgress from '../../components/common/CircularProgress';
 
 const StudentDashboard = () => {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const { theme } = useTheme();
 
     // Data States
@@ -73,6 +73,9 @@ const StudentDashboard = () => {
             // Only set loading on initial fetch to avoid flickering on re-sync
             if (!profile) setLoading(true);
             try {
+                // Refresh profile for latest jurisdictional data
+                if (refreshProfile) await refreshProfile();
+
                 const [profileRes, leavesRes, noticesRes, attendanceRes] = await Promise.all([
                     studentAPI.getProfile(),
                     leaveAPI.getAll(),
@@ -378,8 +381,8 @@ const StudentDashboard = () => {
                                             <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide">Roommate Directory</h4>
                                         </div>
                                         <div className="flex flex-wrap gap-4">
-                                            {studentProfile.roommates && studentProfile.roommates.length > 0 ? (
-                                                studentProfile.roommates.map((mate, idx) => (
+                                            {profile?.profile?.roommates && profile.profile.roommates.length > 0 ? (
+                                                profile.profile.roommates.map((mate, idx) => (
                                                     <div key={idx} className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2.5 rounded-xl">
                                                         <div className="w-6 h-6 bg-emerald-500/20 rounded-lg flex items-center justify-center text-xs font-bold text-emerald-400">
                                                             {mate.charAt(0)}
@@ -396,8 +399,8 @@ const StudentDashboard = () => {
                                 </div>
                                 </div>
 
-                                {/* SECTION: Assigned Warden (NEW) */}
-                                {studentProfile.warden ? (
+                                 {/* SECTION: Assigned Warden (NEW) */}
+                                {profile.profile?.warden ? (
                                     <div className="mt-8 bg-brand-50 dark:bg-brand-900/10 p-8 rounded-3xl border border-brand-100 dark:border-brand-900/30 flex flex-col md:flex-row items-center justify-between gap-6 transition-all group">
                                         <div className="flex items-center gap-5">
                                             <div className="w-14 h-14 bg-brand-600 dark:bg-brand-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand-500/20 group-hover:scale-105 transition-transform">
@@ -409,19 +412,19 @@ const StudentDashboard = () => {
                                                     onClick={() => setShowWardenModal(true)}
                                                     className="text-lg font-bold text-slate-900 dark:text-white tracking-tight cursor-pointer hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                                                 >
-                                                    {studentProfile.warden.name}
+                                                    {profile.profile.warden.name}
                                                 </h4>
                                                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 tracking-wider">
-                                                    Jurisdiction: {studentProfile.warden.hostelName || 'General'} • {studentProfile.warden.assignedFloor || 'All Floors'}
+                                                    Jurisdiction: {profile.profile.warden.hostelName || 'General'} • {profile.profile.warden.assignedFloor || 'All Floors'}
                                                 </p>
                                                 <div className="flex items-center gap-4 mt-2">
                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                                                         <PhoneIcon className="w-3.5 h-3.5" />
-                                                        {studentProfile.warden.phone}
+                                                        {profile.profile.warden.phone}
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                                                         <MailIcon className="w-3.5 h-3.5" />
-                                                        {studentProfile.warden.email}
+                                                        {profile.profile.warden.email}
                                                     </div>
                                                 </div>
                                             </div>
@@ -652,7 +655,7 @@ const StudentDashboard = () => {
             </Modal>
         </div>
             {/* SECTION: Warden Details Modal (NEW) */}
-            {showWardenModal && studentProfile?.warden && (
+            {showWardenModal && profile?.profile?.warden && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowWardenModal(false)}></div>
                     <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300">
@@ -664,7 +667,7 @@ const StudentDashboard = () => {
                                         <UserIcon className="w-8 h-8" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold tracking-tight">{studentProfile.warden.name}</h3>
+                                        <h3 className="text-xl font-bold tracking-tight">{profile.profile.warden.name}</h3>
                                         <p className="text-brand-400 text-xs font-bold uppercase tracking-widest mt-1">Residence Warden</p>
                                     </div>
                                 </div>
@@ -685,7 +688,7 @@ const StudentDashboard = () => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Official Communication</p>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.email}</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{profile.profile.warden.email}</p>
                                     </div>
                                 </div>
 
@@ -695,7 +698,7 @@ const StudentDashboard = () => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Contact Terminal</p>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.phone}</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{profile.profile.warden.phone}</p>
                                     </div>
                                 </div>
 
@@ -706,7 +709,7 @@ const StudentDashboard = () => {
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Jurisdictional Mapping</p>
                                         <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
-                                            {studentProfile.warden.hostelName || 'General Management'} • {studentProfile.warden.assignedFloor || 'Multiple Floors'}
+                                            {profile.profile.warden.hostelName || 'General Management'} • {profile.profile.warden.assignedFloor || 'Multiple Floors'}
                                         </p>
                                     </div>
                                 </div>
@@ -714,7 +717,7 @@ const StudentDashboard = () => {
 
                             <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex gap-4">
                                 <a 
-                                    href={`tel:${studentProfile.warden.phone}`}
+                                    href={`tel:${profile.profile.warden.phone}`}
                                     className="flex-1 px-6 py-4 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:bg-brand-700 text-center transition-all active:scale-95"
                                 >
                                     Call Warden

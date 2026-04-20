@@ -108,9 +108,12 @@ exports.register = async (req, res) => {
                 guardianRelation: 'TBD'
             });
         } else if (role === 'warden') {
+            const hostelDoc = assignedHostel ? await Hostel.findOne({ name: assignedHostel }) : null;
             await Warden.create({
                 user: user._id,
-                employeeId: `EMP-${Date.now()}`
+                employeeId: `EMP-${Date.now()}`,
+                assignedHostel: hostelDoc ? hostelDoc._id : null,
+                assignedFloor: assignedFloor || null
             });
         } else if (role === 'admin') {
             await Admin.create({

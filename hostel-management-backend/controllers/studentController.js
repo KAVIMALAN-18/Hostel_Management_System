@@ -80,34 +80,25 @@ exports.getMyProfile = async (req, res) => {
                 const { Warden } = require('../models');
                 const wardenQuery = { assignedHostel: profile.hostel._id };
                 
-                // If student has a floor assigned via room, try to find floor-specific warden
-                if (profile.room && profile.room.floor) {
-                    wardenQuery.assignedFloor = profile.room.floor;
+                // Try finding floor-specific warden first (case-insensitive)
+                const allWardens = await Warden.find(wardenQuery).populate('user', 'name phone email').populate('assignedHostel', 'name');
+                const studentFloor = profile.room?.floor?.trim().toLowerCase();
+                
+                let foundWarden = null;
+                if (studentFloor) {
+                    foundWarden = allWardens.find(w => w.assignedFloor?.trim().toLowerCase() === studentFloor);
+                }
+                
+                // Fallback to the first warden found in the same hostel if no floor-specific match
+                if (!foundWarden && allWardens.length > 0) {
+                    foundWarden = allWardens[0];
                 }
 
-                const wardenProfile = await Warden.findOne(wardenQuery)
-                    .populate('user', 'name phone email')
-                    .populate('assignedHostel', 'name');
-                
-                // If floor-specific warden not found, try finding general hostel warden
-                if (!wardenProfile && wardenQuery.assignedFloor) {
-                    delete wardenQuery.assignedFloor;
-                    const generalWarden = await Warden.findOne(wardenQuery)
-                        .populate('user', 'name phone email')
-                        .populate('assignedHostel', 'name');
-                    
-                    warden = generalWarden ? {
-                        ...generalWarden.user.toObject(),
-                        assignedFloor: generalWarden.assignedFloor,
-                        hostelName: generalWarden.assignedHostel?.name
-                    } : null;
-                } else {
-                    warden = wardenProfile ? {
-                        ...wardenProfile.user.toObject(),
-                        assignedFloor: wardenProfile.assignedFloor,
-                        hostelName: wardenProfile.assignedHostel?.name
-                    } : null;
-                }
+                warden = foundWarden ? {
+                    ...foundWarden.user.toObject(),
+                    assignedFloor: foundWarden.assignedFloor,
+                    hostelName: foundWarden.assignedHostel?.name
+                } : null;
             }
         }
 
@@ -295,8 +286,11 @@ exports.getMyFloorStudents = async (req, res) => {
         .populate('room', 'roomNumber floor')
         .populate('block', 'name');
 
-        // Filter students by floor (floor is stored in Room model)
-        const floorStudents = students.filter(s => s.room && s.room.floor === warden.assignedFloor);
+        // Filter students by floor (case-insensitive)
+        const targetFloor = warden.assignedFloor?.trim().toLowerCase();
+        const floorStudents = students.filter(s => 
+            s.room && s.room.floor?.trim().toLowerCase() === targetFloor
+        );
 
         res.status(200).json({
             success: true,
@@ -333,35 +327,32 @@ exports.getWardenForStudent = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Student not yet assigned to a hostel/floor' });
         }
 
-        const wardenQuery = { assignedHostel: student.hostel };
-        if (student.room.floor) {
-            wardenQuery.assignedFloor = student.room.floor;
-        }
-
-        let warden = await Warden.findOne(wardenQuery)
+        const allWardens = await Warden.find(wardenQuery)
             .populate('user', 'name email phone')
             .populate('assignedHostel', 'name');
 
-        // Fallback to general warden if floor warden not found
-        if (!warden && wardenQuery.assignedFloor) {
-            delete wardenQuery.assignedFloor;
-            warden = await Warden.findOne(wardenQuery)
-                .populate('user', 'name email phone')
-                .populate('assignedHostel', 'name');
+        const studentFloor = student.room?.floor?.trim().toLowerCase();
+        let foundWarden = null;
+        if (studentFloor) {
+            foundWarden = allWardens.find(w => w.assignedFloor?.trim().toLowerCase() === studentFloor);
         }
 
-        if (!warden) {
+        if (!foundWarden && allWardens.length > 0) {
+            foundWarden = allWardens[0];
+        }
+
+        if (!foundWarden) {
             return res.status(404).json({ success: false, message: 'No warden assigned to this area yet' });
         }
 
         res.status(200).json({
             success: true,
             data: {
-                name: warden.user.name,
-                email: warden.user.email,
-                phone: warden.user.phone,
-                hostel: warden.assignedHostel?.name,
-                floor: warden.assignedFloor || 'General'
+                name: foundWarden.user.name,
+                email: foundWarden.user.email,
+                phone: foundWarden.user.phone,
+                hostel: foundWarden.assignedHostel?.name,
+                floor: foundWarden.assignedFloor || 'General'
             }
         });
     } catch (error) {
