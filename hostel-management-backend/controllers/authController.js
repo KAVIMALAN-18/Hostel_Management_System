@@ -301,14 +301,21 @@ exports.updateUser = async (req, res) => {
         }
 
         if (user.role === 'warden') {
+            // Find hostel by name if provided as string
+            let hostelId = req.body.assignedHostel;
+            if (hostelId && typeof hostelId === 'string' && hostelId.length !== 24) {
+                const hostel = await Hostel.findOne({ name: new RegExp('^' + hostelId.trim() + '$', 'i') });
+                hostelId = hostel ? hostel._id : undefined;
+            }
+
             await Warden.findOneAndUpdate(
                 { user: user._id },
                 { 
                     employeeId: user.employeeId,
-                    assignedHostel: req.body.assignedHostel ? (await Hostel.findOne({ name: req.body.assignedHostel }))?._id : undefined,
+                    assignedHostel: hostelId,
                     assignedFloor: user.assignedFloor
                 },
-                { upsert: false }
+                { upsert: true, new: true }
             );
         }
 

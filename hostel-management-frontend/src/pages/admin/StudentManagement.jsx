@@ -211,9 +211,9 @@ const StudentManagement = () => {
                                                     {student.name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{student.name}</p>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight lowercase">{student.name}</p>
                                                     <div className="flex items-center gap-3 mt-1 text-xs font-bold text-slate-500 tracking-tight">
-                                                        <span className="flex items-center gap-1"><MailIcon className="w-3 h-3" /> {student.email}</span>
+                                                        <span className="flex items-center gap-1 lowercase"><MailIcon className="w-3 h-3" /> {student.email}</span>
                                                     </div>
                                                 </div>
                                             </div>

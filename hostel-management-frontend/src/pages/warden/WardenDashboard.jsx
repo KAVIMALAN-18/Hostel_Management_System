@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { noticeAPI, leaveAPI, complaintAPI } from '../../services/api';
+import { noticeAPI, leaveAPI, complaintAPI, studentAPI } from '../../services/api';
 import {
     HomeIcon,
     UsersIcon,

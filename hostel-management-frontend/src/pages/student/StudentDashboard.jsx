@@ -15,7 +15,8 @@ import {
     UserIcon,
     HomeIcon,
     CheckCircleIcon,
-    XIcon
+    XIcon,
+    BuildingIcon
 } from '../../components/common/Icons';
 import Modal from '../../components/common/Modal';
 import Button from '../../components/common/Button';

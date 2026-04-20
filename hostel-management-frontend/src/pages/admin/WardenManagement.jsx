@@ -10,6 +10,7 @@ import {
     CalendarIcon,
     EditIcon,
     MoreVerticalIcon,
+    ShieldAlertIcon
 } from '../../components/common/Icons';
 import { authAPI, staffAPI, hostelAPI } from '../../services/api';
 
