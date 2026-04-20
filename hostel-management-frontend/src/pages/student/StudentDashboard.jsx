@@ -16,7 +16,8 @@ import {
     HomeIcon,
     CheckCircleIcon,
     XIcon,
-    BuildingIcon
+    BuildingIcon,
+    RefreshCwIcon
 } from '../../components/common/Icons';
 import Modal from '../../components/common/Modal';
 import Button from '../../components/common/Button';
@@ -69,64 +70,60 @@ const StudentDashboard = () => {
     const [updateError, setUpdateError] = useState('');
     const [updateSuccess, setUpdateSuccess] = useState(false);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            // Only set loading on initial fetch to avoid flickering on re-sync
-            if (!profile) setLoading(true);
-            try {
-                // Refresh profile for latest jurisdictional data
-                if (refreshProfile) await refreshProfile();
+    const fetchDashboardData = async () => {
+        // Only set loading on initial fetch to avoid flickering
+        if (!profile) setLoading(true);
+        try {
+            // Refresh profile for latest jurisdictional data
+            if (refreshProfile) await refreshProfile();
 
-                const [profileRes, leavesRes, noticesRes, attendanceRes] = await Promise.all([
-                    studentAPI.getProfile(),
-                    leaveAPI.getAll(),
-                    noticeAPI.getAll({ limit: 5 }),
-                    attendanceAPI.getMyAttendance().catch(() => null)
-                ]);
+            const [profileRes, leavesRes, noticesRes, attendanceRes] = await Promise.all([
+                studentAPI.getProfile(),
+                leaveAPI.getAll(),
+                noticeAPI.getAll({ limit: 5 }),
+                attendanceAPI.getMyAttendance().catch(() => null)
+            ]);
 
-                if (profileRes.success && profileRes.data) {
-                    setProfile(profileRes.data);
-                    const p = profileRes.data.profile || {};
-                    setUpdateForm({
-                        phone: profileRes.data.phone || user?.phone || '',
-                        bloodGroup: p.bloodGroup || '',
-                        guardianName: p.guardianName || '',
-                        guardianPhone: p.guardianPhone || '',
-                        guardianRelation: p.guardianRelation || '',
-                        nativePlace: p.nativePlace || ''
-                    });
-                }
-
-                if (leavesRes.success && leavesRes.data.length > 0) {
-                    setLeaveHistory(leavesRes.data);
-                } else {
-                    setLeaveHistory([]);
-                }
-
-                if (noticesRes.success && noticesRes.data.length > 0) {
-                    setNotices(noticesRes.data);
-                } else {
-                    setNotices([]);
-                }
-                
-                if (attendanceRes && attendanceRes.success && attendanceRes.data) {
-                    setAttendanceStats(attendanceRes.data);
-                }
-
-            } catch (error) {
-                console.error("Dashboard fetch error:", error);
-            } finally {
-                setLoading(false);
+            if (profileRes.success && profileRes.data) {
+                setProfile(profileRes.data);
+                const p = profileRes.data.profile || {};
+                setUpdateForm({
+                    phone: profileRes.data.phone || user?.phone || '',
+                    bloodGroup: p.bloodGroup || '',
+                    guardianName: p.guardianName || '',
+                    guardianPhone: p.guardianPhone || '',
+                    guardianRelation: p.guardianRelation || '',
+                    nativePlace: p.nativePlace || ''
+                });
             }
-        };
 
+            if (leavesRes.success && leavesRes.data.length > 0) {
+                setLeaveHistory(leavesRes.data);
+            } else {
+                setLeaveHistory([]);
+            }
+
+            if (noticesRes.success && noticesRes.data.length > 0) {
+                setNotices(noticesRes.data);
+            } else {
+                setNotices([]);
+            }
+            
+            if (attendanceRes && attendanceRes.success && attendanceRes.data) {
+                setAttendanceStats(attendanceRes.data);
+            }
+
+        } catch (error) {
+            console.error("Dashboard fetch error:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         const userId = user?.id || user?._id;
         if (userId) {
             fetchDashboardData();
-            
-            // Listen for global re-sync events (e.g. from DashboardLayout or visibility changes)
-            window.addEventListener('resync-data', fetchDashboardData);
-            return () => window.removeEventListener('resync-data', fetchDashboardData);
         } else {
             setLoading(false);
         }
@@ -214,6 +211,13 @@ const StudentDashboard = () => {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => fetchDashboardData()}
+                        className="bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-900 transition-all group"
+                        title="Refresh Data"
+                    >
+                        <RefreshCwIcon className="w-5 h-5 group-hover:rotate-180 transition-all duration-700" />
+                    </button>
                     <div className="bg-white dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3 transition-colors">
                         <CalendarIcon className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
                         <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>

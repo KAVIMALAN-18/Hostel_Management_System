@@ -17,7 +17,8 @@ import {
     BoltIcon,
     ShieldAlertIcon,
     MailIcon,
-    PhoneIcon
+    PhoneIcon,
+    RefreshCwIcon
 } from '../../components/common/Icons';
 import Table, { TableRow, TableCell } from '../../components/common/Table';
 import Button from '../../components/common/Button';
@@ -50,40 +51,38 @@ const WardenDashboard = () => {
         role: user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Warden'
     };
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            setLoading(true);
-            try {
-                // Refresh user profile to get latest assignments
-                await refreshProfile();
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        try {
+            // Refresh user profile to get latest assignments
+            if (refreshProfile) await refreshProfile();
 
-                const [noticesRes, leavesRes, complaintsRes, studentsRes] = await Promise.all([
-                    noticeAPI.getAll({ limit: 5 }),
-                    leaveAPI.getAll(),
-                    complaintAPI.getAll(),
-                    studentAPI.getMyFloorStudents().catch(() => ({ success: true, data: [] }))
-                ]);
+            const [noticesRes, leavesRes, complaintsRes, studentsRes] = await Promise.all([
+                noticeAPI.getAll({ limit: 5 }),
+                leaveAPI.getAll(),
+                complaintAPI.getAll(),
+                studentAPI.getMyFloorStudents().catch(() => ({ success: true, data: [] }))
+            ]);
 
-                if (noticesRes.success) setNotices(noticesRes.data);
-                if (leavesRes.success) {
-                    setPendingLeaves(leavesRes.data.filter(l => l.status === 'Pending'));
-                }
-                if (complaintsRes.success) {
-                    setComplaints(complaintsRes.data.filter(c => c.status === 'Pending').slice(0, 5));
-                }
-                if (studentsRes.success) {
-                    setFloorStudents(studentsRes.data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch warden dashboard data:', error);
-            } finally {
-                setLoading(false);
+            if (noticesRes.success) setNotices(noticesRes.data);
+            if (leavesRes.success) {
+                setPendingLeaves(leavesRes.data.filter(l => l.status === 'Pending'));
             }
-        };
-        fetchDashboardData();
+            if (complaintsRes.success) {
+                setComplaints(complaintsRes.data.filter(c => c.status === 'Pending').slice(0, 5));
+            }
+            if (studentsRes.success) {
+                setFloorStudents(studentsRes.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch warden dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        window.addEventListener('resync-data', fetchDashboardData);
-        return () => window.removeEventListener('resync-data', fetchDashboardData);
+    useEffect(() => {
+        fetchDashboardData();
     }, [refreshProfile]);
 
     const handleNoticeSubmit = async (e) => {
@@ -138,9 +137,18 @@ const WardenDashboard = () => {
                             </div>
                             <h2 className="text-xl font-bold tracking-tight lowercase">{wardenProfile.name}</h2>
                             <p className="text-brand-400 text-xs font-bold tracking-wider mt-1 italic">{wardenProfile.role}</p>
-                            <div className="mt-6 flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Active Console</span>
+                            <div className="mt-6 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Active Console</span>
+                                </div>
+                                <button 
+                                    onClick={fetchDashboardData}
+                                    className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all group"
+                                    title="Refresh Data"
+                                >
+                                    <RefreshCwIcon className="w-3.5 h-3.5 text-white/60 group-hover:text-white group-hover:rotate-180 transition-all duration-500" />
+                                </button>
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 opacity-10">
