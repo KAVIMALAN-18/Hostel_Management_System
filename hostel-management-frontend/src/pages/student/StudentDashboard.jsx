@@ -129,7 +129,7 @@ const StudentDashboard = () => {
         } else {
             setLoading(false);
         }
-    }, [user, fetchDashboardData]);
+    }, [user?.id, user?._id, fetchDashboardData]);
 
     const handleLeaveSubmit = async (e) => {
         e.preventDefault();

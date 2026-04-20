@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AuthContext, useAuth } from './AuthContextCore';
 export { useAuth, AuthContext };
 import { authAPI, tokenService, userService } from '../services/api';
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
      * @param {object} credentials - Email and password
      * @returns {Promise<object>} Login response
      */
-    const login = async (credentials) => {
+    const login = useCallback(async (credentials) => {
         try {
             const response = await authAPI.login(credentials);
 
@@ -86,14 +86,14 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             return { success: false, message: error.message };
         }
-    };
+    }, []);
 
     /**
      * Register new user
      * @param {object} userData - User registration data
      * @returns {Promise<object>} Registration response
      */
-    const register = async (userData) => {
+    const register = useCallback(async (userData) => {
         try {
             const response = await authAPI.register(userData);
 
@@ -115,12 +115,12 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             return { success: false, message: error.message };
         }
-    };
+    }, []);
 
     /**
      * Logout user
      */
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             // Call logout API (optional, since JWT is stateless)
             await authAPI.logout();
@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(false);
             navigate('/login');
         }
-    };
+    }, [navigate]);
 
     /**
      * Get role-based dashboard route
@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }) => {
     /**
      * Refresh user profile from server
      */
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         try {
             const response = await authAPI.getProfile();
             if (response.success) {
@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Failed to refresh profile:', error);
         }
-    };
+    }, []);
 
     const value = {
         user,
