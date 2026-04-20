@@ -355,7 +355,7 @@ const FormInput = ({ label, value, onChange, type = "text", required }) => {
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     required={required}
-                    className={`w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 py-4 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400 tracking-tight ${isPassword || type === 'email' ? '' : 'uppercase'}`}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl px-5 py-4 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400 tracking-tight ${isPassword || type === 'email' ? '' : ''}`}
                 />
                 {isPassword && (
                     <button 

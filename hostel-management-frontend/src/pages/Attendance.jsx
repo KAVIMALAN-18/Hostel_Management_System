@@ -173,7 +173,7 @@ const Attendance = () => {
                         placeholder="SEARCH BY NAME OR ID..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-transparent border-none text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white focus:outline-none w-full placeholder:text-slate-400"
+                        className="bg-transparent border-none text-sm font-bold tracking-wider text-slate-900 dark:text-white focus:outline-none w-full placeholder:text-slate-400"
                     />
                 </div>
 
