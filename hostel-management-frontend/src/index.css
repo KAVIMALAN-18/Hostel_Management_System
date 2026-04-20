@@ -204,6 +204,11 @@
   .page-content {
     animation: page-fade-in 0.35s ease-out;
   }
+
+  .lowercase {
+    text-transform: none !important;
+    text-transform: lowercase !important;
+  }
 }
 
 @keyframes modal-backdrop-in {

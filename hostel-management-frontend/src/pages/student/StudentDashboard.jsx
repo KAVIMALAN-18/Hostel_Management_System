@@ -423,7 +423,7 @@ const StudentDashboard = () => {
                                                         <PhoneIcon className="w-3.5 h-3.5" />
                                                         {profile.profile.warden.phone}
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 lowercase">
                                                         <MailIcon className="w-3.5 h-3.5" />
                                                         {profile.profile.warden.email}
                                                     </div>
