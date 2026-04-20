@@ -13,22 +13,51 @@ exports.getWardens = async (req, res) => {
     }
 };
 
-// @desc    Update warden profile
-// @route   PATCH /api/wardens/:id
+// @desc    Update warden profile and user details
+// @route   PUT /api/wardens/:id
 // @access  Private (Admin)
 exports.updateWarden = async (req, res) => {
     try {
-        const warden = await Warden.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        }).populate('user', 'name email phone');
+        const { name, email, phone, assignedHostel, assignedFloor, employeeId, gender } = req.body;
         
+        // 1. Find Warden Profile
+        const warden = await Warden.findById(req.params.id);
         if (!warden) {
             return res.status(404).json({ success: false, message: 'Warden profile not found' });
         }
+
+        // 2. Update User Document
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (email) updateData.email = email.toLowerCase();
+        if (phone) updateData.phone = phone;
+        if (employeeId) updateData.employeeId = employeeId;
+        if (gender) updateData.gender = gender;
+        if (assignedHostel) updateData.assignedHostel = assignedHostel; // Update string in User
+        if (assignedFloor) updateData.assignedFloor = assignedFloor;   // Update string in User
+
+        await User.findByIdAndUpdate(warden.user, updateData, { runValidators: true });
+
+        // 3. Update Warden Document
+        const wardenUpdate = {};
+        if (assignedFloor) wardenUpdate.assignedFloor = assignedFloor;
+        if (employeeId) wardenUpdate.employeeId = employeeId;
         
-        res.status(200).json({ success: true, data: warden });
+        // Resolve Hostel ID if name provided
+        if (assignedHostel && typeof assignedHostel === 'string' && assignedHostel.length !== 24) {
+            const { Hostel } = require('../models');
+            const hostel = await Hostel.findOne({ name: new RegExp('^' + assignedHostel.trim() + '$', 'i') });
+            if (hostel) wardenUpdate.assignedHostel = hostel._id;
+        } else if (assignedHostel) {
+            wardenUpdate.assignedHostel = assignedHostel;
+        }
+
+        const updatedWarden = await Warden.findByIdAndUpdate(req.params.id, wardenUpdate, { new: true })
+            .populate('user', 'name email phone');
+
+        res.status(200).json({ success: true, data: updatedWarden });
     } catch (error) {
+        console.error('[API ERROR] updateWarden:', error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };

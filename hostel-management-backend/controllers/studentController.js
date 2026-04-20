@@ -309,8 +309,6 @@ exports.getMyFloorStudents = async (req, res) => {
     }
 };
 
-};
-
 // @route   GET /api/students/warden/:studentId
 // @desc    Get assigned warden for a student
 // @access  Private
@@ -327,9 +325,15 @@ exports.getWardenForStudent = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Student not yet assigned to a hostel/floor' });
         }
 
+        const wardenQuery = { assignedHostel: student.hostel };
+        console.log(`[DIAGNOSTIC] Matching Warden for Student: ${student._id}`);
+        console.log(`[DIAGNOSTIC] Student Hostel: ${student.hostel}, Floor: ${student.room?.floor}`);
+
         const allWardens = await Warden.find(wardenQuery)
             .populate('user', 'name email phone')
             .populate('assignedHostel', 'name');
+        
+        console.log(`[DIAGNOSTIC] Found ${allWardens.length} potential wardens for this hostel.`);
 
         const studentFloor = student.room?.floor?.trim().toLowerCase();
         let foundWarden = null;

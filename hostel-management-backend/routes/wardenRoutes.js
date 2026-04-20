@@ -12,6 +12,7 @@ router.use(authorize('admin'));
 
 router.get('/', getWardens);
 router.patch('/:id', updateWarden);
+router.put('/:id', updateWarden);
 router.get('/stats', getWardenStats);
 
 module.exports = router;

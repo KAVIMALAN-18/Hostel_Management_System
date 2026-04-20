@@ -38,12 +38,12 @@ const WardenManagement = () => {
             if (response.success) {
                 setWardens(response.data.map(w => ({
                     id: w._id,
-                    name: w.name,
-                    email: w.email,
-                    mobile: w.phone,
-                    hostel: w.assignedHostel,
-                    floor: w.assignedFloor,
-                    gender: w.gender || 'Male',
+                    name: w.user?.name || 'N/A',
+                    email: w.user?.email || 'N/A',
+                    mobile: w.user?.phone || 'N/A',
+                    hostel: w.assignedHostel?.name || w.assignedHostel || 'Unassigned',
+                    floor: w.assignedFloor || 'N/A',
+                    gender: w.user?.gender || 'Male',
                     employeeId: w.employeeId || 'WARDEN-ID-TBD',
                     joiningDate: new Date(w.createdAt).toLocaleDateString()
                 })));
@@ -126,9 +126,15 @@ const WardenManagement = () => {
                     role: 'warden'
                 });
             }
-            fetchWardens();
+            await fetchWardens();
             setIsEditMode(false);
             setIsAddMode(false);
+            // Optional: Add a small temporary success indicator
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed bottom-8 right-8 bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-2xl z-50 animate-bounce';
+            successDiv.innerText = isAddMode ? 'Account Provisioned Successfully' : 'Records Updated Successfully';
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 3000);
         } catch (err) {
             setModalError(err.message || 'Error processing request');
             console.error(err);
@@ -209,7 +215,8 @@ const WardenManagement = () => {
                                         {wrd.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight lowercase">{wrd.name}</h3>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight lowercase">{wrd.name}</h3>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">{wrd.employeeId}</p>
                                         <div className="flex items-center gap-2 mt-1.5">
                                             <span className="px-2 py-0.5 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-lg tracking-wider border border-brand-100 dark:border-brand-900/50">
                                                 Residence Warden

@@ -75,8 +75,8 @@ export const authAPI = {
  * Staff Management API
  */
 export const staffAPI = {
-    getStaff: () => api.get('/auth/staff'),
-    updateStaff: (id, data) => api.put(`/auth/users/${id}`, data),
+    getStaff: () => api.get('/wardens'),
+    updateStaff: (id, data) => api.put(`/wardens/${id}`, data),
     deleteStaff: (id) => api.delete(`/auth/users/${id}`),
 };
 
