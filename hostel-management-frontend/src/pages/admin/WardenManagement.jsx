@@ -308,7 +308,24 @@ const WardenManagement = () => {
                                     options={availableHostels} 
                                     onChange={(v) => setFormData({ ...formData, hostel: v })} 
                                 />
-                                <FormInput label="Jurisdictional Floor" value={formData.floor} onChange={(v) => setFormData({ ...formData, floor: v })} />
+                                <FormSelect 
+                                    label="Jurisdictional Floor" 
+                                    value={formData.floor} 
+                                    options={[
+                                        'Ground Floor',
+                                        '1st Floor',
+                                        '2nd Floor',
+                                        '3rd Floor',
+                                        '4th Floor',
+                                        '5th Floor',
+                                        '6th Floor',
+                                        '7th Floor',
+                                        '8th Floor',
+                                        '9th Floor',
+                                        '10th Floor'
+                                    ]} 
+                                    onChange={(v) => setFormData({ ...formData, floor: v })} 
+                                />
                                 <FormSelect 
                                     label="Staff Gender" 
                                     value={formData.gender} 

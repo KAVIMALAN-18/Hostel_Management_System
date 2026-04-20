@@ -211,6 +211,12 @@
   }
 }
 
+/* ===== Global Email Normalization ===== */
+/* Ensures email fields always render in lowercase regardless of Tailwind utilities */
+[data-email], .email-display {
+  text-transform: lowercase !important;
+}
+
 @keyframes modal-backdrop-in {
   from {
     opacity: 0;

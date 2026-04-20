@@ -75,30 +75,40 @@ exports.getMyProfile = async (req, res) => {
             
             roommates = roommateProfiles.map(p => p.user?.name).filter(Boolean);
 
-            // Fetch Warden for this hostel/floor from the Warden model
+            // Fetch Warden for this hostel/floor — EXACT floor match required
             if (profile.hostel) {
                 const { Warden } = require('../models');
-                const wardenQuery = { assignedHostel: profile.hostel._id };
-                
-                // Try finding floor-specific warden first (case-insensitive)
-                const allWardens = await Warden.find(wardenQuery).populate('user', 'name phone email').populate('assignedHostel', 'name');
                 const studentFloor = profile.room?.floor?.trim().toLowerCase();
-                
+
+                console.log(`[WARDEN-MAP] Student hostel: ${profile.hostel._id} | Student floor: '${studentFloor}'`);
+
+                const allWardens = await Warden.find({ assignedHostel: profile.hostel._id })
+                    .populate('user', 'name phone email')
+                    .populate('assignedHostel', 'name');
+
+                console.log(`[WARDEN-MAP] Wardens in this hostel: ${allWardens.length}`);
+                allWardens.forEach(w => {
+                    console.log(`[WARDEN-MAP]   -> Warden floor: '${w.assignedFloor?.trim().toLowerCase()}'`);
+                });
+
                 let foundWarden = null;
                 if (studentFloor) {
-                    foundWarden = allWardens.find(w => w.assignedFloor?.trim().toLowerCase() === studentFloor);
-                }
-                
-                // Fallback to the first warden found in the same hostel if no floor-specific match
-                if (!foundWarden && allWardens.length > 0) {
-                    foundWarden = allWardens[0];
+                    foundWarden = allWardens.find(
+                        w => w.assignedFloor?.trim().toLowerCase() === studentFloor
+                    );
                 }
 
-                warden = foundWarden ? {
-                    ...foundWarden.user.toObject(),
-                    assignedFloor: foundWarden.assignedFloor,
-                    hostelName: foundWarden.assignedHostel?.name
-                } : null;
+                if (foundWarden) {
+                    console.log(`[WARDEN-MAP] ✅ Matched warden: ${foundWarden.user?.name}`);
+                    warden = {
+                        ...foundWarden.user.toObject(),
+                        assignedFloor: foundWarden.assignedFloor,
+                        hostelName: foundWarden.assignedHostel?.name
+                    };
+                } else {
+                    console.log(`[WARDEN-MAP] ❌ No exact-floor warden match. Student warden will be null.`);
+                    warden = null;
+                }
             }
         }
 
@@ -288,17 +298,23 @@ exports.getMyFloorStudents = async (req, res) => {
 
         // Filter students by floor (case-insensitive)
         const targetFloor = warden.assignedFloor?.trim().toLowerCase();
-        const floorStudents = students.filter(s => 
-            s.room && s.room.floor?.trim().toLowerCase() === targetFloor
-        );
+        console.log(`[FLOOR-STUDENTS] Warden hostel: ${warden.assignedHostel} | Warden floor: '${targetFloor}'`);
+        console.log(`[FLOOR-STUDENTS] Total students in hostel: ${students.length}`);
 
+        const floorStudents = students.filter(s => {
+            const sFloor = s.room?.floor?.trim().toLowerCase();
+            console.log(`[FLOOR-STUDENTS]   Student room floor: '${sFloor}' | Match: ${sFloor === targetFloor}`);
+            return s.room && sFloor === targetFloor;
+        });
+
+        console.log(`[FLOOR-STUDENTS] Matched students: ${floorStudents.length}`);
         res.status(200).json({
             success: true,
             count: floorStudents.length,
             data: floorStudents.map(s => ({
                 id: s.user?._id,
                 name: s.user?.name,
-                email: s.user?.email,
+                email: (s.user?.email || '').toLowerCase(),
                 phone: s.user?.phone,
                 room: s.room?.roomNumber,
                 block: s.block?.name
@@ -325,35 +341,38 @@ exports.getWardenForStudent = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Student not yet assigned to a hostel/floor' });
         }
 
-        const wardenQuery = { assignedHostel: student.hostel };
-        console.log(`[DIAGNOSTIC] Matching Warden for Student: ${student._id}`);
-        console.log(`[DIAGNOSTIC] Student Hostel: ${student.hostel}, Floor: ${student.room?.floor}`);
+        const studentFloor = student.room?.floor?.trim().toLowerCase();
+        console.log(`[WARDEN-API] Matching warden for student: ${student._id}`);
+        console.log(`[WARDEN-API] Hostel: ${student.hostel} | Floor: '${studentFloor}'`);
 
-        const allWardens = await Warden.find(wardenQuery)
+        const allWardens = await Warden.find({ assignedHostel: student.hostel })
             .populate('user', 'name email phone')
             .populate('assignedHostel', 'name');
-        
-        console.log(`[DIAGNOSTIC] Found ${allWardens.length} potential wardens for this hostel.`);
 
-        const studentFloor = student.room?.floor?.trim().toLowerCase();
+        console.log(`[WARDEN-API] Wardens found in hostel: ${allWardens.length}`);
+        allWardens.forEach(w => {
+            console.log(`[WARDEN-API]   -> floor: '${w.assignedFloor?.trim().toLowerCase()}'`);
+        });
+
+        // EXACT floor match required — no fallback to wrong warden
         let foundWarden = null;
         if (studentFloor) {
-            foundWarden = allWardens.find(w => w.assignedFloor?.trim().toLowerCase() === studentFloor);
-        }
-
-        if (!foundWarden && allWardens.length > 0) {
-            foundWarden = allWardens[0];
+            foundWarden = allWardens.find(
+                w => w.assignedFloor?.trim().toLowerCase() === studentFloor
+            );
         }
 
         if (!foundWarden) {
-            return res.status(404).json({ success: false, message: 'No warden assigned to this area yet' });
+            console.log(`[WARDEN-API] ❌ No matching warden for floor '${studentFloor}'`);
+            return res.status(404).json({ success: false, message: 'No warden assigned to this floor yet' });
         }
 
+        console.log(`[WARDEN-API] ✅ Matched warden: ${foundWarden.user?.name}`);
         res.status(200).json({
             success: true,
             data: {
                 name: foundWarden.user.name,
-                email: foundWarden.user.email,
+                email: (foundWarden.user.email || '').toLowerCase(),
                 phone: foundWarden.user.phone,
                 hostel: foundWarden.assignedHostel?.name,
                 floor: foundWarden.assignedFloor || 'General'

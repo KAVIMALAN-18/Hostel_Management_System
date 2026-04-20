@@ -84,7 +84,7 @@ const WardenDashboard = () => {
 
         window.addEventListener('resync-data', fetchDashboardData);
         return () => window.removeEventListener('resync-data', fetchDashboardData);
-    }, []);
+    }, [refreshProfile]);
 
     const handleNoticeSubmit = async (e) => {
         e.preventDefault();
@@ -172,7 +172,7 @@ const WardenDashboard = () => {
                             <div className="space-y-4">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">Communication</p>
-                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300 break-all lowercase">{wardenProfile.email}</p>
+                                     <p className="text-xs font-bold text-slate-600 dark:text-slate-300 break-all" style={{textTransform: 'lowercase'}}>{(wardenProfile.email || '').toLowerCase()}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">Contact Terminal</p>
@@ -270,9 +270,16 @@ const WardenDashboard = () => {
                                 <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
                                     <UsersIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Floor Residents Directory</h3>
+                                <div className="flex flex-col">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Jurisdictional Residents</h3>
+                                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">
+                                        Mapping: {wardenProfile.hostel} • {wardenProfile.floor}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-bold uppercase tracking-widest">{floorStudents.length} Students Assigned</div>
+                            <div className="flex flex-col items-end">
+                                <div className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-bold uppercase tracking-widest">{floorStudents.length} Students Assigned</div>
+                            </div>
                         </div>
                         <div className="p-0">
                             {floorStudents.length > 0 ? (
@@ -294,8 +301,8 @@ const WardenDashboard = () => {
                                                                 {s.name?.charAt(0)}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5 lowercase">{s.name}</p>
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight lowercase">{s.email}</p>
+                                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5">{s.name}</p>
+                                                                <p className="text-[10px] font-bold text-slate-400 tracking-tight" style={{textTransform: 'lowercase'}}>{(s.email || '').toLowerCase()}</p>
                                                             </div>
                                                         </div>
                                                     </td>
