@@ -202,8 +202,8 @@ const WardenManagement = () => {
                                     <div>
                                         <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{wrd.name}</h3>
                                         <div className="flex items-center gap-2 mt-1.5">
-                                            <span className="px-2 py-0.5 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-lg uppercase tracking-wider border border-brand-100 dark:border-brand-900/50">
-                                                RESIDENCE WARDEN
+                                            <span className="px-2 py-0.5 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-lg tracking-wider border border-brand-100 dark:border-brand-900/50">
+                                                Residence Warden
                                             </span>
                                         </div>
                                     </div>
@@ -219,7 +219,7 @@ const WardenManagement = () => {
                             </div>
 
                             <div className="space-y-4 mb-8">
-                                <WardenInfoRow icon={BuildingIcon} label="Jurisdiction" value={`${String(wrd.hostel || 'N/A').toUpperCase()} • ${String(wrd.floor || 'N/A').toUpperCase()}`} />
+                                <WardenInfoRow icon={BuildingIcon} label="Jurisdiction" value={`${wrd.hostel || 'N/A'} • ${wrd.floor || 'N/A'}`} />
                                 <WardenInfoRow icon={MailIcon} label="Communcation" value={wrd.email} />
                                 <WardenInfoRow icon={PhoneIcon} label="Direct Contact" value={wrd.mobile || 'N/A'} />
                             </div>
@@ -335,7 +335,7 @@ const WardenInfoRow = ({ icon, label, value }) => {
             </div>
             <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{value}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{value}</p>
             </div>
         </div>
     );

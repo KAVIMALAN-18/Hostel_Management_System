@@ -85,15 +85,28 @@ exports.getMyProfile = async (req, res) => {
                     wardenQuery.assignedFloor = profile.room.floor;
                 }
 
-                const wardenProfile = await Warden.findOne(wardenQuery).populate('user', 'name phone email');
+                const wardenProfile = await Warden.findOne(wardenQuery)
+                    .populate('user', 'name phone email')
+                    .populate('assignedHostel', 'name');
                 
                 // If floor-specific warden not found, try finding general hostel warden
                 if (!wardenProfile && wardenQuery.assignedFloor) {
                     delete wardenQuery.assignedFloor;
-                    const generalWarden = await Warden.findOne(wardenQuery).populate('user', 'name phone email');
-                    warden = generalWarden ? generalWarden.user : null;
+                    const generalWarden = await Warden.findOne(wardenQuery)
+                        .populate('user', 'name phone email')
+                        .populate('assignedHostel', 'name');
+                    
+                    warden = generalWarden ? {
+                        ...generalWarden.user.toObject(),
+                        assignedFloor: generalWarden.assignedFloor,
+                        hostelName: generalWarden.assignedHostel?.name
+                    } : null;
                 } else {
-                    warden = wardenProfile ? wardenProfile.user : null;
+                    warden = wardenProfile ? {
+                        ...wardenProfile.user.toObject(),
+                        assignedFloor: wardenProfile.assignedFloor,
+                        hostelName: wardenProfile.assignedHostel?.name
+                    } : null;
                 }
             }
         }

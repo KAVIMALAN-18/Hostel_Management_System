@@ -14,14 +14,17 @@ import {
     ClockIcon,
     PlusIcon,
     BellIcon,
-    BoltIcon
+    BoltIcon,
+    ShieldAlertIcon,
+    MailIcon,
+    PhoneIcon
 } from '../../components/common/Icons';
 import Table, { TableRow, TableCell } from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 
 const WardenDashboard = () => {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const [loading, setLoading] = useState(true);
 
     // UI States
@@ -51,6 +54,9 @@ const WardenDashboard = () => {
         const fetchDashboardData = async () => {
             setLoading(true);
             try {
+                // Refresh user profile to get latest assignments
+                await refreshProfile();
+
                 const [noticesRes, leavesRes, complaintsRes, studentsRes] = await Promise.all([
                     noticeAPI.getAll({ limit: 5 }),
                     leaveAPI.getAll(),
@@ -131,7 +137,7 @@ const WardenDashboard = () => {
                                 <UserIcon className="w-8 h-8 text-white" />
                             </div>
                             <h2 className="text-xl font-bold tracking-tight">{wardenProfile.name}</h2>
-                            <p className="text-brand-400 text-xs font-bold uppercase tracking-wider mt-1 italic">{wardenProfile.role}</p>
+                            <p className="text-brand-400 text-xs font-bold tracking-wider mt-1 italic">{wardenProfile.role}</p>
                             <div className="mt-6 flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                                 <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Active Console</span>
@@ -174,7 +180,7 @@ const WardenDashboard = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">Biological Identity</p>
-                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">{wardenProfile.gender}</p>
+                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{wardenProfile.gender}</p>
                                 </div>
                             </div>
                         </div>

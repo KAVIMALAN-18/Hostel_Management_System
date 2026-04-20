@@ -212,7 +212,7 @@ const StudentManagement = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{student.name}</p>
-                                                    <div className="flex items-center gap-3 mt-1 text-xs font-bold text-slate-500 uppercase tracking-tight">
+                                                    <div className="flex items-center gap-3 mt-1 text-xs font-bold text-slate-500 tracking-tight">
                                                         <span className="flex items-center gap-1"><MailIcon className="w-3 h-3" /> {student.email}</span>
                                                     </div>
                                                 </div>
@@ -225,7 +225,7 @@ const StudentManagement = () => {
                                                         UNIT: {student.profile?.room?.roomNumber || 'PENDING'}
                                                     </span>
                                                 </div>
-                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 ml-1">
+                                                <span className="text-xs font-bold text-slate-400 tracking-wider flex items-center gap-1.5 ml-1">
                                                     <BuildingIcon className="w-3 h-3" /> {student.profile?.hostel?.name || 'Block Unassigned'}
                                                 </span>
                                             </div>

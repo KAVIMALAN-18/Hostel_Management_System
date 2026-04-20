@@ -164,6 +164,23 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Refresh user profile from server
+     */
+    const refreshProfile = async () => {
+        try {
+            const response = await authAPI.getProfile();
+            if (response.success) {
+                const freshUser = response.data;
+                setUser(freshUser);
+                userService.setUser(freshUser);
+                return freshUser;
+            }
+        } catch (error) {
+            console.error('Failed to refresh profile:', error);
+        }
+    };
+
     const value = {
         user,
         isAuthenticated,
@@ -173,6 +190,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         navigateToDashboard,
         getDashboardRoute,
+        refreshProfile,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

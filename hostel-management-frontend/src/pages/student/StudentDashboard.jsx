@@ -391,7 +391,8 @@ const StudentDashboard = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-4 -right-4 text-6xl opacity-5 font-bold tracking-tight text-white uppercase">Roommates</div>
+                                    <div className="absolute -bottom-4 -right-4 text-6xl opacity-5 font-bold tracking-tight text-white uppercase">Directory</div>
+                                </div>
                                 </div>
 
                                 {/* SECTION: Assigned Warden (NEW) */}
@@ -404,6 +405,9 @@ const StudentDashboard = () => {
                                             <div>
                                                 <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-[0.2em] mb-1">Assigned Jurisdictional Warden</p>
                                                 <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.name}</h4>
+                                                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 tracking-wider">
+                                                    Jurisdiction: {studentProfile.warden.hostelName || 'General'} • {studentProfile.warden.assignedFloor || 'All Floors'}
+                                                </p>
                                                 <div className="flex items-center gap-4 mt-2">
                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                                                         <PhoneIcon className="w-3.5 h-3.5" />
