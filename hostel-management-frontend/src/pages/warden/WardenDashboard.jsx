@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { noticeAPI, leaveAPI, complaintAPI, studentAPI } from '../../services/api';
 import {
@@ -32,6 +32,7 @@ const WardenDashboard = () => {
     const [complaints, setComplaints] = useState([]);
     const [floorStudents, setFloorStudents] = useState([]);
     const [noticeForm, setNoticeForm] = useState({ title: '', content: '', priority: 'Normal' });
+    const isInitialLoad = useRef(true);
 
     // Profile Summary
     const wardenProfile = {
@@ -46,7 +47,11 @@ const WardenDashboard = () => {
     };
 
     const fetchDashboardData = useCallback(async () => {
-        setLoading(true);
+        // Only show full-page loading if it is the very first load
+        if (isInitialLoad.current) {
+            setLoading(true);
+        }
+        
         try {
             // Refresh user profile to get latest assignments
             if (refreshProfile) await refreshProfile();
@@ -72,6 +77,7 @@ const WardenDashboard = () => {
             console.error('Failed to fetch warden dashboard data:', error);
         } finally {
             setLoading(false);
+            isInitialLoad.current = false;
         }
     }, [refreshProfile]);
 

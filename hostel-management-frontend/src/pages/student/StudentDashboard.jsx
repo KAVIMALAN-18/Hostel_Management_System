@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { studentAPI, leaveAPI, noticeAPI, attendanceAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -69,10 +69,11 @@ const StudentDashboard = () => {
     const [updatingProfile, setUpdatingProfile] = useState(false);
     const [updateError, setUpdateError] = useState('');
     const [updateSuccess, setUpdateSuccess] = useState(false);
+    const isInitialLoad = useRef(true);
 
     const fetchDashboardData = useCallback(async () => {
-        // Only set loading on initial fetch to avoid flickering
-        if (!profile) setLoading(true);
+        // Only set loading on initial fetch to avoid full-page 'refresh' effect
+        if (isInitialLoad.current) setLoading(true);
         try {
             // Refresh profile for latest jurisdictional data
             if (refreshProfile) await refreshProfile();
@@ -117,6 +118,7 @@ const StudentDashboard = () => {
             console.error("Dashboard fetch error:", error);
         } finally {
             setLoading(false);
+            isInitialLoad.current = false;
         }
     }, [refreshProfile, user?.phone]);
 
