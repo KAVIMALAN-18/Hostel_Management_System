@@ -32,6 +32,7 @@ const WardenDashboard = () => {
     const [notices, setNotices] = useState([]);
     const [pendingLeaves, setPendingLeaves] = useState([]);
     const [complaints, setComplaints] = useState([]);
+    const [floorStudents, setFloorStudents] = useState([]);
     const [noticeForm, setNoticeForm] = useState({ title: '', content: '', priority: 'Normal' });
 
     // Profile Summary
@@ -50,10 +51,11 @@ const WardenDashboard = () => {
         const fetchDashboardData = async () => {
             setLoading(true);
             try {
-                const [noticesRes, leavesRes, complaintsRes] = await Promise.all([
+                const [noticesRes, leavesRes, complaintsRes, studentsRes] = await Promise.all([
                     noticeAPI.getAll({ limit: 5 }),
                     leaveAPI.getAll(),
-                    complaintAPI.getAll()
+                    complaintAPI.getAll(),
+                    studentAPI.getMyFloorStudents().catch(() => ({ success: true, data: [] }))
                 ]);
 
                 if (noticesRes.success) setNotices(noticesRes.data);
@@ -62,6 +64,9 @@ const WardenDashboard = () => {
                 }
                 if (complaintsRes.success) {
                     setComplaints(complaintsRes.data.filter(c => c.status === 'Pending').slice(0, 5));
+                }
+                if (studentsRes.success) {
+                    setFloorStudents(studentsRes.data);
                 }
             } catch (error) {
                 console.error('Failed to fetch warden dashboard data:', error);
@@ -247,6 +252,67 @@ const WardenDashboard = () => {
                                         <CheckIcon className="w-8 h-8 text-slate-200 dark:text-slate-700" />
                                     </div>
                                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest italic">All residency leave protocols reconciled</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* SECTION: Floor Residents (NEW) */}
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden transition-all h-fit">
+                        <div className="p-8 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-indigo-50/30 dark:bg-indigo-900/10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
+                                    <UsersIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Floor Residents Directory</h3>
+                            </div>
+                            <div className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-bold uppercase tracking-widest">{floorStudents.length} Students Assigned</div>
+                        </div>
+                        <div className="p-0">
+                            {floorStudents.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
+                                            <tr>
+                                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student Information</th>
+                                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Room Unit</th>
+                                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Terminal Info</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
+                                            {floorStudents.map((s) => (
+                                                <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all">
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center font-bold text-slate-500 text-xs">
+                                                                {s.name?.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5">{s.name}</p>
+                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{s.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-center">
+                                                        <span className="px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-lg text-xs font-bold border border-brand-100 dark:border-brand-900/50">
+                                                            R-{s.room}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-right">
+                                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{s.phone}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{s.block} Block</p>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="py-20 text-center">
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-700 border-dashed">
+                                        <UsersIcon className="w-8 h-8 text-slate-200 dark:text-slate-700" />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest italic leading-relaxed">No personnel records detected on your assigned floor jurisdiction</p>
                                 </div>
                             )}
                         </div>

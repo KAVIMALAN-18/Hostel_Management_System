@@ -370,7 +370,6 @@ const StudentDashboard = () => {
                                         <p className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase mt-1">Bed Assignment: {studentProfile.bed?.bedNumber || 'N/A'}</p>
                                     </div>
                                 </div>
-
                                 <div className="bg-slate-900 dark:bg-slate-900 rounded-3xl p-8 relative overflow-hidden group transition-colors">
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-3 mb-6">
@@ -392,8 +391,40 @@ const StudentDashboard = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-4 -right-4 text-6xl opacity-5 font-bold tracking-tight text-white">ROOMMATES</div>
+                                    <div className="absolute -bottom-4 -right-4 text-6xl opacity-5 font-bold tracking-tight text-white uppercase">Roommates</div>
                                 </div>
+
+                                {/* SECTION: Assigned Warden (NEW) */}
+                                {studentProfile.warden ? (
+                                    <div className="mt-8 bg-brand-50 dark:bg-brand-900/10 p-8 rounded-3xl border border-brand-100 dark:border-brand-900/30 flex flex-col md:flex-row items-center justify-between gap-6 transition-all group">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-14 h-14 bg-brand-600 dark:bg-brand-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand-500/20 group-hover:scale-105 transition-transform">
+                                                <UserIcon className="w-7 h-7" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-[0.2em] mb-1">Assigned Jurisdictional Warden</p>
+                                                <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.name}</h4>
+                                                <div className="flex items-center gap-4 mt-2">
+                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                        <PhoneIcon className="w-3.5 h-3.5" />
+                                                        {studentProfile.warden.phone}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                        <MailIcon className="w-3.5 h-3.5" />
+                                                        {studentProfile.warden.email}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button className="px-6 py-3 bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all active:scale-95 shadow-sm">
+                                            Contact Warden
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-3xl border-dashed text-center">
+                                        <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest italic">No jurisdictional warden assigned to this floor yet</p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="p-20 text-center">

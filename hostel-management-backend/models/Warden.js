@@ -22,6 +22,11 @@ const wardenSchema = new mongoose.Schema(
             ref: 'Hostel',
             default: null
         },
+        assignedFloor: {
+            type: String,
+            trim: true,
+            default: null
+        },
         department: {
             type: String,
             trim: true

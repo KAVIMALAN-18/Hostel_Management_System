@@ -75,14 +75,26 @@ exports.getMyProfile = async (req, res) => {
             
             roommates = roommateProfiles.map(p => p.user?.name).filter(Boolean);
 
-            // Fetch Warden for this hostel from the Warden model
+            // Fetch Warden for this hostel/floor from the Warden model
             if (profile.hostel) {
                 const { Warden } = require('../models');
-                const wardenProfile = await Warden.findOne({ 
-                    assignedHostel: profile.hostel._id 
-                }).populate('user', 'name phone email');
+                const wardenQuery = { assignedHostel: profile.hostel._id };
                 
-                warden = wardenProfile ? wardenProfile.user : null;
+                // If student has a floor assigned via room, try to find floor-specific warden
+                if (profile.room && profile.room.floor) {
+                    wardenQuery.assignedFloor = profile.room.floor;
+                }
+
+                const wardenProfile = await Warden.findOne(wardenQuery).populate('user', 'name phone email');
+                
+                // If floor-specific warden not found, try finding general hostel warden
+                if (!wardenProfile && wardenQuery.assignedFloor) {
+                    delete wardenQuery.assignedFloor;
+                    const generalWarden = await Warden.findOne(wardenQuery).populate('user', 'name phone email');
+                    warden = generalWarden ? generalWarden.user : null;
+                } else {
+                    warden = wardenProfile ? wardenProfile.user : null;
+                }
             }
         }
 
@@ -249,3 +261,46 @@ exports.deletePermanent = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// @route   GET /api/students/my-floor
+// @desc    Get students on the warden's assigned floor
+// @access  Private (Warden)
+exports.getMyFloorStudents = async (req, res) => {
+    try {
+        const { Warden, Student } = require('../models');
+        const warden = await Warden.findOne({ user: req.user.id });
+        
+        if (!warden || !warden.assignedHostel || !warden.assignedFloor) {
+            return res.status(200).json({ success: true, count: 0, data: [] });
+        }
+
+        const students = await Student.find({
+            hostel: warden.assignedHostel,
+            allocationStatus: { $in: ['allocated', 'checked-in'] }
+        })
+        .populate('user', 'name email phone')
+        .populate('room', 'roomNumber floor')
+        .populate('block', 'name');
+
+        // Filter students by floor (floor is stored in Room model)
+        const floorStudents = students.filter(s => s.room && s.room.floor === warden.assignedFloor);
+
+        res.status(200).json({
+            success: true,
+            count: floorStudents.length,
+            data: floorStudents.map(s => ({
+                id: s.user?._id,
+                name: s.user?.name,
+                email: s.user?.email,
+                phone: s.user?.phone,
+                room: s.room?.roomNumber,
+                block: s.block?.name
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports = exports;
+

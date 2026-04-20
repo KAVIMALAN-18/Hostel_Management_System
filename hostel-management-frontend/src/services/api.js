@@ -88,7 +88,8 @@ export const studentAPI = {
     getProfile: () => api.get('/students/profile/me'),
     update: (id, data) => api.put(`/students/${id}`, data),
     deactivate: (id) => api.delete(`/students/${id}`),
-    deletePermanent: (id) => api.delete(`/students/${id}/permanent`)
+    deletePermanent: (id) => api.delete(`/students/${id}/permanent`),
+    getMyFloorStudents: () => api.get('/students/my-floor')
 };
 
 /**
