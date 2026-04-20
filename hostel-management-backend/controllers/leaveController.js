@@ -63,10 +63,23 @@ exports.getLeaves = async (req, res) => {
         if (req.user.role === 'student') {
             query = Leave.find({ student: req.user.id });
         } else if (req.user.role === 'warden') {
-            // If warden has an assigned hostel, filter by it; otherwise show all
-            query = req.user.assignedHostel
-                ? Leave.find({ hostelName: req.user.assignedHostel })
-                : Leave.find();
+            // Strict jurisdictional mapping: Warden only sees leaves from their assigned hostel AND floor
+            const wardenHostel = req.user.assignedHostel;
+            const wardenFloor = req.user.assignedFloor;
+
+            if (wardenHostel && wardenFloor) {
+                console.log(`[LEAVE-MAP] Warden ${req.user.name} viewing leaves for ${wardenHostel} - ${wardenFloor}`);
+                query = Leave.find({ 
+                    hostelName: wardenHostel,
+                    floor: wardenFloor
+                });
+            } else if (wardenHostel) {
+                console.log(`[LEAVE-MAP] Warden ${req.user.name} viewing ALL leaves for hostel ${wardenHostel}`);
+                query = Leave.find({ hostelName: wardenHostel });
+            } else {
+                console.log(`[LEAVE-MAP] Warden ${req.user.name} has no assignment, showing no leaves`);
+                query = Leave.find({ _id: null }); // Return empty if no assignment
+            }
         } else {
             query = Leave.find();
         }

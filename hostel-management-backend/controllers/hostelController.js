@@ -1,4 +1,4 @@
-const { Hostel, Room, Bed, Student } = require('../models');
+const { Hostel, Room, Bed, Student, User } = require('../models');
 
 // --- Hostel Controllers ---
 
@@ -323,6 +323,14 @@ exports.allocateBed = async (req, res) => {
         studentProfile.allocationStatus = 'allocated';
         await studentProfile.save();
 
+        // 5. Sync User model (important for auth middleware and leave jurisdictional mapping)
+        const roomData = await Room.findById(roomId);
+        const hostelData = await Hostel.findById(hostelId);
+        await User.findByIdAndUpdate(studentId, {
+            assignedHostel: hostelData ? hostelData.name : 'Not Assigned',
+            assignedFloor: roomData ? roomData.floor : 'General'
+        });
+
         res.status(200).json({
             success: true,
             message: 'Bed allocated successfully',
@@ -364,6 +372,12 @@ exports.deallocateBed = async (req, res) => {
         studentProfile.bed = null;
         studentProfile.allocationStatus = 'pending';
         await studentProfile.save();
+
+        // 4. Reset User model jurisdictional data
+        await User.findByIdAndUpdate(studentId, {
+            assignedHostel: 'Not Assigned',
+            assignedFloor: 'General'
+        });
 
         res.status(200).json({
             success: true,
