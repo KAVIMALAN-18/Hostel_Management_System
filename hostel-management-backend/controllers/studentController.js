@@ -315,5 +315,60 @@ exports.getMyFloorStudents = async (req, res) => {
     }
 };
 
+};
+
+// @route   GET /api/students/warden/:studentId
+// @desc    Get assigned warden for a student
+// @access  Private
+exports.getWardenForStudent = async (req, res) => {
+    try {
+        const { Student, Warden } = require('../models');
+        const student = await Student.findById(req.params.studentId).populate('room');
+        
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        if (!student.hostel || !student.room) {
+            return res.status(404).json({ success: false, message: 'Student not yet assigned to a hostel/floor' });
+        }
+
+        const wardenQuery = { assignedHostel: student.hostel };
+        if (student.room.floor) {
+            wardenQuery.assignedFloor = student.room.floor;
+        }
+
+        let warden = await Warden.findOne(wardenQuery)
+            .populate('user', 'name email phone')
+            .populate('assignedHostel', 'name');
+
+        // Fallback to general warden if floor warden not found
+        if (!warden && wardenQuery.assignedFloor) {
+            delete wardenQuery.assignedFloor;
+            warden = await Warden.findOne(wardenQuery)
+                .populate('user', 'name email phone')
+                .populate('assignedHostel', 'name');
+        }
+
+        if (!warden) {
+            return res.status(404).json({ success: false, message: 'No warden assigned to this area yet' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                name: warden.user.name,
+                email: warden.user.email,
+                phone: warden.user.phone,
+                hostel: warden.assignedHostel?.name,
+                floor: warden.assignedFloor || 'General'
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = exports;
+
 

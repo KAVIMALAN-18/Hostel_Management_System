@@ -89,7 +89,8 @@ export const studentAPI = {
     update: (id, data) => api.put(`/students/${id}`, data),
     deactivate: (id) => api.delete(`/students/${id}`),
     deletePermanent: (id) => api.delete(`/students/${id}/permanent`),
-    getMyFloorStudents: () => api.get('/students/my-floor')
+    getMyFloorStudents: () => api.get('/students/my-floor'),
+    getWarden: (studentId) => api.get(`/students/warden/${studentId}`)
 };
 
 /**

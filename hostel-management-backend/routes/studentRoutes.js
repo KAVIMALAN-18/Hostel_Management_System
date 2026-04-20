@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { getStudents, getMyProfile, getStudentProfile, updateStudent, deactivateStudent, deletePermanent, getMyFloorStudents } = require('../controllers/studentController');
+const { getStudents, getMyProfile, getStudentProfile, updateStudent, deactivateStudent, deletePermanent, getMyFloorStudents, getWardenForStudent } = require('../controllers/studentController');
 const { authenticate, authorize } = require('../middleware/auth');
 
 router.use(authenticate);
 
 router.get('/my-floor', authorize('warden'), getMyFloorStudents);
+router.get('/warden/:studentId', getWardenForStudent);
 router.get('/', authorize('admin', 'warden'), getStudents);
 router.get('/profile/me', getMyProfile);
 router.get('/:id', getStudentProfile);

@@ -31,6 +31,7 @@ const StudentDashboard = () => {
     const [leaveHistory, setLeaveHistory] = useState([]);
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showWardenModal, setShowWardenModal] = useState(false);
 
     // Attendance Stats (Placeholders for real biometric API)
     const [attendanceStats, setAttendanceStats] = useState({
@@ -404,7 +405,12 @@ const StudentDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-[0.2em] mb-1">Assigned Jurisdictional Warden</p>
-                                                <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.name}</h4>
+                                                <h4 
+                                                    onClick={() => setShowWardenModal(true)}
+                                                    className="text-lg font-bold text-slate-900 dark:text-white tracking-tight cursor-pointer hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                                                >
+                                                    {studentProfile.warden.name}
+                                                </h4>
                                                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 tracking-wider">
                                                     Jurisdiction: {studentProfile.warden.hostelName || 'General'} • {studentProfile.warden.assignedFloor || 'All Floors'}
                                                 </p>
@@ -644,6 +650,86 @@ const StudentDashboard = () => {
                     </div>
                 </form>
             </Modal>
+        </div>
+            {/* SECTION: Warden Details Modal (NEW) */}
+            {showWardenModal && studentProfile?.warden && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowWardenModal(false)}></div>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+                        <div className="bg-slate-900 p-8 text-white relative">
+                            <div className="absolute -right-12 -top-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl"></div>
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand-500/20">
+                                        <UserIcon className="w-8 h-8" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold tracking-tight">{studentProfile.warden.name}</h3>
+                                        <p className="text-brand-400 text-xs font-bold uppercase tracking-widest mt-1">Residence Warden</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowWardenModal(false)}
+                                    className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all"
+                                >
+                                    <XIcon className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-10 space-y-8">
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="flex items-center gap-4 group">
+                                    <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-brand-600 transition-colors">
+                                        <MailIcon className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Official Communication</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.email}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 group">
+                                    <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-brand-600 transition-colors">
+                                        <PhoneIcon className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Contact Terminal</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{studentProfile.warden.phone}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 group">
+                                    <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-brand-600 transition-colors">
+                                        <BuildingIcon className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Jurisdictional Mapping</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                                            {studentProfile.warden.hostelName || 'General Management'} • {studentProfile.warden.assignedFloor || 'Multiple Floors'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex gap-4">
+                                <a 
+                                    href={`tel:${studentProfile.warden.phone}`}
+                                    className="flex-1 px-6 py-4 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:bg-brand-700 text-center transition-all active:scale-95"
+                                >
+                                    Call Warden
+                                </a>
+                                <button 
+                                    onClick={() => setShowWardenModal(false)}
+                                    className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
