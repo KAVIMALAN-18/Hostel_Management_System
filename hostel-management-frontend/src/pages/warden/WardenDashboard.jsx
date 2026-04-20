@@ -136,7 +136,7 @@ const WardenDashboard = () => {
                             <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-500/20">
                                 <UserIcon className="w-8 h-8 text-white" />
                             </div>
-                            <h2 className="text-xl font-bold tracking-tight">{wardenProfile.name}</h2>
+                            <h2 className="text-xl font-bold tracking-tight lowercase">{wardenProfile.name}</h2>
                             <p className="text-brand-400 text-xs font-bold tracking-wider mt-1 italic">{wardenProfile.role}</p>
                             <div className="mt-6 flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -172,7 +172,7 @@ const WardenDashboard = () => {
                             <div className="space-y-4">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">Communication</p>
-                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300 break-all">{wardenProfile.email}</p>
+                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300 break-all lowercase">{wardenProfile.email}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 leading-none">Contact Terminal</p>
@@ -294,8 +294,8 @@ const WardenDashboard = () => {
                                                                 {s.name?.charAt(0)}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5">{s.name}</p>
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{s.email}</p>
+                                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-0.5 lowercase">{s.name}</p>
+                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight lowercase">{s.email}</p>
                                                             </div>
                                                         </div>
                                                     </td>

@@ -151,12 +151,20 @@ const WardenManagement = () => {
                     </p>
                 </div>
                 {isAdmin && (
-                    <button
-                        onClick={handleAdd}
-                        className="px-6 py-3 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-wide shadow-xl shadow-brand-500/20 hover:bg-brand-700 active:scale-95 transition-all flex items-center gap-3"
-                    >
-                        <UserPlusIcon className="w-4 h-4" /> Provision New Staff
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsEditMode(!isEditMode)}
+                            className={`px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide transition-all flex items-center gap-3 ${isEditMode ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'}`}
+                        >
+                            <EditIcon className="w-4 h-4" /> {isEditMode ? 'Exit Edit Mode' : 'Modify Records'}
+                        </button>
+                        <button
+                            onClick={handleAdd}
+                            className="px-6 py-3 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-wide shadow-xl shadow-brand-500/20 hover:bg-brand-700 active:scale-95 transition-all flex items-center gap-3"
+                        >
+                            <UserPlusIcon className="w-4 h-4" /> Provision New Staff
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -200,7 +208,7 @@ const WardenManagement = () => {
                                         {wrd.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{wrd.name}</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight lowercase">{wrd.name}</h3>
                                         <div className="flex items-center gap-2 mt-1.5">
                                             <span className="px-2 py-0.5 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-lg tracking-wider border border-brand-100 dark:border-brand-900/50">
                                                 Residence Warden
@@ -211,16 +219,16 @@ const WardenManagement = () => {
                                 {isAdmin && (
                                     <button 
                                         onClick={() => handleEdit(wrd)}
-                                        className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all"
+                                        className={`p-3 rounded-2xl transition-all shadow-sm ${isEditMode ? 'bg-brand-600 text-white animate-pulse' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-brand-600 hover:bg-brand-50'}`}
                                     >
-                                        <EditIcon className="w-4 h-4" />
+                                        <EditIcon className="w-5 h-5" />
                                     </button>
                                 )}
                             </div>
 
                             <div className="space-y-4 mb-8">
                                 <WardenInfoRow icon={BuildingIcon} label="Jurisdiction" value={`${wrd.hostel || 'N/A'} • ${wrd.floor || 'N/A'}`} />
-                                <WardenInfoRow icon={MailIcon} label="Communcation" value={wrd.email} />
+                                <WardenInfoRow icon={MailIcon} label="Communication" value={wrd.email.toLowerCase()} />
                                 <WardenInfoRow icon={PhoneIcon} label="Direct Contact" value={wrd.mobile || 'N/A'} />
                             </div>
 
