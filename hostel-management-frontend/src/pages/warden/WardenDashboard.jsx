@@ -1,23 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { noticeAPI, leaveAPI, complaintAPI, studentAPI } from '../../services/api';
 import {
     HomeIcon,
     UsersIcon,
-    ClipboardIcon,
     ToolIcon,
     UserIcon,
     BuildingIcon,
     CalendarIcon,
     CheckIcon,
-    XIcon,
     ClockIcon,
     PlusIcon,
     BellIcon,
-    BoltIcon,
-    ShieldAlertIcon,
-    MailIcon,
-    PhoneIcon,
     RefreshCwIcon
 } from '../../components/common/Icons';
 import Table, { TableRow, TableCell } from '../../components/common/Table';
@@ -51,7 +45,7 @@ const WardenDashboard = () => {
         role: user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Warden'
     };
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         setLoading(true);
         try {
             // Refresh user profile to get latest assignments
@@ -79,11 +73,11 @@ const WardenDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [refreshProfile]);
 
     useEffect(() => {
         fetchDashboardData();
-    }, [refreshProfile]);
+    }, [fetchDashboardData]);
 
     const handleNoticeSubmit = async (e) => {
         e.preventDefault();

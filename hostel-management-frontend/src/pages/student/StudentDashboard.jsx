@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { studentAPI, leaveAPI, noticeAPI, attendanceAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -70,7 +70,7 @@ const StudentDashboard = () => {
     const [updateError, setUpdateError] = useState('');
     const [updateSuccess, setUpdateSuccess] = useState(false);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         // Only set loading on initial fetch to avoid flickering
         if (!profile) setLoading(true);
         try {
@@ -118,7 +118,7 @@ const StudentDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [refreshProfile, user?.phone]);
 
     useEffect(() => {
         const userId = user?.id || user?._id;
@@ -127,8 +127,7 @@ const StudentDashboard = () => {
         } else {
             setLoading(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, fetchDashboardData]);
 
     const handleLeaveSubmit = async (e) => {
         e.preventDefault();
