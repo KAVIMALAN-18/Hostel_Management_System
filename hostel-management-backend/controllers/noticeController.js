@@ -7,23 +7,32 @@ exports.createNotice = async (req, res) => {
     try {
         const { title, content, priority, hostel, floor, expiresAt } = req.body;
 
-        // Warden restriction: Can only post to their assigned hostel
+        // Warden logic: Auto-assign or validate jurisdiction
         if (req.user.role === 'warden') {
             const warden = await User.findById(req.user.id);
-            if (hostel !== 'All' && hostel !== warden.assignedHostel) {
+            
+            // If hostel/floor not provided, auto-assign to warden's jurisdiction
+            const targetHostel = hostel || warden.assignedHostel;
+            const targetFloor = floor || warden.assignedFloor;
+
+            if (targetHostel !== 'All' && targetHostel !== warden.assignedHostel) {
                 return res.status(403).json({
                     success: false,
                     message: `You can only post announcements for ${warden.assignedHostel || 'your assigned hostel'}`
                 });
             }
+            
+            // Update local variables for use in creation
+            req.body.hostel = targetHostel;
+            req.body.floor = targetFloor;
         }
 
         const notice = await Notice.create({
             title,
             content,
             priority,
-            hostel: hostel || 'All',
-            floor: floor || 'All',
+            hostel: req.body.hostel || hostel || 'All',
+            floor: req.body.floor || floor || 'All',
             expiresAt,
             author: req.user.id
         });

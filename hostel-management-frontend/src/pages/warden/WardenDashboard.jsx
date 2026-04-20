@@ -96,8 +96,8 @@ const WardenDashboard = () => {
                 setShowNoticeModal(false);
                 alert('Announcement posted successfully');
             }
-        } catch {
-            alert('Failed to post announcement');
+        } catch (error) {
+            alert(error.message || 'Failed to post announcement');
         } finally {
             setSubmitting(false);
         }
